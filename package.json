@@ -1,0 +1,82 @@
+{
+  "name": "neovate-code-desktop",
+  "version": "0.1.0",
+  "description": "Neovate Code Desktop - Electron boilerplate",
+  "main": "dist/main/main/main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
+    "dev:main": "tsc -p tsconfig.main.json && electron dist/main/main/main.js --dev",
+    "dev:renderer": "vite",
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "package": "npm run build && electron-builder",
+    "package:mac": "npm run build && electron-builder --mac",
+    "postinstall": "electron-rebuild"
+  },
+  "keywords": [
+    "electron",
+    "neovate",
+    "desktop"
+  ],
+  "author": {
+    "name": "Neovate AI",
+    "email": "hello@neovateai.com"
+  },
+  "engines": {
+    "node": ">=20.0.0 <23.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.1",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^8.2.2",
+    "electron": "^30.5.1",
+    "electron-builder": "^24.9.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "build": {
+    "appId": "com.neovatecodedesktop",
+    "productName": "neovate-code-desktop",
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "neovate-code-desktop-${arch}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "neovateai",
+        "repo": "neovate-code-desktop"
+      }
+    ],
+    "files": [
+      "dist/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    }
+  }
+}
