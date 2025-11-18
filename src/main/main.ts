@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import fs from 'fs/promises';
@@ -64,6 +64,22 @@ function createWindow() {
 
     // Send result back to renderer
     event.sender.send('directory-result', result);
+  });
+
+  // Handle directory selection dialog
+  ipcMain.handle('select-directory', async () => {
+    if (!mainWindow) return null;
+
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+      title: 'Select Repository Directory',
+    });
+
+    if (result.canceled) {
+      return null;
+    }
+
+    return result.filePaths[0] || null;
   });
 }
 

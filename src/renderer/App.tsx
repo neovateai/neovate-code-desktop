@@ -1,7 +1,12 @@
 import { useStore } from './store';
 import { MainLayout } from './components';
+import { useStoreConnection } from './hooks';
+import { Spinner } from './components/ui';
 
 function App() {
+  // Establish WebSocket connection on mount
+  const connectionState = useStoreConnection();
+
   // Get state and actions from the store
   const {
     repos,
@@ -45,6 +50,20 @@ function App() {
     // For now, we'll just simulate the execution
     return Promise.resolve();
   };
+
+  // Show loading UI while connecting
+  if (connectionState !== 'connected') {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Spinner className="h-8 w-8" />
+          <p className="text-muted-foreground text-sm">
+            Connecting to server...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col">

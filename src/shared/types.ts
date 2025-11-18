@@ -19,6 +19,9 @@ export interface ElectronAPI {
   ) => void;
   removeConfirmRequestListener: () => void;
   removeDirectoryResultListener: () => void;
+  saveStore: (state: any) => Promise<{ success: boolean }>;
+  loadStore: () => Promise<any>;
+  selectDirectory: () => Promise<string | null>;
 }
 
 // Extend Window interface for type safety

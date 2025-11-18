@@ -27,4 +27,7 @@ contextBridge.exposeInMainWorld('electron', {
   // Store persistence
   saveStore: (state: any) => ipcRenderer.invoke('store:save', state),
   loadStore: () => ipcRenderer.invoke('store:load'),
+  // Directory selection
+  selectDirectory: (): Promise<string | null> =>
+    ipcRenderer.invoke('select-directory'),
 });

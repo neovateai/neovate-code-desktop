@@ -46,6 +46,7 @@ import {
   EmptyDescription,
 } from './ui/empty';
 import { Button } from './ui/button';
+import { AddRepoMenu } from './AddRepoMenu';
 
 export const RepoSidebar = ({
   repos,
@@ -361,12 +362,14 @@ RepoSidebar.Footer = function Footer() {
       className="px-3 py-2 flex gap-2"
       style={{ borderTop: '1px solid var(--border-subtle)' }}
     >
-      <button
-        className="p-2 rounded hover:bg-opacity-70 transition-colors"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} />
-      </button>
+      <AddRepoMenu>
+        <button
+          className="p-2 rounded hover:bg-opacity-70 transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} />
+        </button>
+      </AddRepoMenu>
       <button
         className="p-2 rounded hover:bg-opacity-70 transition-colors"
         style={{ color: 'var(--text-secondary)' }}

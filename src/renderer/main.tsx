@@ -4,6 +4,7 @@ import App from './App';
 import './index.css';
 import { useStore } from './store';
 import { hydrateStore, setupPersistence } from './persistence';
+import { ToastProvider } from './components/ui/toast';
 
 // Hydrate store from persisted state before rendering
 (async () => {
@@ -12,7 +13,9 @@ import { hydrateStore, setupPersistence } from './persistence';
   // Render the app
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      <App />
+      <ToastProvider position="bottom-right">
+        <App />
+      </ToastProvider>
     </React.StrictMode>,
   );
 
