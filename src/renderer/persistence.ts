@@ -159,12 +159,11 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         selectedRepoPath: validatedRepoPath,
         selectedWorkspaceId: validatedWorkspaceId,
         selectedSessionId: validatedSessionId,
-        // Connection state always starts as 'disconnected'
         state: 'disconnected',
         transport: null,
         messageBus: null,
       },
-      true, // Replace the state entirely
+      false,
     );
 
     console.log('Store hydrated successfully from persisted state');
