@@ -17,6 +17,7 @@ import {
   EmptyDescription,
 } from '@/components/ui/empty';
 import { useStore } from '../store';
+import { ChatInput } from './ChatInput';
 
 // Define the context type
 interface WorkspaceContextType {
@@ -232,7 +233,23 @@ export const WorkspacePanel = ({
         <WorkspacePanel.SessionTabs />
         <WorkspacePanel.WorkspaceInfo />
         <WorkspacePanel.Messages />
-        <WorkspacePanel.ChatInput />
+        <div
+          className="p-4"
+          style={{ borderTop: '1px solid var(--border-subtle)' }}
+        >
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={sendMessage}
+            isLoading={isLoading}
+            placeholder={
+              selectedSessionId
+                ? 'Type your message...'
+                : 'Type your message with a new session...'
+            }
+            disabled={isLoading}
+          />
+        </div>
       </div>
     </WorkspaceContext.Provider>
   );
@@ -466,94 +483,6 @@ WorkspacePanel.Message = function Message({
   );
 };
 
-WorkspacePanel.ChatInput = function ChatInput() {
-  const {
-    inputValue,
-    setInputValue,
-    sendMessage,
-    isLoading,
-    selectedSessionId,
-  } = useWorkspaceContext();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage(inputValue);
-  };
-
-  const isDisabled = isLoading;
-
-  return (
-    <div
-      className="p-4"
-      style={{ borderTop: '1px solid var(--border-subtle)' }}
-    >
-      <form onSubmit={handleSubmit} className="flex">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={
-              selectedSessionId
-                ? 'Type your message...'
-                : 'Type your message with a new session...'
-            }
-            className="w-full rounded-lg px-4 py-2 pr-12 focus:outline-none focus:ring-2"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-subtle)',
-            }}
-            disabled={isDisabled}
-          />
-          <WorkspacePanel.Toolbar />
-        </div>
-        <WorkspacePanel.SendButton />
-      </form>
-    </div>
-  );
-};
-
-WorkspacePanel.Toolbar = function Toolbar() {
-  const { selectedSessionId } = useWorkspaceContext();
-
-  if (!selectedSessionId) return null;
-
-  return (
-    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex">
-      <button
-        type="button"
-        className="p-1 hover:opacity-70"
-        style={{ color: '#666' }}
-        title="Attach file"
-      >
-        <AttachIcon />
-      </button>
-    </div>
-  );
-};
-
-WorkspacePanel.SendButton = function SendButton() {
-  const { inputValue, isLoading } = useWorkspaceContext();
-
-  const canSend = inputValue.trim() && !isLoading;
-
-  return (
-    <button
-      type="submit"
-      disabled={!canSend}
-      className="ml-2 px-4 py-2 rounded-lg"
-      style={
-        canSend
-          ? { backgroundColor: '#0070f3', color: 'white' }
-          : { backgroundColor: '#e0e0e0', color: '#999', cursor: 'not-allowed' }
-      }
-    >
-      {isLoading ? <SpinnerIcon /> : <SendIcon />}
-    </button>
-  );
-};
-
 // Icons
 function FolderIcon() {
   return (
@@ -587,41 +516,6 @@ function StatusIcon({ status }: { status: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16">
       <circle cx="8" cy="8" r="5" fill={color} />
-    </svg>
-  );
-}
-
-function AttachIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16">
-      <path
-        fill="currentColor"
-        d="M6 3v6a3 3 0 1 0 6 0V3a1 1 0 1 0-2 0v6a1 1 0 1 1-2 0V3a3 3 0 1 0-2 0v6a3 3 0 1 0 6 0V3"
-      />
-    </svg>
-  );
-}
-
-function SendIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16">
-      <path fill="currentColor" d="M1 8l14-6-6 14-4-10L1 8z" />
-    </svg>
-  );
-}
-
-function SpinnerIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" className="animate-spin">
-      <circle
-        cx="8"
-        cy="8"
-        r="6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeDasharray="8 8"
-      />
     </svg>
   );
 }
