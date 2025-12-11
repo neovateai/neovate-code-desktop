@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useListNavigation } from './useListNavigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { findAtTokenAtCursor } from '../lib/tokenUtils';
+import { useListNavigation } from './useListNavigation';
 
 type TriggerType = 'at' | 'tab' | null;
 
@@ -29,16 +29,9 @@ export function useFileSuggestion({
   const [isLoading, setIsLoading] = useState(false);
 
   const atMatch = useMemo((): MatchResult => {
-    console.log(
-      '[useFileSuggestion] computing atMatch, value:',
-      JSON.stringify(value),
-      'cursorPosition:',
-      cursorPosition,
-    );
     const tokenRange = findAtTokenAtCursor(value, cursorPosition);
 
     if (!tokenRange) {
-      console.log('[useFileSuggestion] no tokenRange found');
       return {
         hasQuery: false,
         fullMatch: '',
@@ -55,13 +48,6 @@ export function useFileSuggestion({
       query = query.slice(1).replace(/"$/, '');
     }
 
-    console.log('[useFileSuggestion] atMatch result:', {
-      hasQuery: true,
-      fullMatch,
-      query,
-      startIndex,
-      triggerType: 'at',
-    });
     return {
       hasQuery: true,
       fullMatch,

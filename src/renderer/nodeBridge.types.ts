@@ -79,6 +79,26 @@ type ConfigListOutput = {
 };
 
 // ============================================================================
+// Git Handlers
+// ============================================================================
+
+type GitCloneInput = {
+  url: string;
+  destination: string;
+  taskId?: string;
+};
+type GitCloneOutput = {
+  success: boolean;
+  data?: {
+    clonePath: string;
+    repoName: string;
+  };
+  error?: string;
+  errorCode?: string;
+  needsCredentials?: boolean;
+};
+
+// ============================================================================
 // MCP Handlers
 // ============================================================================
 
@@ -763,6 +783,10 @@ export type HandlerMap = {
   'config.set': { input: ConfigSetInput; output: SuccessResponse };
   'config.remove': { input: ConfigRemoveInput; output: SuccessResponse };
   'config.list': { input: ConfigListInput; output: ConfigListOutput };
+
+  // Git handlers
+  'git.clone': { input: GitCloneInput; output: GitCloneOutput };
+  'git.clone.cancel': { input: { taskId: string }; output: SuccessResponse };
 
   // MCP handlers
   'mcp.getStatus': { input: McpGetStatusInput; output: McpGetStatusOutput };

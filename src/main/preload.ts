@@ -30,4 +30,6 @@ contextBridge.exposeInMainWorld('electron', {
   // Directory selection
   selectDirectory: (): Promise<string | null> =>
     ipcRenderer.invoke('select-directory'),
+  selectCloneLocation: (): Promise<string | null> =>
+    ipcRenderer.invoke('select-clone-location'),
 });

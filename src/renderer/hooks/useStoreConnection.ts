@@ -16,12 +16,10 @@ export function useStoreConnection() {
   useEffect(() => {
     // Prevent running multiple times (e.g., in React Strict Mode)
     if (hasInitialized.current) {
-      console.log('useStoreConnection: Already initialized, skipping');
       return;
     }
 
     hasInitialized.current = true;
-    console.log('useStoreConnection: Initializing');
 
     const init = async () => {
       await connect();

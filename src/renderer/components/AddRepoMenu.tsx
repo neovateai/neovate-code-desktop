@@ -3,6 +3,8 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import React from 'react';
 import type { ElectronAPI } from '../../shared/types';
 import { useStore } from '../store';
+import { CloneInput } from './CloneInput';
+import { CloneProgressToast } from './CloneProgressToast';
 import { toastManager } from './ui';
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from './ui/menu';
 
@@ -13,6 +15,10 @@ interface AddRepoMenuProps {
 export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [cloneDialogOpen, setCloneDialogOpen] = React.useState(false);
+  const [isCloning, setIsCloning] = React.useState(false);
+  const [cloneProgress, setCloneProgress] = React.useState(0);
+  const [currentTaskId, setCurrentTaskId] = React.useState<string | null>(null);
   const { request, addRepo, addWorkspace, repos } = useStore();
 
   const handleOpenProject = async () => {
@@ -140,22 +146,65 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
 
   const handleCloneFromURL = () => {
     setOpen(false);
-    alert('Not implemented');
+    setCloneDialogOpen(true);
+  };
+
+  const handleCloneStart = (progress: number, taskId: string) => {
+    setIsCloning(true);
+    setCloneProgress(progress);
+    setCurrentTaskId(taskId);
+  };
+
+  const handleCloneComplete = () => {
+    setIsCloning(false);
+    setCloneProgress(0);
+    setCurrentTaskId(null);
+  };
+
+  const handleCancelClone = async () => {
+    if (!currentTaskId) return;
+
+    try {
+      await request('git.clone.cancel', { taskId: currentTaskId });
+
+      // Note: Don't reset state here - let CloneInput's finally block handle it
+      // This avoids double state reset and ensures proper cleanup order
+    } catch (error) {
+      console.error('Failed to cancel clone:', error);
+      // Even if cancel fails, the CloneInput will handle state cleanup
+    }
   };
 
   return (
-    <Menu open={open} onOpenChange={setOpen}>
-      <MenuTrigger>{children}</MenuTrigger>
-      <MenuPopup side="top" align="start">
-        <MenuItem onClick={handleOpenProject} disabled={isLoading}>
-          <HugeiconsIcon icon={FolderIcon} size={16} strokeWidth={1.5} />
-          <span>Open Project</span>
-        </MenuItem>
-        <MenuItem onClick={handleCloneFromURL} disabled={isLoading}>
-          <HugeiconsIcon icon={CloudIcon} size={16} strokeWidth={1.5} />
-          <span>Clone from URL</span>
-        </MenuItem>
-      </MenuPopup>
-    </Menu>
+    <>
+      <Menu open={open} onOpenChange={setOpen}>
+        <MenuTrigger>{children}</MenuTrigger>
+        <MenuPopup side="top" align="start">
+          <MenuItem onClick={handleOpenProject} disabled={isLoading}>
+            <HugeiconsIcon icon={FolderIcon} size={16} strokeWidth={1.5} />
+            <span>Open Project</span>
+          </MenuItem>
+          <MenuItem onClick={handleCloneFromURL} disabled={isLoading}>
+            <HugeiconsIcon icon={CloudIcon} size={16} strokeWidth={1.5} />
+            <span>Clone from URL</span>
+          </MenuItem>
+        </MenuPopup>
+      </Menu>
+
+      <CloneInput
+        open={cloneDialogOpen}
+        onOpenChange={setCloneDialogOpen}
+        onCloneStart={handleCloneStart}
+        onCloneComplete={handleCloneComplete}
+      />
+
+      {/* Global clone progress toast - stays visible even when dialog closes */}
+      <CloneProgressToast
+        visible={isCloning}
+        progress={cloneProgress}
+        taskId={currentTaskId || undefined}
+        onCancel={handleCancelClone}
+      />
+    </>
   );
 };

@@ -22,6 +22,7 @@ export interface ElectronAPI {
   saveStore: (state: any) => Promise<{ success: boolean }>;
   loadStore: () => Promise<any>;
   selectDirectory: () => Promise<string | null>;
+  selectCloneLocation: () => Promise<string | null>;
 }
 
 // Extend Window interface for type safety

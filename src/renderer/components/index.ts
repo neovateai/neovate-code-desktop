@@ -3,13 +3,11 @@ export { WorkspacePanel } from './WorkspacePanel';
 export { WorkspaceChanges } from './WorkspaceChanges';
 export { Terminal } from './Terminal';
 export { MainLayout } from './MainLayout';
+export { CloneInput } from './CloneInput';
+export { CloneProgressToast } from './CloneProgressToast';
 
 // Enhanced ChatInput with full feature set
-export {
-  ChatInput,
-  SuggestionDropdown,
-  ImagePreview,
-} from './ChatInput';
+export { ChatInput, SuggestionDropdown, ImagePreview } from './ChatInput';
 
 // Test components
 export { SystemInfo, DirectoryList } from './test';

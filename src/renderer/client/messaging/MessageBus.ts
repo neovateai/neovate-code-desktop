@@ -117,11 +117,16 @@ export class MessageBus {
     }
   }
 
-  onEvent<T = unknown>(event: string, handler: EventHandler<T>): void {
+  onEvent<T = unknown>(event: string, handler: EventHandler<T>): () => void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, []);
     }
     this.eventHandlers.get(event)?.push(handler as EventHandler);
+
+    // Return unsubscribe function
+    return () => {
+      this.removeEventHandler(event, handler);
+    };
   }
 
   registerHandler<T = unknown, R = unknown>(

@@ -1,8 +1,8 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import path from 'path';
 import fs from 'fs/promises';
 import os from 'os';
+import path from 'path';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -80,6 +80,30 @@ function createWindow() {
     }
 
     return result.filePaths[0] || null;
+  });
+
+  // Handle clone location selection dialog
+  ipcMain.handle('select-clone-location', async () => {
+    try {
+      if (!mainWindow) {
+        return null;
+      }
+
+      const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory', 'createDirectory'],
+        title: 'Select Clone Destination',
+        buttonLabel: 'Select',
+      });
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return null;
+      }
+
+      const selectedPath = result.filePaths[0];
+      return selectedPath;
+    } catch (_error) {
+      return null;
+    }
   });
 }
 

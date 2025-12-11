@@ -1,19 +1,17 @@
 import React from 'react';
 import { create } from 'zustand';
-import { WebSocketTransport } from './client/transport/WebSocketTransport';
 import { MessageBus } from './client/messaging/MessageBus';
-import { randomUUID } from './utils/uuid';
-import { getNestedValue, setNestedValue } from './lib/utils';
+import { WebSocketTransport } from './client/transport/WebSocketTransport';
 import type {
   RepoData,
-  WorkspaceData,
   SessionData,
+  WorkspaceData,
 } from './client/types/entities';
 import type { NormalizedMessage } from './client/types/message';
+import { getNestedValue, setNestedValue } from './lib/utils';
 import type {
-  HandlerMap,
-  HandlerMethod,
   HandlerInput,
+  HandlerMethod,
   HandlerOutput,
 } from './nodeBridge.types';
 import {
@@ -21,6 +19,7 @@ import {
   parseSlashCommand,
   type CommandEntry,
 } from './slashCommand';
+import { randomUUID } from './utils/uuid';
 import { localJSXCommands } from './slash-commands';
 
 type WorkspaceId = string;
@@ -86,6 +85,31 @@ const defaultSessionProcessingState: SessionProcessingState = {
   retryInfo: null,
 };
 
+// Clone operation state
+export interface CloneState {
+  taskId: string | null;
+  url: string | null;
+  destination: string | null;
+  status: 'idle' | 'cloning' | 'success' | 'failed' | 'cancelled';
+  progress: number;
+  error: string | null;
+  errorCode: string | null;
+  clonePath: string | null;
+  startTime: number | null;
+}
+
+const defaultCloneState: CloneState = {
+  taskId: null,
+  url: null,
+  destination: null,
+  status: 'idle',
+  progress: 0,
+  error: null,
+  errorCode: null,
+  clonePath: null,
+  startTime: null,
+};
+
 interface StoreState {
   // WebSocket connection state
   state: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -126,6 +150,9 @@ interface StoreState {
   filesByWorkspace: Record<WorkspaceId, string[]>;
   slashCommandsByWorkspace: Record<WorkspaceId, any[]>;
 
+  // Clone state
+  cloneState: CloneState;
+
   // Local JSX slash command state
   slashCommandJSXBySession: Record<SessionId, React.ReactNode | null>;
 }
@@ -138,7 +165,7 @@ interface StoreActions {
     method: K,
     params: HandlerInput<K>,
   ) => Promise<HandlerOutput<K>>;
-  onEvent: <T>(event: string, handler: (data: T) => void) => void;
+  onEvent: <T>(event: string, handler: (data: T) => void) => () => void;
   initialize: () => Promise<void>;
   sendMessage: (params: {
     message: string | null;
@@ -213,6 +240,12 @@ interface StoreActions {
   cancelSession: (sessionId: string) => Promise<void>;
   clearSession: (sessionId: string) => void;
 
+  // Clone actions (simplified - most logic moved to useClone hook)
+  updateCloneState: (updates: Partial<CloneState>) => void;
+  updateCloneProgress: (progress: number) => void;
+  cancelClone: () => Promise<void>;
+  resetCloneState: () => void;
+
   // Local JSX slash command actions
   setSlashCommandJSX: (sessionId: string, jsx: React.ReactNode | null) => void;
 }
@@ -259,6 +292,9 @@ const useStore = create<Store>()((set, get) => ({
   filesByWorkspace: {},
   slashCommandsByWorkspace: {},
 
+  // Initial clone state
+  cloneState: defaultCloneState,
+
   // Initial local JSX slash command state
   slashCommandJSXBySession: {},
 
@@ -297,7 +333,7 @@ const useStore = create<Store>()((set, get) => ({
 
       // Set state to connected after successful connection
       set({ state: 'connected' });
-    } catch (error) {
+    } catch (_error) {
       set({ state: 'error' });
     }
   },
@@ -350,11 +386,18 @@ const useStore = create<Store>()((set, get) => ({
       );
     }
 
-    messageBus.onEvent<T>(event, handler);
+    return messageBus.onEvent<T>(event, handler);
   },
 
   initialize: async () => {
-    const { loadGlobalConfig, initialized, onEvent, addMessage } = get();
+    const {
+      loadGlobalConfig,
+      initialized,
+      onEvent,
+      addMessage,
+      updateCloneProgress,
+      cloneState,
+    } = get();
 
     // Only initialize once
     if (initialized) {
@@ -392,6 +435,18 @@ const useStore = create<Store>()((set, get) => ({
         });
       }
     });
+
+    // Subscribe to clone progress events
+    onEvent<{ taskId: string; percent: number; message: string }>(
+      'git.clone.progress',
+      (data) => {
+        const currentCloneState = get().cloneState;
+        // Only update if this is the current clone task
+        if (data.taskId === currentCloneState.taskId) {
+          updateCloneProgress(data.percent);
+        }
+      },
+    );
 
     set({ initialized: true });
   },
@@ -650,7 +705,7 @@ const useStore = create<Store>()((set, get) => ({
         });
 
         const workspaceSessions = sessions[selectedWorkspaceId];
-        const session = workspaceSessions.find(
+        const _session = workspaceSessions.find(
           (s) => s.sessionId === sessionId,
         );
         const sessionMessages = get().messages[sessionId] || [];
@@ -1212,6 +1267,52 @@ const useStore = create<Store>()((set, get) => ({
         [sessionId]: defaultSessionProcessingState,
       },
     }));
+  },
+
+  // Clone actions (simplified - most logic moved to useClone hook)
+  updateCloneState: (updates: Partial<CloneState>) => {
+    set((state) => ({
+      cloneState: {
+        ...state.cloneState,
+        ...updates,
+      },
+    }));
+  },
+
+  updateCloneProgress: (progress: number) => {
+    set((state) => ({
+      cloneState: {
+        ...state.cloneState,
+        progress: Math.round(progress),
+      },
+    }));
+  },
+
+  cancelClone: async () => {
+    const { cloneState, request } = get();
+
+    if (!cloneState.taskId || cloneState.status !== 'cloning') {
+      return;
+    }
+
+    try {
+      await request('git.clone.cancel', { taskId: cloneState.taskId });
+
+      set((state) => ({
+        cloneState: {
+          ...state.cloneState,
+          status: 'cancelled',
+          error: 'Clone operation cancelled by user',
+          errorCode: 'CANCELLED',
+        },
+      }));
+    } catch (error) {
+      console.error('Failed to cancel clone:', error);
+    }
+  },
+
+  resetCloneState: () => {
+    set({ cloneState: defaultCloneState });
   },
 
   setSlashCommandJSX: (sessionId: string, jsx: React.ReactNode | null) => {
