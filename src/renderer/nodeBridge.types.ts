@@ -11,7 +11,6 @@
 // import type { ApprovalCategory, ToolUse } from './tool';
 
 type ApprovalMode = any;
-type McpServerConfig = any;
 type ResponseFormat = any;
 type ThinkingConfig = any;
 type ImagePart = any;
@@ -27,6 +26,34 @@ type ModelInfo = {
   _mCreator: () => Promise<any>;
 };
 type ProvidersMap = Record<string, Provider>;
+
+// MCP Server Config types (exact match with CLI)
+export type McpStdioServerConfig = {
+  type?: 'stdio';
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+  disable?: boolean;
+  timeout?: number;
+};
+export type McpSSEServerConfig = {
+  type: 'sse';
+  url: string;
+  disable?: boolean;
+  headers?: Record<string, string>;
+  timeout?: number;
+};
+export type McpHttpServerConfig = {
+  type?: 'http';
+  url: string;
+  disable?: boolean;
+  headers?: Record<string, string>;
+  timeout?: number;
+};
+export type McpServerConfig =
+  | McpStdioServerConfig
+  | McpSSEServerConfig
+  | McpHttpServerConfig;
 
 // ============================================================================
 // Common Response Types
@@ -145,6 +172,27 @@ type McpListOutput = {
     isReady: boolean;
     isLoading: boolean;
   };
+};
+
+type McpUpdateConfigInput = {
+  cwd: string;
+  name: string;
+  config: McpServerConfig;
+  global?: boolean;
+};
+type McpUpdateConfigOutput = {
+  success: boolean;
+  error?: string;
+};
+
+type McpRemoveConfigInput = {
+  cwd: string;
+  name: string;
+  global?: boolean;
+};
+type McpRemoveConfigOutput = {
+  success: boolean;
+  error?: string;
 };
 
 // ============================================================================
@@ -768,6 +816,14 @@ export type HandlerMap = {
   'mcp.getStatus': { input: McpGetStatusInput; output: McpGetStatusOutput };
   'mcp.reconnect': { input: McpReconnectInput; output: McpReconnectOutput };
   'mcp.list': { input: McpListInput; output: McpListOutput };
+  'mcp.updateConfig': {
+    input: McpUpdateConfigInput;
+    output: McpUpdateConfigOutput;
+  };
+  'mcp.removeConfig': {
+    input: McpRemoveConfigInput;
+    output: McpRemoveConfigOutput;
+  };
 
   // Models handlers
   'models.list': { input: ModelsListInput; output: ModelsListOutput };

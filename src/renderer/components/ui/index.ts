@@ -2,6 +2,7 @@ export * from './accordion';
 export * from './alert-dialog';
 export * from './autocomplete';
 export * from './avatar';
+export * from './badge';
 export * from './button';
 export * from './checkbox-group';
 export * from './checkbox';
