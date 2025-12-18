@@ -21,7 +21,7 @@ export const SettingsPage = () => {
         className="flex-1 overflow-y-auto p-8"
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
-        <div className="max-w-2xl">
+        <div className="max-w-2xl mx-auto">
           {activeMenu === 'preferences' && <PreferencesPanel />}
           {activeMenu === 'mcp' && <MCPPanel />}
         </div>

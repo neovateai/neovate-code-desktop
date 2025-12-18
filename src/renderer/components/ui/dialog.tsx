@@ -44,8 +44,8 @@ function DialogPopup({
   return (
     <DialogPortal>
       <DialogBackdrop />
-      <div className="fixed inset-0 z-50">
-        <div className="flex h-[100dvh] flex-col items-center overflow-hidden pt-6 max-sm:before:flex-1 sm:overflow-y-auto sm:p-4 sm:before:basis-[20vh] sm:after:flex-1">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="flex w-full items-center justify-center">
           <DialogPrimitive.Popup
             data-slot="dialog-popup"
             className={cn(

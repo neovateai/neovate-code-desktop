@@ -10,6 +10,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 import {
   Select,
   SelectTrigger,
@@ -17,10 +18,6 @@ import {
   SelectPopup,
   SelectItem,
 } from '../ui/select';
-import { Fieldset, FieldsetLegend } from '../ui/fieldset';
-import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
 import {
   Globe,
   FolderOpen,
@@ -166,91 +163,151 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
-      <DialogPopup className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-3 px-6">
+      <DialogPopup className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogHeader className="border-b px-5 py-3 shrink-0">
           <div className="flex items-center gap-2">
-            <Terminal className="size-5" style={{ color: 'var(--primary)' }} />
-            <DialogTitle>
+            <DialogTitle className="text-base font-semibold">
               {editingServerName ? 'Edit MCP Server' : 'Add MCP Server'}
             </DialogTitle>
           </div>
           {editingServerName && (
-            <p className="text-sm text-muted-foreground mt-1.5">
-              Editing configuration for{' '}
-              <code className="font-mono bg-muted px-1.5 py-0.5 rounded">
+            <p className="text-xs text-muted-foreground mt-1">
+              Editing{' '}
+              <code className="font-mono bg-muted px-1 py-0.5 rounded text-[10px]">
                 {editingServerName}
               </code>
             </p>
           )}
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Basic Configuration */}
-          <div className="space-y-3.5 px-6 pt-5">
-            {/* Server Name and Scope - Same row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {/* Server Name */}
-              <div className="space-y-2">
-                <label
-                  className="flex items-center gap-2 text-sm font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  <span>Server Name</span>
-                  <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={!!editingServerName}
-                  placeholder="e.g., filesystem, github"
-                  className={validationErrors.name ? 'border-destructive' : ''}
-                />
-                {validationErrors.name && (
-                  <p className="text-xs text-destructive flex items-center gap-1">
-                    <Info className="size-3" />
-                    {validationErrors.name}
-                  </p>
-                )}
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          {/* Scrollable Content Area */}
+          <div className="overflow-y-auto flex-1">
+            {/* Basic Configuration */}
+            <div className="space-y-3 px-5 pt-4">
+              {/* Server Name and Scope - Same row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Server Name */}
+                <div className="space-y-1.5">
+                  <label
+                    className="flex items-center gap-1.5 text-xs font-medium"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    <span>Server Name</span>
+                    <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={!!editingServerName}
+                    placeholder="e.g., filesystem, github"
+                    className={
+                      validationErrors.name ? 'border-destructive' : ''
+                    }
+                  />
+                  {validationErrors.name && (
+                    <p className="text-[10px] text-destructive flex items-center gap-1">
+                      <Info className="size-3" />
+                      {validationErrors.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Scope Selector */}
+                <div className="space-y-1.5">
+                  <label
+                    className="flex items-center gap-1.5 text-xs font-medium"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    <span>Scope</span>
+                    <span className="text-destructive">*</span>
+                  </label>
+                  <Select
+                    value={scope}
+                    onValueChange={(value) =>
+                      setScope(value as 'global' | 'project')
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectPopup>
+                      <SelectItem value="project">
+                        <div className="flex items-center gap-2">
+                          <FolderOpen className="size-3.5" />
+                          <div>
+                            <div className="font-medium text-xs">Project</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              Current workspace only
+                            </div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="global">
+                        <div className="flex items-center gap-2">
+                          <Globe className="size-3.5" />
+                          <div>
+                            <div className="font-medium text-xs">Global</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              All workspaces
+                            </div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    </SelectPopup>
+                  </Select>
+                </div>
               </div>
 
-              {/* Scope Selector */}
-              <div className="space-y-2">
+              {/* Server Type Selector - Full width */}
+              <div className="space-y-1.5">
                 <label
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex items-center gap-1.5 text-xs font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  <span>Scope</span>
+                  <span>Server Type</span>
                   <span className="text-destructive">*</span>
                 </label>
                 <Select
-                  value={scope}
+                  value={serverType}
                   onValueChange={(value) =>
-                    setScope(value as 'global' | 'project')
+                    setServerType(value as 'stdio' | 'sse' | 'http')
                   }
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectPopup>
-                    <SelectItem value="project">
+                    <SelectItem value="stdio">
                       <div className="flex items-center gap-2">
-                        <FolderOpen className="size-4" />
+                        <Terminal className="size-3.5" />
                         <div>
-                          <div className="font-medium">Project</div>
-                          <div className="text-xs text-muted-foreground">
-                            Current workspace only
+                          <div className="font-medium text-xs">stdio</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            Local process communication
                           </div>
                         </div>
                       </div>
                     </SelectItem>
-                    <SelectItem value="global">
+                    <SelectItem value="http">
                       <div className="flex items-center gap-2">
-                        <Globe className="size-4" />
+                        <GlobeIcon className="size-3.5" />
                         <div>
-                          <div className="font-medium">Global</div>
-                          <div className="text-xs text-muted-foreground">
-                            All workspaces
+                          <div className="font-medium text-xs">HTTP</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            HTTP-based server
+                          </div>
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sse">
+                      <div className="flex items-center gap-2">
+                        <GlobeIcon className="size-3.5" />
+                        <div>
+                          <div className="font-medium text-xs">SSE</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            Server-Sent Events
                           </div>
                         </div>
                       </div>
@@ -258,216 +315,160 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
                   </SelectPopup>
                 </Select>
               </div>
-            </div>
 
-            {/* Server Type Selector - Full width */}
-            <div className="space-y-2">
-              <label
-                className="flex items-center gap-2 text-sm font-medium"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                <span>Server Type</span>
-                <span className="text-destructive">*</span>
-              </label>
-              <Select
-                value={serverType}
-                onValueChange={(value) =>
-                  setServerType(value as 'stdio' | 'sse' | 'http')
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectPopup>
-                  <SelectItem value="stdio">
-                    <div className="flex items-center gap-2">
-                      <Terminal className="size-4" />
-                      <div>
-                        <div className="font-medium">stdio</div>
-                        <div className="text-xs text-muted-foreground">
-                          Local process communication
-                        </div>
-                      </div>
+              {/* Type-specific Configuration */}
+              <div className="space-y-3 pb-4">
+                {serverType === 'stdio' ? (
+                  <>
+                    {/* Command - Full width */}
+                    <div className="space-y-1.5">
+                      <label
+                        className="flex items-center gap-1.5 text-xs font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <span>Command</span>
+                        <span className="text-destructive">*</span>
+                      </label>
+                      <Input
+                        type="text"
+                        value={command}
+                        onChange={(e) => setCommand(e.target.value)}
+                        placeholder="npx"
+                        className={`font-mono text-xs ${validationErrors.command ? 'border-destructive' : ''}`}
+                      />
+                      {validationErrors.command && (
+                        <p className="text-[10px] text-destructive flex items-center gap-1">
+                          <Info className="size-3" />
+                          {validationErrors.command}
+                        </p>
+                      )}
                     </div>
-                  </SelectItem>
-                  <SelectItem value="http">
-                    <div className="flex items-center gap-2">
-                      <GlobeIcon className="size-4" />
-                      <div>
-                        <div className="font-medium">HTTP</div>
-                        <div className="text-xs text-muted-foreground">
-                          HTTP-based server
-                        </div>
-                      </div>
+
+                    {/* Arguments - Full width */}
+                    <div className="space-y-1.5">
+                      <label
+                        className="text-xs font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        Arguments
+                      </label>
+                      <Textarea
+                        value={args}
+                        onChange={(e) => setArgs(e.target.value)}
+                        placeholder="-y @modelcontextprotocol/server-filesystem /path/to/directory"
+                        className="font-mono text-xs min-h-[70px] resize-y"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        Space-separated command line arguments
+                      </p>
                     </div>
-                  </SelectItem>
-                  <SelectItem value="sse">
-                    <div className="flex items-center gap-2">
-                      <GlobeIcon className="size-4" />
-                      <div>
-                        <div className="font-medium">SSE</div>
-                        <div className="text-xs text-muted-foreground">
-                          Server-Sent Events
-                        </div>
-                      </div>
+
+                    {/* Environment Variables - Full width */}
+                    <div className="space-y-1.5">
+                      <label
+                        className="text-xs font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        Environment Variables
+                      </label>
+                      <Textarea
+                        value={env}
+                        onChange={(e) => setEnv(e.target.value)}
+                        rows={4}
+                        placeholder='{\n  "GITHUB_TOKEN": "ghp_xxx",\n  "API_KEY": "your-key"\n}'
+                        className={`font-mono text-xs resize-y ${validationErrors.env ? 'border-destructive' : ''}`}
+                      />
+                      {validationErrors.env && (
+                        <p className="text-[10px] text-destructive flex items-center gap-1">
+                          <Info className="size-3" />
+                          {validationErrors.env}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">
+                        JSON object with environment variables
+                      </p>
                     </div>
-                  </SelectItem>
-                </SelectPopup>
-              </Select>
+                  </>
+                ) : (
+                  <>
+                    {/* URL - Full width */}
+                    <div className="space-y-1.5">
+                      <label
+                        className="flex items-center gap-1.5 text-xs font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <span>URL</span>
+                        <span className="text-destructive">*</span>
+                      </label>
+                      <Input
+                        type="text"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="http://localhost:3000/mcp"
+                        className={`font-mono text-xs ${validationErrors.url ? 'border-destructive' : ''}`}
+                      />
+                      {validationErrors.url && (
+                        <p className="text-[10px] text-destructive flex items-center gap-1">
+                          <Info className="size-3" />
+                          {validationErrors.url}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">
+                        Must start with http:// or https://
+                      </p>
+                    </div>
+
+                    {/* Headers - Full width */}
+                    <div className="space-y-1.5">
+                      <label
+                        className="text-xs font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        Headers
+                      </label>
+                      <Textarea
+                        value={headers}
+                        onChange={(e) => setHeaders(e.target.value)}
+                        rows={4}
+                        placeholder='{\n  "Authorization": "Bearer your-token"\n}'
+                        className={`font-mono text-xs resize-y ${validationErrors.headers ? 'border-destructive' : ''}`}
+                      />
+                      {validationErrors.headers && (
+                        <p className="text-[10px] text-destructive flex items-center gap-1">
+                          <Info className="size-3" />
+                          {validationErrors.headers}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">
+                        JSON object with HTTP headers
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Type-specific Configuration */}
-          <div className="space-y-3.5 px-6 pb-5">
-            {serverType === 'stdio' ? (
-              <>
-                {/* Command - Full width */}
-                <div className="space-y-2">
-                  <label
-                    className="flex items-center gap-2 text-sm font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    <span>Command</span>
-                    <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    value={command}
-                    onChange={(e) => setCommand(e.target.value)}
-                    placeholder="npx -y @modelcontextprotocol/server-filesystem"
-                    className={`font-mono text-sm ${validationErrors.command ? 'border-destructive' : ''}`}
-                  />
-                  {validationErrors.command && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <Info className="size-3" />
-                      {validationErrors.command}
-                    </p>
-                  )}
-                </div>
-
-                {/* Arguments - Full width */}
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    Arguments
-                  </label>
-                  <Input
-                    type="text"
-                    value={args}
-                    onChange={(e) => setArgs(e.target.value)}
-                    placeholder="--arg1 value1 --arg2 value2"
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Space-separated command line arguments
-                  </p>
-                </div>
-
-                {/* Environment Variables - Full width */}
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    Environment Variables
-                  </label>
-                  <Textarea
-                    value={env}
-                    onChange={(e) => setEnv(e.target.value)}
-                    rows={4}
-                    placeholder='{\n  "KEY": "value",\n  "API_TOKEN": "secret"\n}'
-                    className={`font-mono text-sm ${validationErrors.env ? 'border-destructive' : ''}`}
-                  />
-                  {validationErrors.env && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <Info className="size-3" />
-                      {validationErrors.env}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    JSON object with environment variables
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* URL - Full width */}
-                <div className="space-y-2">
-                  <label
-                    className="flex items-center gap-2 text-sm font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    <span>URL</span>
-                    <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="http://localhost:3000/mcp"
-                    className={`font-mono text-sm ${validationErrors.url ? 'border-destructive' : ''}`}
-                  />
-                  {validationErrors.url && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <Info className="size-3" />
-                      {validationErrors.url}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Must start with http:// or https://
-                  </p>
-                </div>
-
-                {/* Headers - Full width */}
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    Headers
-                  </label>
-                  <Textarea
-                    value={headers}
-                    onChange={(e) => setHeaders(e.target.value)}
-                    rows={4}
-                    placeholder='{\n  "Authorization": "Bearer token",\n  "Content-Type": "application/json"\n}'
-                    className={`font-mono text-sm ${validationErrors.headers ? 'border-destructive' : ''}`}
-                  />
-                  {validationErrors.headers && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <Info className="size-3" />
-                      {validationErrors.headers}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    JSON object with HTTP headers
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          <DialogFooter className="px-6 pb-5">
+          <DialogFooter className="px-5 py-3 shrink-0">
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
+              size="sm"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} size="sm">
               {isSubmitting ? (
                 <>
                   <span className="animate-spin">⏳</span>
                   Saving...
                 </>
               ) : editingServerName ? (
-                'Update Server'
+                'Update'
               ) : (
-                'Add Server'
+                'Add'
               )}
             </Button>
           </DialogFooter>
