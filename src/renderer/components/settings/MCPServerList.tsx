@@ -1,21 +1,22 @@
-import React from 'react';
-import type { McpServerConfig } from '../../nodeBridge.types';
-import { Button } from '../ui/button';
-import { Spinner } from '../ui/spinner';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
 import {
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  Circle,
-  Pencil,
-  Trash2,
-  RefreshCw,
   AlertCircle,
-  Globe2,
+  CheckCircle,
+  CheckCircle2,
+  Circle,
+  CircleOff,
   Folder,
+  Globe2,
+  Loader2,
+  Pencil,
+  RefreshCw,
+  Trash2,
+  XCircle,
 } from 'lucide-react';
+import type React from 'react';
+import type { McpServerConfig } from '../../nodeBridge.types';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 
 export interface MCPServerData {
   name: string;
@@ -111,11 +112,15 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
         className="group relative rounded-md border transition-colors hover:bg-muted/20"
         style={{
           borderColor: 'var(--border)',
-          opacity: isDisabled ? 0.5 : 1,
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 px-4 py-3">
+        <div
+          className="flex items-center justify-between gap-4 px-4 py-3"
+          style={{
+            opacity: isDisabled ? 0.5 : 1,
+          }}
+        >
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <h3
               className="font-medium text-sm truncate flex items-center gap-1.5"
@@ -154,17 +159,18 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
           <div className="flex items-center gap-1 shrink-0">
             <Button
               size="sm"
-              variant={server.status === 'disabled' ? 'default' : 'ghost'}
+              variant="ghost"
               onClick={() => onToggle(server.name, server.config, server.scope)}
               disabled={isLoading}
-              className="h-7 px-2.5 text-xs"
+              className="h-7 w-7 p-0"
+              title={server.config.disable ? 'Enable server' : 'Disable server'}
             >
               {isLoading ? (
-                <Loader2 className="size-3 animate-spin" />
-              ) : server.status === 'disabled' ? (
-                'Enable'
+                <Loader2 className="size-4 animate-spin" />
+              ) : server.config.disable ? (
+                <CircleOff className="size-4 opacity-50" />
               ) : (
-                'Disable'
+                <CheckCircle className="size-4" />
               )}
             </Button>
 
@@ -211,7 +217,12 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
           server.status !== 'pending' && (
             <>
               <Separator />
-              <div className="px-4 py-2 bg-destructive/5">
+              <div
+                className="px-4 py-2 bg-destructive/5"
+                style={{
+                  opacity: isDisabled ? 0.5 : 1,
+                }}
+              >
                 <div className="flex items-start gap-2 text-xs">
                   <AlertCircle className="size-3 mt-0.5 shrink-0 text-destructive" />
                   <div className="flex-1 text-muted-foreground">
@@ -226,16 +237,21 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
         {server.tools.length > 0 && server.status === 'connected' && (
           <>
             <Separator />
-            <div className="px-4 py-2.5">
+            <div
+              className="px-4 py-2.5"
+              style={{
+                opacity: isDisabled ? 0.5 : 1,
+              }}
+            >
               <div className="flex gap-1.5 items-center overflow-hidden">
-                {server.tools.slice(0, 3).map((tool, index) => {
+                {server.tools.slice(0, 3).map((tool) => {
                   const simplifiedTool = tool
                     .replace(/^mcp__[^_]+__/, '')
                     .replace(/^mcp_[^_]+_/, '');
 
                   return (
                     <Badge
-                      key={index}
+                      key={tool}
                       variant="outline"
                       className="font-mono text-[10px] px-1.5 py-0.5 whitespace-nowrap"
                     >

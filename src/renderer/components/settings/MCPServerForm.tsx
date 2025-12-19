@@ -1,30 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import type { McpServerConfig } from '../../nodeBridge.types';
-import { toastManager } from '../ui/toast';
 import {
-  Dialog,
-  DialogPopup,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectPopup,
-  SelectItem,
-} from '../ui/select';
-import {
-  Globe,
   FolderOpen,
-  Terminal,
+  Globe,
   Globe as GlobeIcon,
   Info,
+  Terminal,
 } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import type { McpServerConfig } from '../../nodeBridge.types';
+import { Button } from '../ui/button';
+import {
+  Dialog,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from '../ui/dialog';
+import { Input } from '../ui/input';
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
+import { toastManager } from '../ui/toast';
 
 interface MCPServerFormProps {
   editingServerName: string | null;
