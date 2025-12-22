@@ -21,12 +21,6 @@ export const MCPPanel = () => {
   const [operationLoading, setOperationLoading] = useState<
     Record<string, boolean>
   >({});
-  const operationLoadingRef = useRef<Record<string, boolean>>({});
-
-  // Keep ref in sync with state
-  useEffect(() => {
-    operationLoadingRef.current = operationLoading;
-  }, [operationLoading]);
 
   const cwd = selectedWorkspaceId
     ? workspaces[selectedWorkspaceId]?.worktreePath || ''
@@ -34,46 +28,20 @@ export const MCPPanel = () => {
 
   // Helper: Merge server data with optimistic updates
   const mergeServerData = useCallback(
-    (prevServers: MCPServerData[], newServers: MCPServerData[]) => {
-      const currentOperationLoading = operationLoadingRef.current;
-      const operatingServerNames = Object.keys(currentOperationLoading).filter(
-        (name) => currentOperationLoading[name],
-      );
-
+    (
+      prevServers: MCPServerData[],
+      newServers: MCPServerData[],
+      operatingServers: Set<string>,
+    ) => {
       // If no operations in progress, use new data directly
-      if (operatingServerNames.length === 0) {
+      if (operatingServers.size === 0) {
         return newServers;
       }
 
-      // Check which operations can be cleared (status is stable)
+      // Create map for fast lookup
       const newServersMap = new Map(
         newServers.map((s) => [`${s.name}_${s.scope}`, s]),
       );
-
-      const operationsToKeep: Record<string, boolean> = {};
-      for (const serverName of operatingServerNames) {
-        const prevServer = prevServers.find((s) => s.name === serverName);
-        const newServer = Array.from(newServersMap.values()).find(
-          (s) => s.name === serverName,
-        );
-
-        // Keep loading if: server is connecting/pending, or transitioning to/from disconnected
-        if (
-          !newServer ||
-          newServer.status === 'connecting' ||
-          newServer.status === 'pending' ||
-          ((prevServer?.status === 'connecting' ||
-            prevServer?.status === 'pending') &&
-            newServer.status === 'disconnected')
-        ) {
-          operationsToKeep[serverName] = true;
-        }
-      }
-
-      // Clear operations that are stable
-      if (Object.keys(operationsToKeep).length < operatingServerNames.length) {
-        setOperationLoading(operationsToKeep);
-      }
 
       // Merge: preserve operating servers, update others
       const result = prevServers
@@ -83,23 +51,12 @@ export const MCPPanel = () => {
 
           // Server was deleted, remove it (unless it's being operated on)
           if (!newServer) {
-            return operationsToKeep[prevServer.name] ? prevServer : null;
+            return operatingServers.has(prevServer.name) ? prevServer : null;
           }
 
           // Preserve state if this server is being operated on
-          if (operationsToKeep[prevServer.name]) {
+          if (operatingServers.has(prevServer.name)) {
             return prevServer;
-          }
-
-          // If any operation is in progress, preserve non-disconnected state for other servers
-          // to avoid flashing disconnected during Context rebuild
-          if (Object.keys(operationsToKeep).length > 0) {
-            if (
-              newServer.status === 'disconnected' &&
-              prevServer.status === 'connected'
-            ) {
-              return prevServer;
-            }
           }
 
           // Otherwise use new data
@@ -166,8 +123,19 @@ export const MCPPanel = () => {
             }),
         ];
 
-        // Smart merge: preserve optimistic updates for servers currently being operated on
-        setServers((prevServers) => mergeServerData(prevServers, serverList));
+        // Smart merge: use functional update to get current operationLoading
+        setOperationLoading((currentLoading) => {
+          const operatingServers = new Set(
+            Object.keys(currentLoading).filter((name) => currentLoading[name]),
+          );
+
+          setServers((prevServers) => {
+            return mergeServerData(prevServers, serverList, operatingServers);
+          });
+
+          return currentLoading; // No change to loading state here
+        });
+
         setError(null);
       }
     } catch (err) {
@@ -190,14 +158,113 @@ export const MCPPanel = () => {
     [loadServers],
   );
 
-  // Initial load and polling (every 3 seconds, paused when form is open)
-  useEffect(() => {
-    if (isFormOpen || !cwd) return; // Pause during editing
+  // Event handler for MCP status changes (stable reference using ref)
+  const handleStatusChangeRef = useRef<((eventData: any) => void) | null>(null);
 
-    loadServers(); // Initial load
-    const interval = setInterval(loadServers, 3000);
-    return () => clearInterval(interval);
-  }, [cwd, isFormOpen, loadServers]);
+  // Update the ref whenever dependencies change
+  handleStatusChangeRef.current = (eventData: any) => {
+    // Only handle events for our workspace
+    if (eventData.cwd !== cwd) {
+      return;
+    }
+
+    // Update servers from event data
+    if (eventData.success) {
+      const { projectServers, globalServers, activeServers } = eventData.data;
+      const serverList: MCPServerData[] = [];
+
+      // Process project servers
+      for (const [name, config] of Object.entries(projectServers)) {
+        const activeServer = activeServers[name];
+        const status = config.disable
+          ? 'disabled'
+          : activeServer?.status || 'disconnected';
+
+        serverList.push({
+          name,
+          config,
+          scope: 'project',
+          status: status as MCPServerData['status'],
+          error: activeServer?.error,
+          tools: activeServer?.tools || [],
+        });
+      }
+
+      // Process global servers
+      for (const [name, config] of Object.entries(globalServers)) {
+        if (projectServers[name]) continue;
+
+        const activeServer = activeServers[name];
+        const status = config.disable
+          ? 'disabled'
+          : activeServer?.status || 'disconnected';
+
+        serverList.push({
+          name,
+          config,
+          scope: 'global',
+          status: status as MCPServerData['status'],
+          error: activeServer?.error,
+          tools: activeServer?.tools || [],
+        });
+      }
+
+      // Update both states atomically using functional updates
+      setOperationLoading((currentLoading) => {
+        const operatingServers = new Set(
+          Object.keys(currentLoading).filter((name) => currentLoading[name]),
+        );
+
+        // Clear loading states for stabilized servers FIRST
+        const newLoading = { ...currentLoading };
+        for (const server of serverList) {
+          if (server.status !== 'connecting' && server.status !== 'pending') {
+            delete newLoading[server.name];
+          }
+        }
+
+        // Recalculate operating servers after clearing
+        const updatedOperatingServers = new Set(
+          Object.keys(newLoading).filter((name) => newLoading[name]),
+        );
+
+        // Merge server data with updated operating servers
+        setServers((prevServers) => {
+          const merged = mergeServerData(
+            prevServers,
+            serverList,
+            updatedOperatingServers, // Use updated set
+          );
+          return merged;
+        });
+
+        return newLoading;
+      });
+    }
+  };
+
+  // Stable event handler wrapper
+  const stableHandleStatusChange = useCallback((eventData: any) => {
+    handleStatusChangeRef.current?.(eventData);
+  }, []);
+
+  // Initial load and event subscription
+  useEffect(() => {
+    if (!cwd) return;
+
+    // Initial load
+    loadServers();
+
+    // Register event listener with stable reference
+    const onEvent = useStore.getState().onEvent;
+    const offEvent = useStore.getState().offEvent;
+    onEvent('mcp.statusChanged', stableHandleStatusChange);
+
+    // Cleanup event listener on unmount
+    return () => {
+      offEvent('mcp.statusChanged', stableHandleStatusChange);
+    };
+  }, [cwd, loadServers, stableHandleStatusChange]);
 
   // Handle add server
   const handleAddServer = () => {
@@ -241,7 +308,12 @@ export const MCPPanel = () => {
         err instanceof Error ? err.message : String(err),
       );
     } finally {
-      // Don't clear immediately - let polling detect when server is truly removed
+      // Always clear loading state on operation complete
+      setOperationLoading((prev) => {
+        const newLoading = { ...prev };
+        delete newLoading[name];
+        return newLoading;
+      });
     }
   };
 
@@ -286,9 +358,14 @@ export const MCPPanel = () => {
         'Error toggling server',
         err instanceof Error ? err.message : String(err),
       );
-    } finally {
-      // Don't clear immediately - let polling detect when status is stable
+      // Clear loading on error
+      setOperationLoading((prev) => {
+        const newLoading = { ...prev };
+        delete newLoading[name];
+        return newLoading;
+      });
     }
+    // Success case: loading cleared by event-driven update
   };
 
   // Handle reconnect server
@@ -313,16 +390,30 @@ export const MCPPanel = () => {
       const result = await request('mcp.reconnect', { cwd, serverName: name });
 
       if (!result.success) {
-        await handleOperationFailure('Failed to reconnect', result.error);
+        // Don't call handleOperationFailure - backend will send event
+        // Just show toast
+        toastManager.add({
+          title: 'Failed to reconnect',
+          description: result.error || 'Unknown error',
+          type: 'error',
+        });
+      } else {
+        toastManager.add({
+          title: 'Reconnection initiated',
+          description: `Attempting to reconnect ${name}...`,
+          type: 'info',
+        });
       }
+      // Both success and failure cases: wait for event-driven update
     } catch (err) {
-      await handleOperationFailure(
-        'Error reconnecting',
-        err instanceof Error ? err.message : String(err),
-      );
-    } finally {
-      // Don't clear immediately - let polling detect when status is stable
+      // Network/communication error - still wait for event
+      toastManager.add({
+        title: 'Error reconnecting',
+        description: err instanceof Error ? err.message : String(err),
+        type: 'error',
+      });
     }
+    // Loading state will be cleared by event-driven update
   };
 
   // Handle form submit
@@ -350,47 +441,17 @@ export const MCPPanel = () => {
       setIsFormOpen(false);
       setEditingServer(null);
 
-      // Optimistic update: add/update server in connecting state
-      const isNewServer = !servers.find(
-        (s) => s.name === name && s.scope === scope,
-      );
-
-      if (isNewServer) {
-        // Add new server with clean state
-        setServers((prev) => [
-          ...prev,
-          {
-            name,
-            config,
-            scope,
-            status: 'connecting',
-            error: undefined,
-            tools: [],
-          },
-        ]);
-      } else {
-        // Update existing server and clear old error/tools
-        setServers((prev) =>
-          prev.map((s) =>
-            s.name === name && s.scope === scope
-              ? {
-                  ...s,
-                  config,
-                  status: 'connecting' as const,
-                  error: undefined,
-                  tools: [],
-                }
-              : s,
-          ),
-        );
-      }
+      // No optimistic update - rely on event-driven update from backend
     } catch (err) {
       // Clear loading on error and re-throw for toast handling
-      setOperationLoading((prev) => ({ ...prev, [name]: false }));
+      setOperationLoading((prev) => {
+        const newLoading = { ...prev };
+        delete newLoading[name];
+        return newLoading;
+      });
       throw err;
-    } finally {
-      // Don't clear immediately on success - let polling detect when status is stable
     }
+    // Success case: loading cleared by event-driven update
   };
 
   if (loading) {

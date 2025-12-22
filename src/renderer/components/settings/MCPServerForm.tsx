@@ -229,6 +229,7 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
                     onValueChange={(value) =>
                       setScope(value as 'global' | 'project')
                     }
+                    disabled={!!editingServerName}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -461,16 +462,11 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} size="sm">
-              {isSubmitting ? (
-                <>
-                  <span className="animate-spin">⏳</span>
-                  Saving...
-                </>
-              ) : editingServerName ? (
-                'Update'
-              ) : (
-                'Add'
-              )}
+              {isSubmitting
+                ? 'Saving...'
+                : editingServerName
+                  ? 'Update'
+                  : 'Add'}
             </Button>
           </DialogFooter>
         </form>
