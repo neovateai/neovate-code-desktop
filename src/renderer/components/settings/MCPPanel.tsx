@@ -26,154 +26,14 @@ export const MCPPanel = () => {
     ? workspaces[selectedWorkspaceId]?.worktreePath || ''
     : '';
 
-  // Helper: Merge server data with optimistic updates
-  const mergeServerData = useCallback(
+  const buildServerList = useCallback(
     (
-      prevServers: MCPServerData[],
-      newServers: MCPServerData[],
-      operatingServers: Set<string>,
-    ) => {
-      // If no operations in progress, use new data directly
-      if (operatingServers.size === 0) {
-        return newServers;
-      }
-
-      // Create map for fast lookup
-      const newServersMap = new Map(
-        newServers.map((s) => [`${s.name}_${s.scope}`, s]),
-      );
-
-      // Merge: preserve operating servers, update others
-      const result = prevServers
-        .map((prevServer) => {
-          const key = `${prevServer.name}_${prevServer.scope}`;
-          const newServer = newServersMap.get(key);
-
-          // Server was deleted, remove it (unless it's being operated on)
-          if (!newServer) {
-            return operatingServers.has(prevServer.name) ? prevServer : null;
-          }
-
-          // Preserve state if this server is being operated on
-          if (operatingServers.has(prevServer.name)) {
-            return prevServer;
-          }
-
-          // Otherwise use new data
-          return newServer;
-        })
-        .filter((s): s is MCPServerData => s !== null)
-        // Add any new servers that weren't in prevServers
-        .concat(
-          newServers.filter(
-            (newServer) =>
-              !prevServers.some(
-                (p) => p.name === newServer.name && p.scope === newServer.scope,
-              ),
-          ),
-        );
-
-      return result;
-    },
-    [],
-  );
-
-  // Load servers function
-  const loadServers = useCallback(async () => {
-    if (!cwd) return;
-
-    try {
-      const result = await request('mcp.list', { cwd });
-      if (result.success) {
-        const { projectServers, globalServers, activeServers } = result.data;
-
-        // Convert to MCPServerData array
-        const serverList: MCPServerData[] = [
-          // Add all project servers (including disabled)
-          ...Object.entries(projectServers).map(([name, config]) => {
-            const activeServer = activeServers[name];
-            return {
-              name,
-              config,
-              status: config.disable
-                ? ('disabled' as const)
-                : activeServer?.status || ('disconnected' as const),
-              scope: 'project' as const,
-              error: activeServer?.error,
-              toolCount: activeServer?.toolCount,
-              tools: activeServer?.tools || [],
-            };
-          }),
-          // Add global servers (excluding those overridden by project)
-          ...Object.entries(globalServers)
-            .filter(([name]) => !projectServers[name])
-            .map(([name, config]) => {
-              const activeServer = activeServers[name];
-              return {
-                name,
-                config,
-                status: config.disable
-                  ? ('disabled' as const)
-                  : activeServer?.status || ('disconnected' as const),
-                scope: 'global' as const,
-                error: activeServer?.error,
-                toolCount: activeServer?.toolCount,
-                tools: activeServer?.tools || [],
-              };
-            }),
-        ];
-
-        // Smart merge: use functional update to get current operationLoading
-        setOperationLoading((currentLoading) => {
-          const operatingServers = new Set(
-            Object.keys(currentLoading).filter((name) => currentLoading[name]),
-          );
-
-          setServers((prevServers) => {
-            return mergeServerData(prevServers, serverList, operatingServers);
-          });
-
-          return currentLoading; // No change to loading state here
-        });
-
-        setError(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [cwd, request, mergeServerData]);
-
-  // Helper: Handle operation failure with revert and toast
-  const handleOperationFailure = useCallback(
-    async (title: string, error: string | undefined) => {
-      await loadServers();
-      toastManager.add({
-        title,
-        description: error || 'Unknown error',
-        type: 'error',
-      });
-    },
-    [loadServers],
-  );
-
-  // Event handler for MCP status changes (stable reference using ref)
-  const handleStatusChangeRef = useRef<((eventData: any) => void) | null>(null);
-
-  // Update the ref whenever dependencies change
-  handleStatusChangeRef.current = (eventData: any) => {
-    // Only handle events for our workspace
-    if (eventData.cwd !== cwd) {
-      return;
-    }
-
-    // Update servers from event data
-    if (eventData.success) {
-      const { projectServers, globalServers, activeServers } = eventData.data;
+      projectServers: Record<string, McpServerConfig>,
+      globalServers: Record<string, McpServerConfig>,
+      activeServers: Record<string, any>,
+    ): MCPServerData[] => {
       const serverList: MCPServerData[] = [];
 
-      // Process project servers
       for (const [name, config] of Object.entries(projectServers)) {
         const activeServer = activeServers[name];
         const status = config.disable
@@ -186,11 +46,11 @@ export const MCPPanel = () => {
           scope: 'project',
           status: status as MCPServerData['status'],
           error: activeServer?.error,
+          toolCount: activeServer?.toolCount,
           tools: activeServer?.tools || [],
         });
       }
 
-      // Process global servers
       for (const [name, config] of Object.entries(globalServers)) {
         if (projectServers[name]) continue;
 
@@ -205,39 +65,66 @@ export const MCPPanel = () => {
           scope: 'global',
           status: status as MCPServerData['status'],
           error: activeServer?.error,
+          toolCount: activeServer?.toolCount,
           tools: activeServer?.tools || [],
         });
       }
 
-      // Update both states atomically using functional updates
-      setOperationLoading((currentLoading) => {
-        const operatingServers = new Set(
-          Object.keys(currentLoading).filter((name) => currentLoading[name]),
-        );
+      return serverList;
+    },
+    [],
+  );
 
-        // Clear loading states for stabilized servers FIRST
+  // Load servers function
+  const loadServers = useCallback(async () => {
+    if (!cwd) return;
+
+    try {
+      const result = await request('mcp.list', { cwd });
+      if (result.success) {
+        const { projectServers, globalServers, activeServers } = result.data;
+        const serverList = buildServerList(
+          projectServers,
+          globalServers,
+          activeServers,
+        );
+        setServers(serverList);
+
+        setError(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [cwd, request, buildServerList]);
+
+  // Event handler for MCP status changes (stable reference using ref)
+  const handleStatusChangeRef = useRef<((eventData: any) => void) | null>(null);
+
+  // Update the ref whenever dependencies change
+  handleStatusChangeRef.current = (eventData: any) => {
+    if (eventData.cwd !== cwd) {
+      return;
+    }
+
+    if (eventData.success) {
+      const { projectServers, globalServers, activeServers } = eventData.data;
+      const serverList = buildServerList(
+        projectServers,
+        globalServers,
+        activeServers,
+      );
+
+      setServers(serverList);
+
+      setOperationLoading((currentLoading) => {
         const newLoading = { ...currentLoading };
         for (const server of serverList) {
           if (server.status !== 'connecting' && server.status !== 'pending') {
             delete newLoading[server.name];
           }
         }
-
-        // Recalculate operating servers after clearing
-        const updatedOperatingServers = new Set(
-          Object.keys(newLoading).filter((name) => newLoading[name]),
-        );
-
-        // Merge server data with updated operating servers
-        setServers((prevServers) => {
-          const merged = mergeServerData(
-            prevServers,
-            serverList,
-            updatedOperatingServers, // Use updated set
-          );
-          return merged;
-        });
-
         return newLoading;
       });
     }
@@ -278,17 +165,11 @@ export const MCPPanel = () => {
     setIsFormOpen(true);
   };
 
-  // Handle delete server
   const handleDeleteServer = async (
     name: string,
     scope: 'global' | 'project',
   ) => {
     if (!confirm(`Are you sure you want to delete server "${name}"?`)) return;
-
-    // Optimistic update: immediately remove from UI
-    setServers((prevServers) =>
-      prevServers.filter((s) => !(s.name === name && s.scope === scope)),
-    );
 
     setOperationLoading((prev) => ({ ...prev, [name]: true }));
 
@@ -300,15 +181,29 @@ export const MCPPanel = () => {
       });
 
       if (!result.success) {
-        await handleOperationFailure('Failed to delete server', result.error);
+        toastManager.add({
+          title: 'Failed to delete server',
+          description: result.error || 'Unknown error',
+          type: 'error',
+        });
+        setOperationLoading((prev) => {
+          const newLoading = { ...prev };
+          delete newLoading[name];
+          return newLoading;
+        });
+      } else {
+        toastManager.add({
+          title: 'Server deleted',
+          description: `Successfully deleted "${name}"`,
+          type: 'success',
+        });
       }
     } catch (err) {
-      await handleOperationFailure(
-        'Error deleting server',
-        err instanceof Error ? err.message : String(err),
-      );
-    } finally {
-      // Always clear loading state on operation complete
+      toastManager.add({
+        title: 'Error deleting server',
+        description: err instanceof Error ? err.message : String(err),
+        type: 'error',
+      });
       setOperationLoading((prev) => {
         const newLoading = { ...prev };
         delete newLoading[name];
@@ -317,28 +212,12 @@ export const MCPPanel = () => {
     }
   };
 
-  // Handle toggle enable/disable
   const handleToggleServer = async (
     name: string,
     currentConfig: McpServerConfig,
     scope: 'global' | 'project',
   ) => {
     const newConfig = { ...currentConfig, disable: !currentConfig.disable };
-
-    // Optimistic update: immediately update UI and clear old error/tools
-    setServers((prevServers) =>
-      prevServers.map((server) =>
-        server.name === name && server.scope === scope
-          ? {
-              ...server,
-              config: newConfig,
-              status: newConfig.disable ? 'disabled' : 'connecting',
-              error: undefined, // Clear old error
-              tools: [], // Clear old tools
-            }
-          : server,
-      ),
-    );
 
     setOperationLoading((prev) => ({ ...prev, [name]: true }));
 
@@ -351,51 +230,53 @@ export const MCPPanel = () => {
       });
 
       if (!result.success) {
-        await handleOperationFailure('Failed to toggle server', result.error);
+        toastManager.add({
+          title: 'Failed to toggle server',
+          description: result.error || 'Unknown error',
+          type: 'error',
+        });
+        setOperationLoading((prev) => {
+          const newLoading = { ...prev };
+          delete newLoading[name];
+          return newLoading;
+        });
+      } else {
+        toastManager.add({
+          title: newConfig.disable ? 'Server disabled' : 'Server enabled',
+          description: `Successfully ${newConfig.disable ? 'disabled' : 'enabled'} "${name}"`,
+          type: 'success',
+        });
       }
     } catch (err) {
-      await handleOperationFailure(
-        'Error toggling server',
-        err instanceof Error ? err.message : String(err),
-      );
-      // Clear loading on error
+      toastManager.add({
+        title: 'Error toggling server',
+        description: err instanceof Error ? err.message : String(err),
+        type: 'error',
+      });
       setOperationLoading((prev) => {
         const newLoading = { ...prev };
         delete newLoading[name];
         return newLoading;
       });
     }
-    // Success case: loading cleared by event-driven update
   };
 
-  // Handle reconnect server
   const handleReconnectServer = async (name: string) => {
-    // Optimistic update: set to connecting state and clear old error/tools
-    setServers((prevServers) =>
-      prevServers.map((server) =>
-        server.name === name
-          ? {
-              ...server,
-              status: 'connecting',
-              error: undefined, // Clear old error
-              tools: [], // Clear old tools
-            }
-          : server,
-      ),
-    );
-
     setOperationLoading((prev) => ({ ...prev, [name]: true }));
 
     try {
       const result = await request('mcp.reconnect', { cwd, serverName: name });
 
       if (!result.success) {
-        // Don't call handleOperationFailure - backend will send event
-        // Just show toast
         toastManager.add({
           title: 'Failed to reconnect',
           description: result.error || 'Unknown error',
           type: 'error',
+        });
+        setOperationLoading((prev) => {
+          const newLoading = { ...prev };
+          delete newLoading[name];
+          return newLoading;
         });
       } else {
         toastManager.add({
@@ -404,25 +285,25 @@ export const MCPPanel = () => {
           type: 'info',
         });
       }
-      // Both success and failure cases: wait for event-driven update
     } catch (err) {
-      // Network/communication error - still wait for event
       toastManager.add({
         title: 'Error reconnecting',
         description: err instanceof Error ? err.message : String(err),
         type: 'error',
       });
+      setOperationLoading((prev) => {
+        const newLoading = { ...prev };
+        delete newLoading[name];
+        return newLoading;
+      });
     }
-    // Loading state will be cleared by event-driven update
   };
 
-  // Handle form submit
   const handleFormSubmit = async (
     name: string,
     config: McpServerConfig,
     scope: 'global' | 'project',
   ) => {
-    // Set loading state before operation
     setOperationLoading((prev) => ({ ...prev, [name]: true }));
 
     try {
@@ -434,24 +315,39 @@ export const MCPPanel = () => {
       });
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to save configuration');
+        toastManager.add({
+          title: 'Failed to save configuration',
+          description: result.error || 'Unknown error',
+          type: 'error',
+        });
+        setOperationLoading((prev) => {
+          const newLoading = { ...prev };
+          delete newLoading[name];
+          return newLoading;
+        });
+        return;
       }
 
-      // Close form immediately
+      toastManager.add({
+        title: editingServer ? 'Configuration updated' : 'Server added',
+        description: `Successfully ${editingServer ? 'updated' : 'added'} "${name}"`,
+        type: 'success',
+      });
+
       setIsFormOpen(false);
       setEditingServer(null);
-
-      // No optimistic update - rely on event-driven update from backend
     } catch (err) {
-      // Clear loading on error and re-throw for toast handling
+      toastManager.add({
+        title: 'Error saving configuration',
+        description: err instanceof Error ? err.message : String(err),
+        type: 'error',
+      });
       setOperationLoading((prev) => {
         const newLoading = { ...prev };
         delete newLoading[name];
         return newLoading;
       });
-      throw err;
     }
-    // Success case: loading cleared by event-driven update
   };
 
   if (loading) {

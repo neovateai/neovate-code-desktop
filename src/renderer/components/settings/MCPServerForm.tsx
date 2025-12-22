@@ -139,7 +139,7 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
         config = {
           type: 'stdio',
           command,
-          args: args.trim() ? args.split(/\s+/) : undefined,
+          args: args.trim() ? args.split(/\s+/) : [],
           env: JSON.parse(env),
         };
       } else {
@@ -151,12 +151,6 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
       }
 
       await onSubmit(name, config, scope);
-    } catch (err) {
-      toastManager.add({
-        title: 'Failed to save configuration',
-        description: err instanceof Error ? err.message : String(err),
-        type: 'error',
-      });
     } finally {
       setIsSubmitting(false);
     }
