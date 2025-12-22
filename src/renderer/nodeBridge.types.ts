@@ -29,26 +29,23 @@ type ProvidersMap = Record<string, Provider>;
 
 // MCP Server Config types (exact match with CLI)
 export type McpStdioServerConfig = {
-  type?: 'stdio';
+  type: 'stdio';
   command: string;
-  args?: string[];
+  args: string[];
   env?: Record<string, string>;
   disable?: boolean;
-  timeout?: number;
 };
 export type McpSSEServerConfig = {
   type: 'sse';
   url: string;
   disable?: boolean;
   headers?: Record<string, string>;
-  timeout?: number;
 };
 export type McpHttpServerConfig = {
-  type?: 'http';
+  type: 'http';
   url: string;
   disable?: boolean;
   headers?: Record<string, string>;
-  timeout?: number;
 };
 export type McpServerConfig =
   | McpStdioServerConfig
