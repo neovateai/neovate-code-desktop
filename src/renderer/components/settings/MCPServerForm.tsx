@@ -103,6 +103,19 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
       if (!command.trim()) {
         errors.command = 'Command is required for stdio type';
       }
+      if (!args.trim()) {
+        errors.args = 'Arguments is required for stdio type';
+      } else {
+        // Validate that arguments contain more than just flags
+        const argParts = args.trim().split(/\s+/);
+        const hasPackageName = argParts.some(
+          (part) => !part.startsWith('-') && part.length > 0,
+        );
+        if (!hasPackageName) {
+          errors.args =
+            'Arguments must contain a package name or executable, not just flags (e.g., -y)';
+        }
+      }
       try {
         JSON.parse(env);
       } catch {
@@ -343,17 +356,26 @@ export const MCPServerForm: React.FC<MCPServerFormProps> = ({
                     {/* Arguments - Full width */}
                     <div className="space-y-1.5">
                       <label
-                        className="text-xs font-medium"
+                        className="flex items-center gap-1.5 text-xs font-medium"
                         style={{ color: 'var(--text-primary)' }}
                       >
-                        Arguments
+                        <span>Arguments</span>
+                        <span className="text-destructive">*</span>
                       </label>
                       <Textarea
                         value={args}
                         onChange={(e) => setArgs(e.target.value)}
                         placeholder="-y @modelcontextprotocol/server-filesystem /path/to/directory"
-                        className="font-mono text-xs min-h-[70px] resize-y"
+                        className={`font-mono text-xs min-h-[70px] resize-y ${
+                          validationErrors.args ? 'border-destructive' : ''
+                        }`}
                       />
+                      {validationErrors.args && (
+                        <p className="text-[10px] text-destructive flex items-center gap-1">
+                          <Info className="size-3" />
+                          {validationErrors.args}
+                        </p>
+                      )}
                       <p className="text-[10px] text-muted-foreground">
                         Space-separated command line arguments
                       </p>

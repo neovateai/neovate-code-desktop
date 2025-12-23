@@ -58,7 +58,8 @@ Explored three different approaches:
 **Simplifications Made**:
 - Use `mcp.list` for both configuration and status (combines file data + runtime state)
 - 3-second polling (aligned with CLI slash command implementation)
-- Only need 2 new handlers: `mcp.updateConfig` and `mcp.removeConfig`
+- **Use existing `config.set` handler instead of creating new MCP-specific handlers**
+- Frontend manages mcpServers object manipulation (load → modify → write pattern)
 - Accept Context recreation overhead (unavoidable due to MCPManager architecture)
 
 **Data Flow Refined**:
@@ -95,8 +96,8 @@ The desktop application acts as a remote control for the CLI's MCP functionality
 │ - MCPPanel          │              │ Handler Registry:   │            │ ~/.neovate/      │
 │ - MCPServerList     │              │  - mcp.list         │            │   config.json    │
 │ - MCPServerForm     │              │  - mcp.reconnect    │            │                  │
-│ - Zustand Store     │              │  - mcp.updateConfig │            │ ./.neovate/      │
-│   └─ request()      │              │  - mcp.removeConfig │            │   config.json    │
+│ - Zustand Store     │              │  - config.set       │            │ ./.neovate/      │
+│   └─ request()      │              │  (reused)           │            │   config.json    │
 └─────────────────────┘              └──────────┬──────────┘            └──────────────────┘
                                                  │
                                      ┌───────────▼──────────┐
@@ -113,87 +114,46 @@ The desktop application acts as a remote control for the CLI's MCP functionality
 
 ### WebSocket Handlers
 
-**Existing Handlers**:
+**Existing Handlers (All Reused)**:
 - `mcp.list` - Lists all MCP servers with config + runtime status
 - `mcp.getStatus` - Gets detailed status for all configured servers
 - `mcp.reconnect` - Reconnects a specific MCP server
+- `config.set` - Generic config setter (used for mcpServers updates)
 
-**New Required Handlers**:
+**No New Handlers Needed** - Simplified implementation reuses existing infrastructure.
 
+**Frontend Pattern for Config Operations:**
 ```typescript
-// mcp.updateConfig - Add or update MCP server configuration
-interface MCPUpdateConfigInput {
-  cwd: string;
-  name: string;
-  config: McpServerConfig; // Use existing type from config.ts
-  global?: boolean;
-}
-interface MCPUpdateConfigOutput {
-  success: boolean;
-  error?: string;
-}
+// All operations follow: Load → Modify → Write → Reload pattern
 
-// mcp.removeConfig - Remove MCP server configuration
-interface MCPRemoveConfigInput {
-  cwd: string;
-  name: string;
-  global?: boolean;
-}
-interface MCPRemoveConfigOutput {
-  success: boolean;
-  error?: string;
-}
-```
+// 1. Load current config via mcp.list
+const listResult = await request('mcp.list', { cwd });
+const currentServers = scope === 'global'
+  ? listResult.data.globalServers
+  : listResult.data.projectServers;
 
-**Implementation Details**:
-```typescript
-// mcp.updateConfig - 参考 config.set 的实现模式
-this.messageBus.registerHandler('mcp.updateConfig', async (data) => {
-  const { cwd, name, config, global } = data;
-  const context = await this.getContext(cwd);
-  const configManager = new ConfigManager(cwd, context.productName, {});
-  
-  // 1. 读取现有 mcpServers 对象
-  const mcpServers = configManager.getConfig(global, 'mcpServers') || {};
-  
-  // 2. 更新/添加特定服务器
-  mcpServers[name] = config;
-  
-  // 3. 写回完整对象(使用 JSON.stringify)
-  configManager.setConfig(global, 'mcpServers', JSON.stringify(mcpServers));
-  
-  // 4. 销毁 Context 触发重建(参考 config.set:194-206)
-  if (this.contexts.has(cwd)) {
-    await context.destroy();
-    this.contexts.delete(cwd);
-  }
-  
-  return { success: true };
+// 2. Modify the object (add/update/delete)
+const updatedServers = { ...currentServers };
+updatedServers[name] = config;  // Add/Update
+// OR: delete updatedServers[name];  // Delete
+
+// 3. Write back via config.set
+await request('config.set', {
+  cwd,
+  isGlobal: scope === 'global',
+  key: 'mcpServers',
+  value: JSON.stringify(updatedServers),
 });
 
-// mcp.removeConfig - 类似逻辑
-this.messageBus.registerHandler('mcp.removeConfig', async (data) => {
-  const { cwd, name, global } = data;
-  const context = await this.getContext(cwd);
-  const configManager = new ConfigManager(cwd, context.productName, {});
-  
-  const mcpServers = configManager.getConfig(global, 'mcpServers') || {};
-  delete mcpServers[name];
-  configManager.setConfig(global, 'mcpServers', JSON.stringify(mcpServers));
-  
-  if (this.contexts.has(cwd)) {
-    await context.destroy();
-    this.contexts.delete(cwd);
-  }
-  
-  return { success: true };
-});
+// 4. Reload to refresh UI (triggers Context recreation)
+await loadServers();
 ```
 
-**注意事项:**
-- 必须先调用 `getConfig()` 读取完整对象,避免覆盖其他服务器配置
-- 使用 `JSON.stringify()` 写回,符合 ConfigManager 的期望
-- Context 销毁会触发 MCPManager 重建,导致 1-3 秒延迟
+**Why This Approach:**
+- ✅ No new backend code needed
+- ✅ Reuses battle-tested `config.set` handler
+- ✅ Frontend has full control over object manipulation
+- ✅ Explicit reload ensures UI sync (fixes previous state update issue)
 
 ## Frontend Architecture
 
@@ -232,18 +192,17 @@ this.messageBus.registerHandler('mcp.removeConfig', async (data) => {
    ⚠️ Paused when form is open
 
 3. User Add/Edit Server
-   Form submit → store.request('mcp.updateConfig', {cwd, name, config, global}) → 
-   Handler updates config file → context.destroy() → contexts.delete(cwd) → 
-   Success response → Immediate store.request('mcp.list') → UI shows new state
+   Form submit → Load current config via mcp.list →
+   Modify mcpServers object → request('config.set', {key: 'mcpServers', value: JSON.stringify(...)}) →
+   Success response → loadServers() refresh → UI shows new state
    
 4. User Delete Server
-   Delete click → store.request('mcp.removeConfig', {cwd, name, global}) → 
-   Handler removes from config → context.destroy() → 
-   Success response → Immediate refresh → UI updated
+   Delete click → Load current config → delete mcpServers[name] →
+   request('config.set', ...) → Success → loadServers() → UI updated
    
 5. User Enable/Disable Server
-   Toggle click → store.request('mcp.updateConfig', {cwd, name, config: {..., disable: true/false}}) → 
-   Same flow as edit → Context recreated → MCP connections rebuilt
+   Toggle click → Load current config → Modify disable flag →
+   request('config.set', ...) → Context recreated → MCP connections rebuilt
    
 6. User Reconnect Server
    Reconnect click → store.request('mcp.reconnect', {cwd, serverName}) → 
@@ -329,11 +288,28 @@ useEffect(() => {
 **手动刷新策略:**
 ```typescript
 // 用户操作后立即刷新,不等待下次轮询
-const handleUpdateServer = async (name: string, config: McpServerConfig) => {
+const handleUpdateServer = async (name: string, config: McpServerConfig, scope: 'global' | 'project') => {
   setOperationLoading(name, true);
   try {
-    await request('mcp.updateConfig', { cwd, name, config, global });
-    await loadServers();  // ← 手动立即刷新
+    // Load current config
+    const listResult = await request('mcp.list', { cwd });
+    const currentServers = scope === 'global'
+      ? listResult.data.globalServers
+      : listResult.data.projectServers;
+    
+    // Modify
+    const updatedServers = { ...currentServers, [name]: config };
+    
+    // Write
+    await request('config.set', {
+      cwd,
+      isGlobal: scope === 'global',
+      key: 'mcpServers',
+      value: JSON.stringify(updatedServers),
+    });
+    
+    // Reload immediately
+    await loadServers();
   } finally {
     setOperationLoading(name, false);
   }
@@ -356,18 +332,31 @@ const handleUpdateServer = async (name: string, config: McpServerConfig) => {
 
 **Implementation Pattern**:
 ```typescript
-const handleToggle = async (serverName: string, currentConfig: McpServerConfig) => {
+const handleToggle = async (serverName: string, currentConfig: McpServerConfig, scope: 'global' | 'project') => {
   setOperationLoading(serverName, true);
   
   try {
-    await request('mcp.updateConfig', {
+    // Load current config
+    const listResult = await request('mcp.list', { cwd });
+    const currentServers = scope === 'global'
+      ? listResult.data.globalServers
+      : listResult.data.projectServers;
+    
+    // Modify disable flag
+    const updatedServers = {
+      ...currentServers,
+      [serverName]: { ...currentConfig, disable: !currentConfig.disable },
+    };
+    
+    // Write back
+    await request('config.set', {
       cwd,
-      name: serverName,
-      config: { ...currentConfig, disable: !currentConfig.disable },
-      global: serverScope === 'global',
+      isGlobal: scope === 'global',
+      key: 'mcpServers',
+      value: JSON.stringify(updatedServers),
     });
     
-    // Wait for backend to confirm
+    // Wait for backend to process
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Refresh immediately
@@ -505,37 +494,13 @@ const validationRules = {
 ## Implementation Checklist
 
 ### Backend (neovate-code)
-- [ ] Add type definitions to `nodeBridge.types.ts`:
-  - [ ] `McpUpdateConfigInput` / `McpUpdateConfigOutput`
-  - [ ] `McpRemoveConfigInput` / `McpRemoveConfigOutput`
-  - [ ] Add to `HandlerMap` type
-  - [ ] 确保 `McpServerConfig` 类型精确(包含 disable, timeout 字段)
-- [ ] Implement `mcp.updateConfig` handler in `nodeBridge.ts`:
-  - [ ] 参考 `config.set` (line 194-206) 的实现模式
-  - [ ] Read: `configManager.getConfig(global, 'mcpServers')`
-  - [ ] Modify: `mcpServers[name] = config`
-  - [ ] Write: `configManager.setConfig(global, 'mcpServers', JSON.stringify(mcpServers))`
-  - [ ] Destroy: `context.destroy()` + `contexts.delete(cwd)`
-  - [ ] Return success/error response
-- [ ] Implement `mcp.removeConfig` handler in `nodeBridge.ts`:
-  - [ ] Same pattern: read → `delete mcpServers[name]` → write → destroy
-- [ ] Add validation:
-  - [ ] Server name: `/^[a-zA-Z0-9_-]+$/` (alphanumeric + dash/underscore)
-  - [ ] URL: `/^https?:\/\/.+/` for HTTP/SSE
-  - [ ] Config completeness: command OR url must exist
-  - [ ] Duplicate check: 基于 global/project scope 分别检查
-- [ ] Error handling:
-  - [ ] File permission errors: return `{ success: false, error: 'Permission denied' }`
-  - [ ] Validation errors: return specific error messages
-  - [ ] Context destruction errors: catch and log
-- [ ] Test integration:
-  - [ ] Context recreation after config change
-  - [ ] Concurrent updates (两个不同服务器)
-  - [ ] 禁用服务器不出现在 activeServers
-  - [ ] 项目配置覆盖全局配置
-- [ ] Update Desktop type definitions:
-  - [ ] Copy precise `McpServerConfig` from CLI
-  - [ ] 移除 `type McpServerConfig = any;` 临时定义
+- [x] **No backend changes needed** - Implementation complete, reuses existing handlers:
+  - [x] `mcp.list` - Already exists for reading MCP config
+  - [x] `config.set` - Already exists for writing config
+  - [x] `mcp.reconnect` - Already exists for reconnection
+- [x] Type definitions already in place:
+  - [x] `McpServerConfig` type matches CLI implementation
+  - [x] No new handler types needed (removed `McpUpdateConfigInput/Output`)
 
 ### Frontend (neovate-code-desktop)
 - [ ] Create MCPPanel component:
@@ -570,20 +535,60 @@ const validationRules = {
 - [ ] Implement operations:
   - [ ] Add/Edit server:
     ```typescript
-    const config = projectServers[name] || globalServers[name];
-    await request('mcp.updateConfig', { cwd, name, config, global });
+    // Load current config
+    const listResult = await request('mcp.list', { cwd });
+    const currentServers = scope === 'global'
+      ? listResult.data.globalServers
+      : listResult.data.projectServers;
+    
+    // Update
+    const updatedServers = { ...currentServers, [name]: config };
+    
+    // Write
+    await request('config.set', {
+      cwd,
+      isGlobal: scope === 'global',
+      key: 'mcpServers',
+      value: JSON.stringify(updatedServers),
+    });
     await loadServers();  // 立即刷新
     ```
   - [ ] Delete server:
     ```typescript
-    // 必须明确 global 参数,避免误删
-    await request('mcp.removeConfig', { cwd, name, global });
+    const listResult = await request('mcp.list', { cwd });
+    const currentServers = scope === 'global'
+      ? listResult.data.globalServers
+      : listResult.data.projectServers;
+    
+    const updatedServers = { ...currentServers };
+    delete updatedServers[name];
+    
+    await request('config.set', {
+      cwd,
+      isGlobal: scope === 'global',
+      key: 'mcpServers',
+      value: JSON.stringify(updatedServers),
+    });
     await loadServers();
     ```
   - [ ] Toggle enable:
     ```typescript
-    const config = { ...existingConfig, disable: !existingConfig.disable };
-    await request('mcp.updateConfig', { cwd, name, config, global });
+    const listResult = await request('mcp.list', { cwd });
+    const currentServers = scope === 'global'
+      ? listResult.data.globalServers
+      : listResult.data.projectServers;
+    
+    const updatedServers = {
+      ...currentServers,
+      [name]: { ...currentServers[name], disable: !currentServers[name].disable },
+    };
+    
+    await request('config.set', {
+      cwd,
+      isGlobal: scope === 'global',
+      key: 'mcpServers',
+      value: JSON.stringify(updatedServers),
+    });
     await loadServers();
     ```
   - [ ] Reconnect: `request('mcp.reconnect', {cwd, serverName})`
@@ -622,8 +627,9 @@ const validationRules = {
 
 1. **CLI as Single Source of Truth**
    - Desktop never stores MCP config locally
-   - All reads from `mcp.list`, all writes via `mcp.updateConfig/removeConfig`
+   - All reads from `mcp.list`, all writes via `config.set` (reusing existing handler)
    - Avoids sync complexity and data inconsistency
+   - Frontend manages mcpServers object manipulation
 
 2. **Context Recreation Pattern**
    - Accept 1-3s delay when config changes (unavoidable)
@@ -647,14 +653,25 @@ const validationRules = {
 
 ### 🔧 Key Implementation Details
 
-1. **Handler Pattern** (参考 `config.set`)
+1. **Handler Pattern** (using existing `config.set`)
    ```typescript
-   // Read → Modify → Write → Destroy Context
-   const mcpServers = configManager.getConfig(global, 'mcpServers') || {};
-   mcpServers[name] = config;
-   configManager.setConfig(global, 'mcpServers', JSON.stringify(mcpServers));
-   await context.destroy();
-   contexts.delete(cwd);
+   // Load → Modify → Write → Reload pattern
+   const listResult = await request('mcp.list', { cwd });
+   const currentServers = scope === 'global'
+     ? listResult.data.globalServers
+     : listResult.data.projectServers;
+   
+   const updatedServers = { ...currentServers };
+   updatedServers[name] = config;  // or: delete updatedServers[name];
+   
+   await request('config.set', {
+     cwd,
+     isGlobal: scope === 'global',
+     key: 'mcpServers',
+     value: JSON.stringify(updatedServers),
+   });
+   
+   await loadServers();  // Triggers Context recreation
    ```
 
 2. **禁用服务器处理**

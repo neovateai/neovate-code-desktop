@@ -174,16 +174,33 @@ export const MCPPanel = () => {
     setOperationLoading((prev) => ({ ...prev, [name]: true }));
 
     try {
-      const result = await request('mcp.removeConfig', {
+      // Load current servers to get the full mcpServers object
+      const listResult = await request('mcp.list', { cwd });
+      if (!listResult.success) {
+        throw new Error('Failed to load current configuration');
+      }
+
+      const currentServers =
+        scope === 'global'
+          ? listResult.data.globalServers
+          : listResult.data.projectServers;
+
+      // Create a copy and delete the server
+      const updatedServers = { ...currentServers };
+      delete updatedServers[name];
+
+      // Write back the updated servers object
+      const result = await request('config.set', {
         cwd,
-        name,
-        global: scope === 'global',
+        isGlobal: scope === 'global',
+        key: 'mcpServers',
+        value: JSON.stringify(updatedServers),
       });
 
       if (!result.success) {
         toastManager.add({
           title: 'Failed to delete server',
-          description: result.error || 'Unknown error',
+          description: 'Failed to update configuration',
           type: 'error',
         });
         setOperationLoading((prev) => {
@@ -192,10 +209,19 @@ export const MCPPanel = () => {
           return newLoading;
         });
       } else {
+        // Reload server list first to get updated state
+        await loadServers();
+
+        // Then show success and clear loading
         toastManager.add({
           title: 'Server deleted',
           description: `Successfully deleted "${name}"`,
           type: 'success',
+        });
+        setOperationLoading((prev) => {
+          const newLoading = { ...prev };
+          delete newLoading[name];
+          return newLoading;
         });
       }
     } catch (err) {
@@ -222,17 +248,35 @@ export const MCPPanel = () => {
     setOperationLoading((prev) => ({ ...prev, [name]: true }));
 
     try {
-      const result = await request('mcp.updateConfig', {
+      // Load current servers to get the full mcpServers object
+      const listResult = await request('mcp.list', { cwd });
+      if (!listResult.success) {
+        throw new Error('Failed to load current configuration');
+      }
+
+      const currentServers =
+        scope === 'global'
+          ? listResult.data.globalServers
+          : listResult.data.projectServers;
+
+      // Update the specific server
+      const updatedServers = {
+        ...currentServers,
+        [name]: newConfig,
+      };
+
+      // Write back the updated servers object
+      const result = await request('config.set', {
         cwd,
-        name,
-        config: newConfig,
-        global: scope === 'global',
+        isGlobal: scope === 'global',
+        key: 'mcpServers',
+        value: JSON.stringify(updatedServers),
       });
 
       if (!result.success) {
         toastManager.add({
           title: 'Failed to toggle server',
-          description: result.error || 'Unknown error',
+          description: 'Failed to update configuration',
           type: 'error',
         });
         setOperationLoading((prev) => {
@@ -241,10 +285,19 @@ export const MCPPanel = () => {
           return newLoading;
         });
       } else {
+        // Reload server list first to get updated state
+        await loadServers();
+
+        // Then show success and clear loading
         toastManager.add({
           title: newConfig.disable ? 'Server disabled' : 'Server enabled',
           description: `Successfully ${newConfig.disable ? 'disabled' : 'enabled'} "${name}"`,
           type: 'success',
+        });
+        setOperationLoading((prev) => {
+          const newLoading = { ...prev };
+          delete newLoading[name];
+          return newLoading;
         });
       }
     } catch (err) {
@@ -307,17 +360,35 @@ export const MCPPanel = () => {
     setOperationLoading((prev) => ({ ...prev, [name]: true }));
 
     try {
-      const result = await request('mcp.updateConfig', {
+      // Load current servers to get the full mcpServers object
+      const listResult = await request('mcp.list', { cwd });
+      if (!listResult.success) {
+        throw new Error('Failed to load current configuration');
+      }
+
+      const currentServers =
+        scope === 'global'
+          ? listResult.data.globalServers
+          : listResult.data.projectServers;
+
+      // Update or add the specific server
+      const updatedServers = {
+        ...currentServers,
+        [name]: config,
+      };
+
+      // Write back the updated servers object
+      const result = await request('config.set', {
         cwd,
-        name,
-        config,
-        global: scope === 'global',
+        isGlobal: scope === 'global',
+        key: 'mcpServers',
+        value: JSON.stringify(updatedServers),
       });
 
       if (!result.success) {
         toastManager.add({
           title: 'Failed to save configuration',
-          description: result.error || 'Unknown error',
+          description: 'Failed to update configuration',
           type: 'error',
         });
         setOperationLoading((prev) => {
@@ -328,10 +399,19 @@ export const MCPPanel = () => {
         return;
       }
 
+      // Reload server list first to get updated state
+      await loadServers();
+
+      // Then show success and clear loading
       toastManager.add({
         title: editingServer ? 'Configuration updated' : 'Server added',
         description: `Successfully ${editingServer ? 'updated' : 'added'} "${name}"`,
         type: 'success',
+      });
+      setOperationLoading((prev) => {
+        const newLoading = { ...prev };
+        delete newLoading[name];
+        return newLoading;
       });
 
       setIsFormOpen(false);

@@ -171,27 +171,6 @@ type McpListOutput = {
   };
 };
 
-type McpUpdateConfigInput = {
-  cwd: string;
-  name: string;
-  config: McpServerConfig;
-  global?: boolean;
-};
-type McpUpdateConfigOutput = {
-  success: boolean;
-  error?: string;
-};
-
-type McpRemoveConfigInput = {
-  cwd: string;
-  name: string;
-  global?: boolean;
-};
-type McpRemoveConfigOutput = {
-  success: boolean;
-  error?: string;
-};
-
 // ============================================================================
 // Models Handlers
 // ============================================================================
@@ -813,14 +792,6 @@ export type HandlerMap = {
   'mcp.getStatus': { input: McpGetStatusInput; output: McpGetStatusOutput };
   'mcp.reconnect': { input: McpReconnectInput; output: McpReconnectOutput };
   'mcp.list': { input: McpListInput; output: McpListOutput };
-  'mcp.updateConfig': {
-    input: McpUpdateConfigInput;
-    output: McpUpdateConfigOutput;
-  };
-  'mcp.removeConfig': {
-    input: McpRemoveConfigInput;
-    output: McpRemoveConfigOutput;
-  };
 
   // Models handlers
   'models.list': { input: ModelsListInput; output: ModelsListOutput };
