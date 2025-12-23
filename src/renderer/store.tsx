@@ -333,13 +333,10 @@ const useStore = create<Store>()((set, get) => ({
       );
     }
 
-    // Development logging - uncomment if needed for debugging
-    // console.log('[REQUEST]', method, params);
     const response = await messageBus.request<
       HandlerInput<K>,
       HandlerOutput<K>
     >(method, params);
-    // console.log('[RESPONSE]', method, response);
     return response;
   },
 
