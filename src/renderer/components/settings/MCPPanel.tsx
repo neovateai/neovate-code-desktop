@@ -1,5 +1,5 @@
 import { AlertCircle, Plus, RefreshCw, Server } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { McpServerConfig } from '../../nodeBridge.types';
 import { useStore } from '../../store';
 import { Button } from '../ui/button';
@@ -99,59 +99,13 @@ export const MCPPanel = () => {
     }
   }, [cwd, request, buildServerList]);
 
-  // Event handler for MCP status changes (stable reference using ref)
-  const handleStatusChangeRef = useRef<((eventData: any) => void) | null>(null);
-
-  // Update the ref whenever dependencies change
-  handleStatusChangeRef.current = (eventData: any) => {
-    if (eventData.cwd !== cwd) {
-      return;
-    }
-
-    if (eventData.success) {
-      const { projectServers, globalServers, activeServers } = eventData.data;
-      const serverList = buildServerList(
-        projectServers,
-        globalServers,
-        activeServers,
-      );
-
-      setServers(serverList);
-
-      setOperationLoading((currentLoading) => {
-        const newLoading = { ...currentLoading };
-        for (const server of serverList) {
-          if (server.status !== 'connecting' && server.status !== 'pending') {
-            delete newLoading[server.name];
-          }
-        }
-        return newLoading;
-      });
-    }
-  };
-
-  // Stable event handler wrapper
-  const stableHandleStatusChange = useCallback((eventData: any) => {
-    handleStatusChangeRef.current?.(eventData);
-  }, []);
-
-  // Initial load and event subscription
+  // Initial load
   useEffect(() => {
     if (!cwd) return;
 
     // Initial load
     loadServers();
-
-    // Register event listener with stable reference
-    const onEvent = useStore.getState().onEvent;
-    const offEvent = useStore.getState().offEvent;
-    onEvent('mcp.statusChanged', stableHandleStatusChange);
-
-    // Cleanup event listener on unmount
-    return () => {
-      offEvent('mcp.statusChanged', stableHandleStatusChange);
-    };
-  }, [cwd, loadServers, stableHandleStatusChange]);
+  }, [cwd, loadServers]);
 
   // Handle add server
   const handleAddServer = () => {
