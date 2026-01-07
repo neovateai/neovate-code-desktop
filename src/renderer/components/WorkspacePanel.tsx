@@ -28,6 +28,7 @@ import {
 import { useStore } from '../store';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { Message } from './messages/Message';
+import { toastManager } from './ui/toast';
 import { splitMessages } from './messages/messageHelpers';
 import { OpenAppButton } from './OpenAppButton';
 import { ActivityIndicator } from './ActivityIndicator';
@@ -367,7 +368,11 @@ export const WorkspacePanel = ({
               setIsLoading(false);
             }}
             onShowForkModal={() => {
-              alert('fork not implemented');
+              toastManager.add({
+                type: 'info',
+                title: 'Fork session',
+                description: 'Fork functionality is not implemented yet',
+              });
             }}
             fetchPaths={fetchPaths}
             fetchCommands={fetchCommands}
@@ -415,7 +420,11 @@ WorkspacePanel.Header = function Header() {
   };
 
   const handleCreatePR = () => {
-    alert('Not implemented');
+    toastManager.add({
+      type: 'info',
+      title: 'Create PR',
+      description: 'Create PR functionality is not implemented yet',
+    });
   };
 
   return (

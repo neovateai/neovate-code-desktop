@@ -140,7 +140,11 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
 
   const handleCloneFromURL = () => {
     setOpen(false);
-    alert('Not implemented');
+    toastManager.add({
+      type: 'info',
+      title: 'Clone from URL',
+      description: 'Clone from URL functionality is not implemented yet',
+    });
   };
 
   return (

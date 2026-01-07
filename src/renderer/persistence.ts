@@ -1,4 +1,5 @@
 import type { StoreApi } from 'zustand';
+import { toastManager } from './components/ui/toast';
 
 // Declare electron API on window object
 declare global {
@@ -87,9 +88,11 @@ export function setupPersistence(store: StoreApi<any>): void {
       await window.electron.saveStore(persistableState);
     } catch (error) {
       console.error('Failed to save store:', error);
-      window.alert(
-        `Failed to save application state: ${(error as Error).message}`,
-      );
+      toastManager.add({
+        type: 'error',
+        title: 'Failed to save application state',
+        description: (error as Error).message,
+      });
     }
   }, 500);
 

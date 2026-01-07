@@ -125,17 +125,23 @@ export function useInputHandlers({
     const trimmed = value.trim();
     if (!trimmed) return;
 
-    // In plan mode, show alert instead of submitting
+    // In plan mode, show toast instead of submitting
     if (planMode === 'plan') {
-      alert('Plan mode is not implemented yet');
+      toastManager.add({
+        type: 'info',
+        title: 'Plan mode',
+        description: 'Plan mode is not implemented yet',
+      });
       return;
     }
 
-    // In memory mode or bash mode, show alert instead of submitting
+    // In memory mode or bash mode, show toast instead of submitting
     if (mode === 'memory' || mode === 'bash') {
-      alert(
-        `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode is not implemented yet`,
-      );
+      toastManager.add({
+        type: 'info',
+        title: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`,
+        description: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode is not implemented yet`,
+      });
       return;
     }
 

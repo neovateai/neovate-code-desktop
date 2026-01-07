@@ -4,6 +4,7 @@ import { RefreshIcon } from '@hugeicons/core-free-icons';
 import { Button } from '../ui/button';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
+import { toastManager } from '../ui/toast';
 
 type ThemeValue = 'light' | 'dark' | 'system';
 
@@ -99,7 +100,11 @@ export const PreferencesPanel = () => {
 
   const handleSendFeedback = () => {
     // Placeholder - will be implemented later
-    alert('Not implemented yet');
+    toastManager.add({
+      type: 'info',
+      title: 'Send feedback',
+      description: 'Send feedback functionality is not implemented yet',
+    });
   };
 
   const handleCheckForUpdates = async () => {
@@ -108,7 +113,11 @@ export const PreferencesPanel = () => {
     // Simulate a brief loading state
     await new Promise((resolve) => setTimeout(resolve, 500));
     setIsCheckingForUpdates(false);
-    alert('Not implemented yet');
+    toastManager.add({
+      type: 'info',
+      title: 'Check for updates',
+      description: 'Check for updates functionality is not implemented yet',
+    });
   };
 
   if (isConfigLoading || globalConfig === null) {

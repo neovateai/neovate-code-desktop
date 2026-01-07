@@ -4,6 +4,7 @@ import { WebSocketTransport } from './client/transport/WebSocketTransport';
 import { MessageBus } from './client/messaging/MessageBus';
 import { randomUUID } from './utils/uuid';
 import { getNestedValue, setNestedValue } from './lib/utils';
+import { toastManager } from './components/ui/toast';
 import type {
   RepoData,
   WorkspaceData,
@@ -604,11 +605,19 @@ const useStore = create<Store>()((set, get) => ({
             }));
             return;
           } else {
-            alert(`${command} Local JSX commands are not supported`);
+            toastManager.add({
+              type: 'error',
+              title: 'Command not supported',
+              description: `${command} Local JSX commands are not supported`,
+            });
           }
           return;
         } else {
-          alert(`${command} Unknown slash command type: ${type}`);
+          toastManager.add({
+            type: 'error',
+            title: 'Unknown command type',
+            description: `${command} Unknown slash command type: ${type}`,
+          });
           return;
         }
       }
