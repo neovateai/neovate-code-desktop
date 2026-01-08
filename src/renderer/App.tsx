@@ -81,7 +81,6 @@ function App() {
     }
   }, [theme, globalConfig]);
 
-  console.log('connectionState', connectionState);
   if (connectionState === 'error') {
     return (
       <ServerErrorDialog
