@@ -1,0 +1,93 @@
+name: PR Build
+
+on:
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-mac-dev:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: macos-13
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build dev package
+        run: npm run package:dev -- --${{ matrix.arch }} --publish=never
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: neovate-dev-${{ matrix.arch }}
+          path: release-dev/*-${{ matrix.arch }}.*
+          if-no-files-found: error
+  comment:
+    needs: build-mac-dev
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post PR comment with artifact links
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const identifier = '<!-- neovate-build -->';
+
+            const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: process.env.GITHUB_RUN_ID,
+            });
+
+            const arm64 = artifacts.find(a => a.name === 'neovate-dev-arm64');
+            const x64 = artifacts.find(a => a.name === 'neovate-dev-x64');
+
+            const body = [
+              identifier,
+              '## 🎉 Build Ready',
+              '',
+              '| Architecture | Download |',
+              '|--------------|----------|',
+              `| Apple Silicon | ${arm64 ? `[Download](${arm64.archive_download_url})` : '⏳'} |`,
+              `| Intel | ${x64 ? `[Download](${x64.archive_download_url})` : '⏳'} |`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(identifier));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
