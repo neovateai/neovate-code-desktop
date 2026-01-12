@@ -82,7 +82,6 @@ export const WorkspacePanel = ({
   const workspaces = useStore((state) => state.workspaces);
   const sessionsMap = useStore((state) => state.sessions);
   const messagesMap = useStore((state) => state.messages);
-  const fetchFileList = useStore((state) => state.fetchFileList);
   const fetchSlashCommandList = useStore(
     (state) => state.fetchSlashCommandList,
   );
@@ -317,11 +316,6 @@ export const WorkspacePanel = ({
   }, []);
 
   // Create wrapper functions that provide context for ChatInput
-  const fetchPaths = useCallback(async () => {
-    if (!selectedWorkspaceId) return [];
-    return fetchFileList(selectedWorkspaceId);
-  }, [selectedWorkspaceId, fetchFileList]);
-
   const fetchCommands = useCallback(async () => {
     if (!selectedWorkspaceId) return [];
     return fetchSlashCommandList(selectedWorkspaceId);
@@ -411,7 +405,6 @@ export const WorkspacePanel = ({
             onSubmit={sendMessage}
             onCancel={handleCancel}
             onShowForkModal={handleShowForkModal}
-            fetchPaths={fetchPaths}
             fetchCommands={fetchCommands}
             placeholder={
               selectedSessionId

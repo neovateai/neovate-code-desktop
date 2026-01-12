@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toastManager } from '../components/ui/toast';
+import type {
+  HandlerInput,
+  HandlerMethod,
+  HandlerOutput,
+} from '../nodeBridge.types';
 import { useDoublePress } from './useDoublePress';
 import { useFileSuggestion } from './useFileSuggestion';
 import { useImagePasteManager } from './useImagePasteManager';
@@ -15,9 +20,13 @@ interface UseInputHandlersProps {
   onSubmit: (value: string, images?: string[]) => void;
   onCancel: () => void;
   onShowForkModal: () => void;
-  fetchPaths: () => Promise<string[]>;
   fetchCommands: () => Promise<SlashCommand[]>;
   isProcessing?: boolean;
+  request: <K extends HandlerMethod>(
+    method: K,
+    params: HandlerInput<K>,
+  ) => Promise<HandlerOutput<K>>;
+  cwd: string;
 }
 
 export function useInputHandlers({
@@ -26,9 +35,10 @@ export function useInputHandlers({
   onSubmit,
   onCancel,
   onShowForkModal,
-  fetchPaths,
   fetchCommands,
   isProcessing,
+  request,
+  cwd,
 }: UseInputHandlersProps) {
   const inputState = useInputState(sessionId, workspaceId);
   const { value, cursorPosition, mode } = inputState.state;
@@ -69,7 +79,8 @@ export function useInputHandlers({
     value,
     cursorPosition,
     forceTabTrigger,
-    fetchPaths,
+    request,
+    cwd,
   });
 
   const slashCommands = useSlashCommands({ value, fetchCommands });
@@ -112,6 +123,7 @@ export function useInputHandlers({
     inputState.setValue(newValue);
     inputState.setCursorPosition(`${before}${prefix}${selected} `.length);
     setForceTabTrigger(false);
+    fileSuggestion.reset();
   }, [fileSuggestion, inputState]);
 
   const handleSubmit = useCallback(() => {
@@ -592,5 +604,6 @@ export function useInputHandlers({
     thinkingEnabled,
     setThinkingEnabled,
     setThinking,
+    isSearching: fileSuggestion.isLoading,
   };
 }

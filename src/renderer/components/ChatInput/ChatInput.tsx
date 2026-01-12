@@ -51,7 +51,6 @@ interface ChatInputProps {
   onSubmit: (value: string, images?: string[]) => void;
   onCancel?: () => void;
   onShowForkModal?: () => void;
-  fetchPaths?: () => Promise<string[]>;
   fetchCommands?: () => Promise<SlashCommand[]>;
   placeholder?: string;
   disabled?: boolean;
@@ -67,7 +66,6 @@ interface ChatInputProps {
 }
 
 // Default implementations
-const defaultFetchPaths = async () => [];
 const defaultFetchCommands = async () => [];
 const noop = () => {};
 
@@ -82,7 +80,6 @@ export const ChatInput = memo(
       onSubmit,
       onCancel = noop,
       onShowForkModal = noop,
-      fetchPaths = defaultFetchPaths,
       fetchCommands = defaultFetchCommands,
       placeholder = 'Type your message...',
       disabled = false,
@@ -118,15 +115,17 @@ export const ChatInput = memo(
       thinkingEnabled,
       setThinkingEnabled,
       setThinking,
+      isSearching,
     } = useInputHandlers({
       sessionId,
       workspaceId,
       onSubmit,
       onCancel,
       onShowForkModal,
-      fetchPaths,
       fetchCommands,
       isProcessing,
+      request: request!,
+      cwd: cwd || '',
     });
 
     const { planMode, thinking, togglePlanMode, toggleThinking } = inputState;
@@ -422,6 +421,20 @@ export const ChatInput = memo(
             items={suggestions.items}
             selectedIndex={suggestions.selectedIndex}
           />
+        )}
+
+        {/* Searching indicator */}
+        {isSearching && suggestions.items.length === 0 && (
+          <div
+            className="absolute bottom-full left-0 mb-1 px-3 py-2 text-sm rounded-md"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            Searching...
+          </div>
         )}
 
         {/* Main Input Container */}
