@@ -20,8 +20,8 @@ Then you should see the desktop app running in your browser.
 
 ## Local Development with Custom @neovate/code
 
-To use a local development version of `@neovate/code`, set the `NEOVATE_CODE_CLI_PATH` environment variable:
+To use a local development version of `@neovate/code`, set the `NEOVATE_CODE_PATH` environment variable:
 
 ```bash
-NEOVATE_CODE_CLI_PATH=/path/to/neovate-code/dist/cli.mjs npm run dev
+NEOVATE_CODE_PATH=/path/to/neovate-code/dist/index.mjs npm run dev
 ```
