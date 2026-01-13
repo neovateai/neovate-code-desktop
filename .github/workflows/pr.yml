@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: neovate-dev-${{ matrix.arch }}
-          path: release-dev/mac*/Neovate Dev.app
+          path: release-dev/${{ matrix.arch == 'x64' && 'mac' || 'mac-arm64' }}/*.app
           if-no-files-found: error
   comment:
     needs: build-mac-dev
