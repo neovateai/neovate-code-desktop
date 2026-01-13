@@ -1,6 +1,12 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useListNavigation } from './useListNavigation';
+import { useDebounce } from './useDebounce';
 import { findAtTokenAtCursor } from '../lib/tokenUtils';
+import type {
+  HandlerInput,
+  HandlerMethod,
+  HandlerOutput,
+} from '../nodeBridge.types';
 
 type TriggerType = 'at' | 'tab' | null;
 
@@ -16,29 +22,29 @@ interface UseFileSuggestionProps {
   value: string;
   cursorPosition: number;
   forceTabTrigger: boolean;
-  fetchPaths: () => Promise<string[]>;
+  request: <K extends HandlerMethod>(
+    method: K,
+    params: HandlerInput<K>,
+  ) => Promise<HandlerOutput<K>>;
+  cwd: string;
 }
 
 export function useFileSuggestion({
   value,
   cursorPosition,
   forceTabTrigger,
-  fetchPaths,
+  request,
+  cwd,
 }: UseFileSuggestionProps) {
   const [paths, setPaths] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const requestIdRef = useRef(0);
+  const lastQueryRef = useRef('');
 
   const atMatch = useMemo((): MatchResult => {
-    // console.log(
-    //   '[useFileSuggestion] computing atMatch, value:',
-    //   JSON.stringify(value),
-    //   'cursorPosition:',
-    //   cursorPosition,
-    // );
     const tokenRange = findAtTokenAtCursor(value, cursorPosition);
 
     if (!tokenRange) {
-      // console.log('[useFileSuggestion] no tokenRange found');
       return {
         hasQuery: false,
         fullMatch: '',
@@ -49,19 +55,11 @@ export function useFileSuggestion({
     }
 
     const { startIndex, fullMatch } = tokenRange;
-    // Query is text between @ and cursor (for partial matching during typing)
     let query = value.substring(startIndex + 1, cursorPosition);
     if (query.startsWith('"')) {
       query = query.slice(1).replace(/"$/, '');
     }
 
-    // console.log('[useFileSuggestion] atMatch result:', {
-    //   hasQuery: true,
-    //   fullMatch,
-    //   query,
-    //   startIndex,
-    //   triggerType: 'at',
-    // });
     return {
       hasQuery: true,
       fullMatch,
@@ -107,24 +105,48 @@ export function useFileSuggestion({
 
   const activeMatch = atMatch.hasQuery ? atMatch : tabMatch;
 
-  const matchedPaths = useMemo(() => {
-    if (!activeMatch.hasQuery) return [];
-    if (activeMatch.query === '') return paths;
-    return paths.filter((p) =>
-      p.toLowerCase().includes(activeMatch.query.toLowerCase()),
-    );
-  }, [paths, activeMatch]);
-
-  const navigation = useListNavigation(matchedPaths);
+  const debouncedQuery = useDebounce(activeMatch.query, 150);
 
   useEffect(() => {
-    if (activeMatch.hasQuery && paths.length === 0) {
-      setIsLoading(true);
-      fetchPaths()
-        .then(setPaths)
-        .finally(() => setIsLoading(false));
+    if (activeMatch.query !== lastQueryRef.current) {
+      lastQueryRef.current = activeMatch.query;
+      setPaths([]);
     }
-  }, [activeMatch.hasQuery, paths.length, fetchPaths]);
+  }, [activeMatch.query]);
+
+  useEffect(() => {
+    if (!activeMatch.hasQuery) {
+      setPaths([]);
+      return;
+    }
+
+    const currentRequestId = ++requestIdRef.current;
+    setIsLoading(true);
+
+    request('utils.searchPaths', {
+      cwd,
+      query: debouncedQuery,
+      maxResults: 100,
+    })
+      .then((res) => {
+        if (currentRequestId !== requestIdRef.current) return;
+        setPaths(res.data.paths);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        if (currentRequestId !== requestIdRef.current) return;
+        console.error('Failed to search paths:', error);
+        setIsLoading(false);
+      });
+  }, [request, cwd, debouncedQuery, activeMatch.hasQuery]);
+
+  const matchedPaths = useMemo(() => {
+    if (!activeMatch.hasQuery) return [];
+    if (paths.length === 1 && paths[0] === activeMatch.query) return [];
+    return paths;
+  }, [paths, activeMatch.hasQuery, activeMatch.query]);
+
+  const navigation = useListNavigation(matchedPaths);
 
   const getSelected = useCallback(() => {
     const selected = navigation.getSelected();

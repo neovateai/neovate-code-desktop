@@ -1,6 +1,5 @@
-import React from 'react';
+import { FileIcon, CodeIcon, FolderIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { FileIcon, CodeIcon } from '@hugeicons/core-free-icons';
 import { ScrollArea } from '../ui';
 
 interface SuggestionDropdownProps {
@@ -8,6 +7,21 @@ interface SuggestionDropdownProps {
   items: (string | { name: string; description: string })[];
   selectedIndex: number;
   maxVisible?: number;
+}
+
+function parseFilePath(path: string): { fileName: string; dirPath: string } {
+  const lastSlash = path.lastIndexOf('/');
+  if (lastSlash === -1) {
+    return { fileName: path, dirPath: '' };
+  }
+  return {
+    fileName: path.substring(lastSlash + 1),
+    dirPath: path.substring(0, lastSlash),
+  };
+}
+
+function isDirectory(path: string): boolean {
+  return path.endsWith('/') || !path.includes('.');
 }
 
 export function SuggestionDropdown({
@@ -29,7 +43,7 @@ export function SuggestionDropdown({
 
   return (
     <div
-      className="absolute bottom-full left-0 mb-1 w-full max-w-md rounded-lg shadow-lg overflow-hidden z-50"
+      className="absolute bottom-full left-0 mb-1 w-full max-w-lg rounded-lg shadow-lg overflow-hidden z-50"
       style={{
         backgroundColor: 'var(--bg-surface)',
         border: '1px solid var(--border-subtle)',
@@ -40,14 +54,53 @@ export function SuggestionDropdown({
           {visibleItems.map((item, index) => {
             const actualIndex = startIndex + index;
             const isSelected = actualIndex === selectedIndex;
-            const name = typeof item === 'string' ? item : item.name;
-            const description =
-              typeof item === 'string' ? '' : item.description;
+
+            if (type === 'slash') {
+              const name = typeof item === 'string' ? item : item.name;
+              const description =
+                typeof item === 'string' ? '' : item.description;
+
+              return (
+                <li
+                  key={actualIndex}
+                  className="px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors"
+                  style={{
+                    backgroundColor: isSelected
+                      ? 'var(--bg-active)'
+                      : 'transparent',
+                  }}
+                >
+                  <HugeiconsIcon
+                    icon={CodeIcon}
+                    size={16}
+                    color="var(--text-secondary)"
+                  />
+                  <span
+                    className="font-mono text-sm flex-1"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    /{name}
+                  </span>
+                  {description && (
+                    <span
+                      className="text-xs truncate max-w-[200px]"
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      {description}
+                    </span>
+                  )}
+                </li>
+              );
+            }
+
+            const fullPath = typeof item === 'string' ? item : item.name;
+            const isDir = isDirectory(fullPath);
+            const { fileName, dirPath } = parseFilePath(fullPath);
 
             return (
               <li
                 key={actualIndex}
-                className="px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors"
+                className="px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors min-w-0"
                 style={{
                   backgroundColor: isSelected
                     ? 'var(--bg-active)'
@@ -55,22 +108,23 @@ export function SuggestionDropdown({
                 }}
               >
                 <HugeiconsIcon
-                  icon={type === 'slash' ? CodeIcon : FileIcon}
+                  icon={isDir ? FolderIcon : FileIcon}
                   size={16}
                   color="var(--text-secondary)"
+                  className="flex-shrink-0"
                 />
                 <span
-                  className="font-mono text-sm flex-1"
+                  className="text-sm font-medium truncate"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {type === 'slash' ? `/${name}` : name}
+                  {fileName || fullPath}
                 </span>
-                {description && (
+                {dirPath && (
                   <span
-                    className="text-xs truncate max-w-[200px]"
+                    className="text-xs truncate flex-1 text-right"
                     style={{ color: 'var(--text-tertiary)' }}
                   >
-                    {description}
+                    {dirPath}
                   </span>
                 )}
               </li>

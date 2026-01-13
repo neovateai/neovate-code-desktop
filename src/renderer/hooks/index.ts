@@ -15,3 +15,4 @@ export {
   useImagePasteManager,
   type ImagePasteResult,
 } from './useImagePasteManager';
+export { useDebounce } from './useDebounce';
