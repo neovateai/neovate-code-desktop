@@ -1,6 +1,7 @@
 // Shared types between main and renderer processes
+import type { ElectronAPI } from '@electron-toolkit/preload';
 
-export interface ElectronAPI {
+export interface LegacyElectronAPI {
   platform: string;
   versions: {
     node: string;
@@ -23,13 +24,12 @@ export interface ElectronAPI {
   loadStore: () => Promise<any>;
   selectDirectory: () => Promise<string | null>;
   rendererReady: () => void;
-  createNeovateServer: () => Promise<{ url: string }>;
   quitApp: () => void;
 }
 
 // Extend Window interface for type safety
 declare global {
   interface Window {
-    electron?: ElectronAPI;
+    electron: ElectronAPI & LegacyElectronAPI;
   }
 }

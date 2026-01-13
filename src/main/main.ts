@@ -3,15 +3,13 @@ import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { isDev } from './env';
-import { ErrorCodes } from './server/constants';
-import { createNeovateServer } from './server/create';
-import type { ServerInstance } from './server/types';
+import { registerMainHandlers } from '../shared/lib/ipc/main';
+import { ipcMainHandlers } from './ipc';
+import { neovateServerManager } from './server';
 
 // declare const _dirname: string;
 
 let mainWindow: BrowserWindow | null = null;
-let serverInstance: ServerInstance | null = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -39,28 +37,13 @@ function createWindow() {
   if (!isDev) {
     autoUpdater.checkForUpdatesAndNotify();
   }
-
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-ipcMain.handle('neovate-server:create', async () => {
-  if (serverInstance) {
-    return { url: serverInstance.url };
-  }
-
-  try {
-    const instance = await createNeovateServer();
-    serverInstance = instance;
-    return { url: instance.url };
-  } catch (error) {
-    throw {
-      code: ErrorCodes.SPAWN_FAILED,
-      message: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-});
+// Register typesafe IPC handlers
+registerMainHandlers(ipcMainHandlers);
 
 // Handle directory listing requests with confirmation
 ipcMain.on('request-list-directory', (event) => {
@@ -163,13 +146,6 @@ ipcMain.on('app:quit', () => {
   app.quit();
 });
 
-// Shutdown handlers
-app.on('before-quit', () => {
-  if (serverInstance) {
-    serverInstance.close();
-  }
-});
-
 process.on('uncaughtException', (error) => {
   console.error('Uncaught exception', error);
 });
@@ -195,4 +171,9 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// Register shutdown handler to clean up server on app quit
+app.on('before-quit', () => {
+  neovateServerManager.stop();
 });

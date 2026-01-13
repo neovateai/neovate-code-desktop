@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store';
+import { ipcMainCaller } from '../lib/ipc';
 
 interface ServerError {
   code: string;
@@ -40,7 +41,7 @@ export function useStoreConnection(): UseStoreConnectionResult {
 
     const startServer = async () => {
       try {
-        const { url } = await window.electron!.createNeovateServer();
+        const { url } = await ipcMainCaller.neovateServer.create();
         setUrl(url);
       } catch (error) {
         setServerError(error as ServerError);
@@ -75,7 +76,7 @@ export function useStoreConnection(): UseStoreConnectionResult {
     setConnectionState('connecting');
     hasInitialized.current = false;
     try {
-      const { url } = await window.electron!.createNeovateServer();
+      const { url } = await ipcMainCaller.neovateServer.create();
       setUrl(url);
     } catch (error) {
       setServerError(error as ServerError);

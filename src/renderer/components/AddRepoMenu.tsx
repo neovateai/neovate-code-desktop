@@ -1,7 +1,6 @@
 import { CloudIcon, FolderIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import React from 'react';
-import type { ElectronAPI } from '../../shared/types';
 import { useStore } from '../store';
 import { toastManager } from './ui';
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from './ui/menu';
@@ -35,7 +34,7 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
 
     try {
       // Open native directory picker
-      const electron = window.electron as ElectronAPI | undefined;
+      const electron = window.electron;
       if (!electron?.selectDirectory) {
         console.error('Directory selection is not available');
         return;
