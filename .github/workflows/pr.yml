@@ -37,31 +37,24 @@ jobs:
           # Calculate sizes and format them
           echo "Calculating artifact sizes..."
 
-          # Find DMG and ZIP files
-          DMG_FILE=$(find release-dev -name "*-${{ matrix.arch }}.dmg" -type f | head -n 1)
-          ZIP_FILE=$(find release-dev -name "*-${{ matrix.arch }}.zip" -type f | head -n 1)
+          # Find .app directory
+          APP_DIR=$(find release-dev -name "*.app" -type d | head -n 1)
 
-          # Get sizes in bytes and convert to human-readable format
-          if [ -f "$DMG_FILE" ]; then
-            DMG_SIZE_BYTES=$(stat -f%z "$DMG_FILE" 2>/dev/null || stat -c%s "$DMG_FILE" 2>/dev/null)
-            DMG_SIZE_MB=$(echo "scale=2; $DMG_SIZE_BYTES / 1048576" | bc)
-            echo "dmg_size=${DMG_SIZE_MB} MB" >> $GITHUB_OUTPUT
+          # Get size of .app directory
+          if [ -d "$APP_DIR" ]; then
+            # Get size in bytes
+            APP_SIZE_BYTES=$(du -sk "$APP_DIR" | cut -f1)
+            # Convert KB to MB
+            APP_SIZE_MB=$(echo "scale=2; $APP_SIZE_BYTES / 1024" | bc)
+            echo "app_size=${APP_SIZE_MB} MB" >> $GITHUB_OUTPUT
           else
-            echo "dmg_size=N/A" >> $GITHUB_OUTPUT
-          fi
-
-          if [ -f "$ZIP_FILE" ]; then
-            ZIP_SIZE_BYTES=$(stat -f%z "$ZIP_FILE" 2>/dev/null || stat -c%s "$ZIP_FILE" 2>/dev/null)
-            ZIP_SIZE_MB=$(echo "scale=2; $ZIP_SIZE_BYTES / 1048576" | bc)
-            echo "zip_size=${ZIP_SIZE_MB} MB" >> $GITHUB_OUTPUT
-          else
-            echo "zip_size=N/A" >> $GITHUB_OUTPUT
+            echo "app_size=N/A" >> $GITHUB_OUTPUT
+            APP_SIZE_MB="N/A"
           fi
 
           # Create a size info file for the comment job
           mkdir -p size-info
-          echo "DMG: ${DMG_SIZE_MB:-N/A} MB" > size-info/${{ matrix.arch }}-sizes.txt
-          echo "ZIP: ${ZIP_SIZE_MB:-N/A} MB" >> size-info/${{ matrix.arch }}-sizes.txt
+          echo "App: ${APP_SIZE_MB} MB" > size-info/${{ matrix.arch }}-sizes.txt
 
           cat size-info/${{ matrix.arch }}-sizes.txt
       - name: Upload size info
@@ -100,15 +93,12 @@ jobs:
               try {
                 const sizeFile = path.join('size-info', `size-info-${arch}`, `${arch}-sizes.txt`);
                 const content = fs.readFileSync(sizeFile, 'utf8');
-                const lines = content.trim().split('\n');
-                const dmgLine = lines.find(l => l.startsWith('DMG:'));
-                const zipLine = lines.find(l => l.startsWith('ZIP:'));
-                const dmgSize = dmgLine ? dmgLine.split(':')[1].trim() : 'N/A';
-                const zipSize = zipLine ? zipLine.split(':')[1].trim() : 'N/A';
-                return { dmg: dmgSize, zip: zipSize };
+                const appLine = content.trim().split('\n').find(l => l.startsWith('App:'));
+                const appSize = appLine ? appLine.split(':')[1].trim() : 'N/A';
+                return { app: appSize };
               } catch (error) {
                 console.error(`Error reading size info for ${arch}:`, error);
-                return { dmg: 'N/A', zip: 'N/A' };
+                return { app: 'N/A' };
               }
             };
 
@@ -131,10 +121,10 @@ jobs:
               identifier,
               '## 🎉 Build Ready',
               '',
-              '| Architecture | Download | DMG Size | ZIP Size |',
-              '|--------------|----------|----------|----------|',
-              `| Apple Silicon | ${arm64 ? `[Download](${artifactUrl(arm64)})` : '⏳'} | ${arm64Sizes.dmg} | ${arm64Sizes.zip} |`,
-              `| Intel | ${x64 ? `[Download](${artifactUrl(x64)})` : '⏳'} | ${x64Sizes.dmg} | ${x64Sizes.zip} |`,
+              '| Architecture | Download | App Size |',
+              '|--------------|----------|----------|',
+              `| Apple Silicon | ${arm64 ? `[Download](${artifactUrl(arm64)})` : '⏳'} | ${arm64Sizes.app} |`,
+              `| Intel | ${x64 ? `[Download](${artifactUrl(x64)})` : '⏳'} | ${x64Sizes.app} |`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
