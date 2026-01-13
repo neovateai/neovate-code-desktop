@@ -112,14 +112,6 @@ function App() {
     ? workspaces[selectedWorkspaceId]
     : null;
 
-  // Mock function to execute a command
-  const handleExecuteCommand = async (command: string) => {
-    // In a real implementation, this would send the command via WebSocket
-    console.log(`Executing command: ${command}`);
-    // For now, we'll just simulate the execution
-    return Promise.resolve();
-  };
-
   // Determine empty state type
   const emptyStateType = !selectedWorkspace
     ? Object.keys(repos).length === 0
@@ -165,7 +157,7 @@ function App() {
         <AppLayoutSecondaryPanel>
           <div className="h-full flex flex-col">
             {/* <WorkspaceChanges workspace={selectedWorkspace} /> */}
-            <Terminal onExecuteCommand={handleExecuteCommand} />
+            {selectedRepoPath && <Terminal cwd={selectedRepoPath} />}
           </div>
         </AppLayoutSecondaryPanel>
       </AppLayout>

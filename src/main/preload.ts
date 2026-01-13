@@ -35,6 +35,32 @@ const compatibleElectronAPI = {
 
   quitApp: () => ipcRenderer.send('app:quit'),
 
+  // Terminal PTY events (main → renderer)
+  onTerminalData: (
+    callback: (data: { ptyId: string; data: string }) => void,
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      data: { ptyId: string; data: string },
+    ) => callback(data);
+    ipcRenderer.on('terminal:data', handler);
+    return () => ipcRenderer.removeListener('terminal:data', handler);
+  },
+  onTerminalExit: (
+    callback: (data: {
+      ptyId: string;
+      exitCode: number;
+      signal?: number;
+    }) => void,
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      data: { ptyId: string; exitCode: number; signal?: number },
+    ) => callback(data);
+    ipcRenderer.on('terminal:exit', handler);
+    return () => ipcRenderer.removeListener('terminal:exit', handler);
+  },
+
   // Expose @electron-toolkit/preload API for typesafe IPC
   ...electronAPI,
 };

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { registerMainHandlers } from '../shared/lib/ipc/main';
 import { ipcMainHandlers } from './ipc';
+import { ptyManager } from './pty';
 import { neovateServerManager } from './server';
 
 // declare const _dirname: string;
@@ -173,7 +174,8 @@ app.on('activate', () => {
   }
 });
 
-// Register shutdown handler to clean up server on app quit
+// Register shutdown handler to clean up server and PTYs on app quit
 app.on('before-quit', () => {
+  ptyManager.destroyAll();
   neovateServerManager.stop();
 });

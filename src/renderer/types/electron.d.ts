@@ -25,6 +25,17 @@ export interface LegacyElectronAPI {
   selectDirectory: () => Promise<string | null>;
   rendererReady: () => void;
   quitApp: () => void;
+  // Terminal PTY events
+  onTerminalData: (
+    callback: (data: { ptyId: string; data: string }) => void,
+  ) => () => void;
+  onTerminalExit: (
+    callback: (data: {
+      ptyId: string;
+      exitCode: number;
+      signal?: number;
+    }) => void,
+  ) => () => void;
 }
 
 // Extend Window interface for type safety

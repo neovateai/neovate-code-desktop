@@ -998,22 +998,19 @@ const useStore = create<Store>()((set, get) => ({
 
   selectWorkspace: (id: string | null) => {
     set((state) => {
-      // Validate that the workspace exists and belongs to the selected repo if both are set
-      if (id !== null) {
-        const workspace = state.workspaces[id];
-        if (!workspace) return state;
-
-        if (
-          state.selectedRepoPath &&
-          workspace.repoPath !== state.selectedRepoPath
-        ) {
-          return state;
-        }
+      if (id === null) {
+        return {
+          selectedWorkspaceId: null,
+          selectedSessionId: null,
+        };
       }
 
+      const workspace = state.workspaces[id];
+      if (!workspace) return state;
+
       return {
+        selectedRepoPath: workspace.repoPath,
         selectedWorkspaceId: id,
-        // Reset child selection when parent changes
         selectedSessionId: null,
       };
     });
