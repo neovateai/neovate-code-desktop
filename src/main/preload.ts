@@ -1,7 +1,8 @@
+import { electronAPI } from '@electron-toolkit/preload';
 import { contextBridge, ipcRenderer } from 'electron';
 
-// Expose safe APIs to renderer process
-contextBridge.exposeInMainWorld('electron', {
+const compatibleElectronAPI = {
+  // Legacy APIs (keep for backward compatibility with non-migrated code)
   platform: process.platform,
   versions: {
     node: process.versions.node,
@@ -32,8 +33,28 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.invoke('select-directory'),
   rendererReady: () => ipcRenderer.send('renderer:ready'),
 
-  createNeovateServer: (): Promise<{ url: string }> =>
-    ipcRenderer.invoke('neovate-server:create'),
-
   quitApp: () => ipcRenderer.send('app:quit'),
-});
+
+  // Expose @electron-toolkit/preload API for typesafe IPC
+  ...electronAPI,
+};
+
+/**
+ * Expose Electron APIs from your preload script, the API
+ * will be accessible from the website on `window.electron`.
+ */
+export function exposeElectronAPI(): void {
+  if (process.contextIsolated) {
+    try {
+      contextBridge.exposeInMainWorld('electron', compatibleElectronAPI);
+    } catch (error) {
+      console.error(error);
+    }
+  } else {
+    // @ts-expect-error (need dts)
+    window.electron = electronAPI;
+  }
+}
+
+// Call the function to expose the API
+exposeElectronAPI();

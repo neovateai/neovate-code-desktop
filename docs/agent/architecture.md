@@ -9,7 +9,13 @@ The application follows a standard Electron architecture with a Main process and
   - Window creation and management.
   - Native file system access (directory selection).
   - **Persistence**: Handles saving/loading the Zustand store to `~/.neovate/desktop/store.json`.
-  - **IPC Handlers**: `select-directory`, `store:save`, `store:load`.
+  - **IPC Handlers**: Defined in `src/main/ipc/index.ts` using typesafe IPC (tipc).
+
+## Typesafe IPC (`src/shared/lib/tipc/`)
+- **Source of Truth**: `src/main/ipc/index.ts` - defines `mainHandlers` and `RendererHandlers` type
+- **Main Process**: `registerMainHandlers()` registers handlers, `getRendererCaller()` calls renderer
+- **Renderer Process**: `mainCaller` invokes main handlers, `rendererHandler` handles events from main
+- **Pattern**: Two-level nested structure like `mainCaller.namespace.method()`
 
 ## Renderer Process (`src/renderer/`)
 - **Framework**: React 19 with TypeScript.

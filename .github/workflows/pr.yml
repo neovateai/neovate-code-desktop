@@ -31,6 +31,45 @@ jobs:
         run: npm ci
       - name: Build dev package
         run: npm run package:dev -- --${{ matrix.arch }} --publish=never
+      - name: Calculate artifact sizes
+        id: sizes
+        run: |
+          # Calculate sizes and format them
+          echo "Calculating artifact sizes..."
+
+          # Find DMG and ZIP files
+          DMG_FILE=$(find release-dev -name "*-${{ matrix.arch }}.dmg" -type f | head -n 1)
+          ZIP_FILE=$(find release-dev -name "*-${{ matrix.arch }}.zip" -type f | head -n 1)
+
+          # Get sizes in bytes and convert to human-readable format
+          if [ -f "$DMG_FILE" ]; then
+            DMG_SIZE_BYTES=$(stat -f%z "$DMG_FILE" 2>/dev/null || stat -c%s "$DMG_FILE" 2>/dev/null)
+            DMG_SIZE_MB=$(echo "scale=2; $DMG_SIZE_BYTES / 1048576" | bc)
+            echo "dmg_size=${DMG_SIZE_MB} MB" >> $GITHUB_OUTPUT
+          else
+            echo "dmg_size=N/A" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -f "$ZIP_FILE" ]; then
+            ZIP_SIZE_BYTES=$(stat -f%z "$ZIP_FILE" 2>/dev/null || stat -c%s "$ZIP_FILE" 2>/dev/null)
+            ZIP_SIZE_MB=$(echo "scale=2; $ZIP_SIZE_BYTES / 1048576" | bc)
+            echo "zip_size=${ZIP_SIZE_MB} MB" >> $GITHUB_OUTPUT
+          else
+            echo "zip_size=N/A" >> $GITHUB_OUTPUT
+          fi
+
+          # Create a size info file for the comment job
+          mkdir -p size-info
+          echo "DMG: ${DMG_SIZE_MB:-N/A} MB" > size-info/${{ matrix.arch }}-sizes.txt
+          echo "ZIP: ${ZIP_SIZE_MB:-N/A} MB" >> size-info/${{ matrix.arch }}-sizes.txt
+
+          cat size-info/${{ matrix.arch }}-sizes.txt
+      - name: Upload size info
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-info-${{ matrix.arch }}
+          path: size-info/${{ matrix.arch }}-sizes.txt
+          if-no-files-found: error
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -43,11 +82,38 @@ jobs:
     permissions:
       pull-requests: write
     steps:
+      - name: Download size info artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: size-info-*
+          path: size-info
       - name: Post PR comment with artifact links
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
+            const path = require('path');
             const identifier = '<!-- neovate-build -->';
+
+            // Read size information from downloaded artifacts
+            const readSizeInfo = (arch) => {
+              try {
+                const sizeFile = path.join('size-info', `size-info-${arch}`, `${arch}-sizes.txt`);
+                const content = fs.readFileSync(sizeFile, 'utf8');
+                const lines = content.trim().split('\n');
+                const dmgLine = lines.find(l => l.startsWith('DMG:'));
+                const zipLine = lines.find(l => l.startsWith('ZIP:'));
+                const dmgSize = dmgLine ? dmgLine.split(':')[1].trim() : 'N/A';
+                const zipSize = zipLine ? zipLine.split(':')[1].trim() : 'N/A';
+                return { dmg: dmgSize, zip: zipSize };
+              } catch (error) {
+                console.error(`Error reading size info for ${arch}:`, error);
+                return { dmg: 'N/A', zip: 'N/A' };
+              }
+            };
+
+            const arm64Sizes = readSizeInfo('arm64');
+            const x64Sizes = readSizeInfo('x64');
 
             const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
               owner: context.repo.owner,
@@ -58,17 +124,17 @@ jobs:
             const arm64 = artifacts.find(a => a.name === 'neovate-dev-arm64');
             const x64 = artifacts.find(a => a.name === 'neovate-dev-x64');
 
-            const artifactUrl = (artifact) => 
+            const artifactUrl = (artifact) =>
               `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/artifacts/${artifact.id}`;
 
             const body = [
               identifier,
               '## 🎉 Build Ready',
               '',
-              '| Architecture | Download |',
-              '|--------------|----------|',
-              `| Apple Silicon | ${arm64 ? `[Download](${artifactUrl(arm64)})` : '⏳'} |`,
-              `| Intel | ${x64 ? `[Download](${artifactUrl(x64)})` : '⏳'} |`,
+              '| Architecture | Download | DMG Size | ZIP Size |',
+              '|--------------|----------|----------|----------|',
+              `| Apple Silicon | ${arm64 ? `[Download](${artifactUrl(arm64)})` : '⏳'} | ${arm64Sizes.dmg} | ${arm64Sizes.zip} |`,
+              `| Intel | ${x64 ? `[Download](${artifactUrl(x64)})` : '⏳'} | ${x64Sizes.dmg} | ${x64Sizes.zip} |`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({

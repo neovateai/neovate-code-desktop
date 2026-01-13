@@ -154,6 +154,7 @@ interface StoreActions {
     planMode: PlanMode;
     parentUuid?: string;
     think: ThinkingLevel;
+    images?: string[];
   }) => Promise<void>;
 
   // Server URL action
@@ -493,6 +494,7 @@ const useStore = create<Store>()((set, get) => ({
     planMode: PlanMode;
     parentUuid?: string;
     think: ThinkingLevel;
+    images?: string[];
   }) => {
     const {
       selectedSessionId,
@@ -687,6 +689,15 @@ const useStore = create<Store>()((set, get) => ({
       // Transform params to backend format
       const planModeBoolean = params.planMode === 'plan';
       const thinking = params.think ? { effect: params.think } : undefined;
+      const attachments = params.images?.map((data) => {
+        const mimeMatch = data.match(/^data:([^;]+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+        return {
+          type: 'image' as const,
+          data,
+          mimeType,
+        };
+      });
 
       const response = await request('session.send', {
         message,
@@ -696,6 +707,7 @@ const useStore = create<Store>()((set, get) => ({
         thinking,
         parentUuid: params.parentUuid,
         model,
+        attachments,
       });
 
       if (response.success) {

@@ -3,7 +3,7 @@ import { useStore } from './store';
 import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
 import { WorkspacePanel } from './components/WorkspacePanel';
-import { WorkspaceChanges } from './components/WorkspaceChanges';
+// import { WorkspaceChanges } from './components/WorkspaceChanges';
 import { Terminal } from './components/Terminal';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
@@ -164,7 +164,7 @@ function App() {
         {/* Right Panel */}
         <AppLayoutSecondaryPanel>
           <div className="h-full flex flex-col">
-            <WorkspaceChanges workspace={selectedWorkspace} />
+            {/* <WorkspaceChanges workspace={selectedWorkspace} /> */}
             <Terminal onExecuteCommand={handleExecuteCommand} />
           </div>
         </AppLayoutSecondaryPanel>

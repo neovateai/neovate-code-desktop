@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { useStore } from '../store';
 
 export interface ImagePasteResult {
   success: boolean;
@@ -29,6 +30,7 @@ function truncateFilename(filename: string, maxLength = 20): string {
 }
 
 export function useImagePasteManager(
+  sessionId: string | null,
   pastedImageMap: Record<string, string>,
   setPastedImageMap: (map: Record<string, string>) => void,
 ) {
@@ -46,7 +48,8 @@ export function useImagePasteManager(
           const dimensions = await getImageDimensions(base64);
           const filename = truncateFilename(file.name || 'image.png');
 
-          setPastedImageMap({ ...pastedImageMap, [imageId]: base64 });
+          const newMap = { ...pastedImageMap, [imageId]: base64 };
+          setPastedImageMap(newMap);
 
           resolve({
             success: true,
@@ -59,7 +62,7 @@ export function useImagePasteManager(
         reader.readAsDataURL(file);
       });
     },
-    [generateImageId, pastedImageMap, setPastedImageMap],
+    [generateImageId, pastedImageMap, setPastedImageMap, sessionId],
   );
 
   const getPastedImage = useCallback(
@@ -83,9 +86,15 @@ export function useImagePasteManager(
       const regex = /\[Image \d+X\d+ [^\]]+#(\d+)\]/g;
       const matches = [...message.matchAll(regex)];
 
+      const storeState = useStore.getState();
+      const sessionInput = sessionId
+        ? storeState.inputBySession[sessionId]
+        : null;
+      const currentImageMap = sessionInput?.pastedImageMap ?? {};
+
       for (const match of matches) {
         const imageId = `#${match[1]}`;
-        const imageData = getPastedImage(imageId);
+        const imageData = currentImageMap[imageId];
         if (imageData) {
           images.push(imageData);
           expandedMessage = expandedMessage.replace(match[0], '').trim();
@@ -94,7 +103,7 @@ export function useImagePasteManager(
 
       return { expandedMessage, images };
     },
-    [getPastedImage],
+    [sessionId],
   );
 
   return {

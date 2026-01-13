@@ -73,6 +73,8 @@
     "zustand": "^5.0.8"
   },
   "dependencies": {
+    "@electron-toolkit/preload": "^3.0.2",
+    "@electron-toolkit/utils": "^4.0.0",
     "@neovate/code": "^0.23.0",
     "@pierre/diffs": "^1.0.2",
     "electron-updater": "^6.6.2",

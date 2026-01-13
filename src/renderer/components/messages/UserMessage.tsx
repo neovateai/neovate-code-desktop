@@ -45,7 +45,7 @@ export function UserMessage({ message }: UserMessageProps) {
             {imageParts.map((imagePart, index) => (
               <div key={index} style={{ marginBottom: '8px' }}>
                 <img
-                  src={`data:${imagePart.mimeType};base64,${imagePart.data}`}
+                  src={imagePart.data}
                   alt={`User uploaded image ${index + 1}`}
                   style={{
                     maxWidth: '100%',

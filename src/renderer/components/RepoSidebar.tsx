@@ -163,16 +163,7 @@ export const RepoSidebar = ({
                       />
                       <span className="font-medium text-sm">{repo.name}</span>
                       <span
-                        className="ml-auto text-xs px-2 py-0.5 rounded"
-                        style={{
-                          backgroundColor: 'var(--bg-base)',
-                          color: 'var(--text-secondary)',
-                        }}
-                      >
-                        {repo.workspaceIds.length}
-                      </span>
-                      <span
-                        className="p-1 rounded hover:bg-opacity-70"
+                        className="ml-auto p-1 rounded hover:bg-opacity-70"
                         onClick={(e) => handleRepoInfoClick(repo, e)}
                         style={{ color: 'var(--text-secondary)' }}
                       >

@@ -272,7 +272,7 @@ export const WorkspacePanel = ({
   ]);
 
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, images?: string[]) => {
       if (!content.trim() || isLoading) return;
 
       const inputState = getSessionInput(selectedSessionId || '');
@@ -283,6 +283,7 @@ export const WorkspacePanel = ({
           message: content,
           planMode: inputState.planMode,
           think: inputState.thinking,
+          images,
         });
         setInputValue('');
       } finally {
