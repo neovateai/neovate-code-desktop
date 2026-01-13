@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useStore } from './store';
 import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
@@ -90,6 +90,21 @@ function App() {
     }
   }, [theme]);
 
+  const [visitedRepoPaths, setVisitedRepoPaths] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  useEffect(() => {
+    if (selectedRepoPath && !visitedRepoPaths.has(selectedRepoPath)) {
+      setVisitedRepoPaths((prev) => new Set(prev).add(selectedRepoPath));
+    }
+  }, [selectedRepoPath]);
+
+  const visitedRepoPathsArray = useMemo(
+    () => Array.from(visitedRepoPaths),
+    [visitedRepoPaths],
+  );
+
   if (connectionState === 'error') {
     return (
       <ServerErrorDialog
@@ -157,7 +172,13 @@ function App() {
         <AppLayoutSecondaryPanel>
           <div className="h-full flex flex-col">
             {/* <WorkspaceChanges workspace={selectedWorkspace} /> */}
-            {selectedRepoPath && <Terminal cwd={selectedRepoPath} />}
+            {visitedRepoPathsArray.map((repoPath) => (
+              <Terminal
+                key={repoPath}
+                cwd={repoPath}
+                hidden={repoPath !== selectedRepoPath}
+              />
+            ))}
           </div>
         </AppLayoutSecondaryPanel>
       </AppLayout>

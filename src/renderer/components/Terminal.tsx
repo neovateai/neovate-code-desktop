@@ -100,7 +100,13 @@ function createTerminalTab(name: string): TerminalTab {
 }
 
 // Main component
-export const Terminal = ({ cwd }: { cwd: string }) => {
+export const Terminal = ({
+  cwd,
+  hidden,
+}: {
+  cwd: string;
+  hidden?: boolean;
+}) => {
   console.log('[Terminal] Component render, cwd prop:', cwd);
   // Create initial tab with stable ID
   const [{ tabs, activeTabId }, setTerminalState] = useState(() => {
@@ -184,6 +190,7 @@ export const Terminal = ({ cwd }: { cwd: string }) => {
           backgroundColor: '#0d0d0d',
           color: 'var(--text-primary)',
           borderTop: '1px solid var(--border-subtle)',
+          display: hidden ? 'none' : 'flex',
         }}
       >
         <Terminal.Tabs />
