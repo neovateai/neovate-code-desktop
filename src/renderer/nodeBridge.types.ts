@@ -11,7 +11,6 @@
 // import type { ApprovalCategory, ToolUse } from './tool';
 
 type ApprovalMode = any;
-type McpServerConfig = any;
 type ResponseFormat = any;
 type ThinkingConfig = any;
 type ImagePart = any;
@@ -27,6 +26,31 @@ type ModelInfo = {
   _mCreator: () => Promise<any>;
 };
 type ProvidersMap = Record<string, Provider>;
+
+// MCP Server Config types (exact match with CLI)
+export type McpStdioServerConfig = {
+  type: 'stdio';
+  command: string;
+  args: string[];
+  env?: Record<string, string>;
+  disable?: boolean;
+};
+export type McpSSEServerConfig = {
+  type: 'sse';
+  url: string;
+  disable?: boolean;
+  headers?: Record<string, string>;
+};
+export type McpHttpServerConfig = {
+  type: 'http';
+  url: string;
+  disable?: boolean;
+  headers?: Record<string, string>;
+};
+export type McpServerConfig =
+  | McpStdioServerConfig
+  | McpSSEServerConfig
+  | McpHttpServerConfig;
 
 // ============================================================================
 // Common Response Types

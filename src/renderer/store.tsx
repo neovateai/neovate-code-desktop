@@ -148,6 +148,7 @@ interface StoreActions {
     params: HandlerInput<K>,
   ) => Promise<HandlerOutput<K>>;
   onEvent: <T>(event: string, handler: (data: T) => void) => void;
+  offEvent: <T>(event: string, handler: (data: T) => void) => void;
   initialize: () => Promise<void>;
   sendMessage: (params: {
     message: string | null;
@@ -356,12 +357,10 @@ const useStore = create<Store>()((set, get) => ({
       );
     }
 
-    console.log('[REQUEST]', method, params);
     const response = await messageBus.request<
       HandlerInput<K>,
       HandlerOutput<K>
     >(method, params);
-    console.log('[RESPONSE]', method, response);
     return response;
   },
 
@@ -375,6 +374,17 @@ const useStore = create<Store>()((set, get) => ({
     }
 
     messageBus.onEvent<T>(event, handler);
+  },
+
+  offEvent: <T,>(event: string, handler: (data: T) => void) => {
+    const { messageBus } = get();
+
+    if (!messageBus) {
+      // Silently return if no messageBus - cleanup is not critical
+      return;
+    }
+
+    messageBus.offEvent<T>(event, handler);
   },
 
   initialize: async () => {

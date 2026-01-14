@@ -88,7 +88,13 @@ export class MessageBus {
   private handleEvent(message: EventMessage): void {
     const handlers = this.eventHandlers.get(message.event);
     if (handlers) {
-      handlers.map((handler) => handler(message.data));
+      handlers.map((handler) => {
+        try {
+          handler(message.data);
+        } catch (error) {
+          // Silently handle errors to prevent crashes
+        }
+      });
     }
   }
 
@@ -142,6 +148,11 @@ export class MessageBus {
         handlers.splice(index, 1);
       }
     }
+  }
+
+  // Alias for removeEventHandler to match backend API
+  offEvent<T = unknown>(event: string, handler: EventHandler<T>): void {
+    this.removeEventHandler(event, handler);
   }
 
   removeMessageHandler(method: string): void {
