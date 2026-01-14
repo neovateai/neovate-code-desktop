@@ -125,7 +125,7 @@ export function useInputHandlers({
     const newValue = `${before}${prefix}${selected} ${after}`.trim();
 
     inputState.setValue(newValue);
-    inputState.setCursorPosition(`${before}${prefix}${selected} `.length);
+    inputState.setCursorPosition(newValue.length);
     setForceTabTrigger(false);
     fileSuggestion.reset();
   }, [fileSuggestion, inputState]);
