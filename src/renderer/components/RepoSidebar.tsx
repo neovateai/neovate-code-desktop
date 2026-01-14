@@ -5,19 +5,17 @@ import {
   GitBranchIcon,
   PlusSignIcon,
   DeleteIcon,
-  SettingsIcon,
   InformationCircleIcon,
   CalendarIcon,
   ClockIcon,
   DatabaseIcon,
   CloudIcon,
   Comment01Icon,
-  ArrowLeftIcon,
-  ArrowRightIcon,
 } from '@hugeicons/core-free-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import type { RepoData } from '../client/types/entities';
 import { useStore } from '../store';
+import { useAppStore, selectPrimarySidebarCollapsed } from '../store/app';
 import { cn } from '../lib/utils';
 import { Spinner } from './ui/spinner';
 import { ScrollArea } from './ui/scroll-area';
@@ -60,7 +58,7 @@ import {
   EmptyDescription,
 } from './ui/empty';
 import { Button } from './ui/button';
-import { AddRepoMenu } from './AddRepoMenu';
+import { Input } from './ui/input';
 
 export const RepoSidebar = ({
   repos,
@@ -88,8 +86,7 @@ export const RepoSidebar = ({
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
   const createSession = useStore((state) => state.createSession);
-  const sidebarCollapsed = useStore((state) => state.sidebarCollapsed);
-  const toggleSidebar = useStore((state) => state.toggleSidebar);
+  const primarySidebarCollapsed = useAppStore(selectPrimarySidebarCollapsed);
   const getSessionProcessing = useStore((state) => state.getSessionProcessing);
   const messages = useStore((state) => state.messages);
 
@@ -119,20 +116,11 @@ export const RepoSidebar = ({
   };
 
   return (
-    <div
-      className="h-full flex flex-col overflow-hidden"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <RepoSidebar.Header
-        collapsed={sidebarCollapsed}
-        onToggle={toggleSidebar}
-      />
+    <div className="h-full flex flex-col">
+      <RepoSidebar.Header />
 
-      {!sidebarCollapsed && (
-        <ScrollArea className="flex-1" orientation="vertical">
+      {!primarySidebarCollapsed && (
+        <ScrollArea className="flex-1 p-2" orientation="vertical">
           {repos.length === 0 ? (
             <Empty>
               <EmptyMedia variant="icon">
@@ -357,7 +345,7 @@ export const RepoSidebar = ({
       )}
 
       <div className="mt-auto">
-        <RepoSidebar.Footer collapsed={sidebarCollapsed} />
+        <RepoSidebar.Footer collapsed={primarySidebarCollapsed} />
       </div>
 
       <Dialog
@@ -483,72 +471,20 @@ function InfoRow({
   );
 }
 
-RepoSidebar.Header = memo(function Header({
-  collapsed,
-  onToggle,
-}: {
-  collapsed: boolean;
-  onToggle: () => void;
-}) {
+RepoSidebar.Header = memo(function Header() {
+  const [searchValue, setSearchValue] = useState('');
+
   return (
-    <div
-      className={cn(
-        'flex items-center h-12',
-        collapsed ? 'justify-end px-2' : 'justify-between px-4',
-      )}
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
-      {!collapsed && (
-        <h2 className="text-base font-semibold flex-1">Neovate Code Desktop</h2>
-      )}
-      <button
-        className="p-1 rounded hover:bg-opacity-70 transition-colors"
-        style={{ color: 'var(--text-secondary)' }}
-        onClick={onToggle}
-        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
-        <HugeiconsIcon
-          icon={collapsed ? ArrowRightIcon : ArrowLeftIcon}
-          size={18}
-          strokeWidth={1.5}
-        />
-      </button>
-    </div>
+    <Input
+      type="search"
+      size="default"
+      value={searchValue}
+      onChange={(e) => setSearchValue(e.target.value)}
+      placeholder="Search..."
+    />
   );
 });
 
-RepoSidebar.Footer = memo(function Footer({
-  collapsed,
-}: {
-  collapsed: boolean;
-}) {
-  const setShowSettings = useStore((state) => state.setShowSettings);
-
-  return (
-    <div
-      className={cn(
-        'py-2 flex',
-        collapsed ? 'flex-col items-center px-2 gap-2' : 'flex-row px-3 gap-2',
-      )}
-      style={{ borderTop: '1px solid var(--border-subtle)' }}
-    >
-      <AddRepoMenu>
-        <div
-          className="p-2 rounded hover:bg-opacity-70 transition-colors"
-          style={{ color: 'var(--text-secondary)' }}
-          title="Add repository"
-        >
-          <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} />
-        </div>
-      </AddRepoMenu>
-      <div
-        className="p-2 rounded hover:bg-opacity-70 transition-colors"
-        style={{ color: 'var(--text-secondary)' }}
-        onClick={() => setShowSettings(true)}
-        title="Settings"
-      >
-        <HugeiconsIcon icon={SettingsIcon} size={18} strokeWidth={1.5} />
-      </div>
-    </div>
-  );
+RepoSidebar.Footer = memo(function Footer(_props: { collapsed: boolean }) {
+  return null;
 });
