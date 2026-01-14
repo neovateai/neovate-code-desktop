@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { is, platform } from '@electron-toolkit/utils';
 import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -25,9 +26,7 @@ function createWindow() {
   });
 
   // Load renderer
-  const isDev = process.argv.includes('--dev');
-
-  if (isDev) {
+  if (is.dev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
@@ -35,7 +34,7 @@ function createWindow() {
   }
 
   // Check for updates in production
-  if (!isDev) {
+  if (!is.dev) {
     autoUpdater.checkForUpdatesAndNotify();
   }
   mainWindow.on('closed', () => {
@@ -159,11 +158,18 @@ app.whenReady().then(() => {
   autoUpdater.on('error', (error) => {
     console.error('Auto updater error', error);
   });
+
+  // Set dev icon in dock when running in development mode (macOS)
+  if (is.dev && platform.isMacOS && app.dock) {
+    const devIconPath = path.join(process.cwd(), 'build/icons/icon-dev.png');
+    app.dock.setIcon(devIconPath);
+  }
+
   createWindow();
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (!platform.isMacOS) {
     app.quit();
   }
 });
