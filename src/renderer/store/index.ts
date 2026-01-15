@@ -1,4 +1,3 @@
-// Re-export existing store for backwards compatibility
 export {
   useStore,
   getInputMode,
