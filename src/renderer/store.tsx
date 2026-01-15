@@ -23,6 +23,7 @@ import {
   type CommandEntry,
 } from './slashCommand';
 import { localJSXCommands } from './slash-commands';
+import { createUISlice, type UISlice } from './store/ui-slice';
 
 type WorkspaceId = string;
 type SessionId = string;
@@ -121,7 +122,6 @@ interface StoreState {
   selectedWorkspaceId: WorkspaceId | null;
   selectedSessionId: SessionId | null;
   showSettings: boolean;
-  sidebarCollapsed: boolean;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
@@ -209,8 +209,6 @@ interface StoreActions {
   selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
-  toggleSidebar: () => void;
-  setSidebarCollapsed: (collapsed: boolean) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
   setTestComponentVisible: (visible: boolean) => void;
@@ -235,9 +233,9 @@ interface StoreActions {
   setConnectionState: (state: StoreState['state']) => void;
 }
 
-type Store = StoreState & StoreActions;
+type Store = StoreState & StoreActions & UISlice;
 
-const useStore = create<Store>()((set, get) => ({
+const useStore = create<Store>()((set, get, ...rest) => ({
   // Initial WebSocket state
   state: 'idle',
   transport: null,
@@ -267,7 +265,6 @@ const useStore = create<Store>()((set, get) => ({
   selectedWorkspaceId: null,
   selectedSessionId: null,
   showSettings: false,
-  sidebarCollapsed: false,
   openRepoAccordions: [],
   expandedSessionGroups: {},
   isTestComponentVisible: false,
@@ -1028,18 +1025,6 @@ const useStore = create<Store>()((set, get) => ({
     }));
   },
 
-  toggleSidebar: () => {
-    set((state) => ({
-      sidebarCollapsed: !state.sidebarCollapsed,
-    }));
-  },
-
-  setSidebarCollapsed: (collapsed: boolean) => {
-    set(() => ({
-      sidebarCollapsed: collapsed,
-    }));
-  },
-
   setOpenRepoAccordions: (ids: string[]) => {
     set(() => ({
       openRepoAccordions: ids,
@@ -1269,7 +1254,16 @@ const useStore = create<Store>()((set, get) => ({
   },
 
   setConnectionState: (state) => set({ state }),
+
+  // UI Slice
+  ...createUISlice(set, get, ...rest),
 }));
 
 export { useStore, defaultSessionInputState };
-export type { Store, StoreState, StoreActions, SessionProcessingState };
+export type {
+  Store,
+  StoreState,
+  StoreActions,
+  SessionProcessingState,
+  UISlice,
+};

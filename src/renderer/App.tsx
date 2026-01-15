@@ -10,9 +10,14 @@ import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/server-error-dialog';
 import {
   AppLayout,
-  AppLayoutSidebar,
-  AppLayoutPrimaryPanel,
-  AppLayoutSecondaryPanel,
+  AppLayoutTasksPanel,
+  AppLayoutChatPanel,
+  AppLayoutTabsPanel,
+  AppLayoutSecondarySidebar,
+  AppLayoutActivityBar,
+  TitleBar,
+  ActivityBar,
+  SecondarySidebar,
 } from './components/layout';
 
 function App() {
@@ -144,13 +149,14 @@ function App() {
   }
 
   return (
-    <div
-      className="flex flex-col h-dvh"
-      style={{ backgroundColor: 'var(--bg-primary)' }}
-    >
+    <div className="flex flex-col h-dvh bg-(--bg-surface)">
+      {/* Custom Title Bar */}
+      <TitleBar />
+
+      {/* Main Content Area */}
       <AppLayout>
-        {/* Sidebar */}
-        <AppLayoutSidebar>
+        {/* Tasks Panel (left sidebar) */}
+        <AppLayoutTasksPanel>
           <RepoSidebar
             repos={Object.values(repos)}
             selectedRepoPath={selectedRepoPath}
@@ -158,20 +164,19 @@ function App() {
             onSelectRepo={selectRepo}
             onSelectWorkspace={selectWorkspace}
           />
-        </AppLayoutSidebar>
+        </AppLayoutTasksPanel>
 
-        {/* Main Content */}
-        <AppLayoutPrimaryPanel>
+        {/* Chat Panel (main content) */}
+        <AppLayoutChatPanel>
           <WorkspacePanel
             workspace={selectedWorkspace}
             emptyStateType={emptyStateType}
           />
-        </AppLayoutPrimaryPanel>
+        </AppLayoutChatPanel>
 
-        {/* Right Panel */}
-        <AppLayoutSecondaryPanel>
+        {/* Tabs Panel (terminal, logs - conditional) */}
+        <AppLayoutTabsPanel>
           <div className="h-full flex flex-col">
-            {/* <WorkspaceChanges workspace={selectedWorkspace} /> */}
             {visitedRepoPathsArray.map((repoPath) => (
               <Terminal
                 key={repoPath}
@@ -180,7 +185,17 @@ function App() {
               />
             ))}
           </div>
-        </AppLayoutSecondaryPanel>
+        </AppLayoutTabsPanel>
+
+        {/* Secondary Sidebar (files, git - conditional) */}
+        <AppLayoutSecondarySidebar>
+          <SecondarySidebar />
+        </AppLayoutSecondarySidebar>
+
+        {/* Activity Bar (always visible) */}
+        <AppLayoutActivityBar>
+          <ActivityBar />
+        </AppLayoutActivityBar>
       </AppLayout>
 
       <TestComponent />

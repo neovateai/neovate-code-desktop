@@ -9,5 +9,6 @@ export {
   type StoreState,
   type StoreActions,
   type SessionProcessingState,
+  type SessionInputState,
+  type UISlice,
 } from '../store';
-export type { SessionInputState } from '../store';

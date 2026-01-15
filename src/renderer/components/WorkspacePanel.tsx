@@ -381,16 +381,10 @@ export const WorkspacePanel = ({
 
   return (
     <WorkspaceContext.Provider value={contextValue}>
-      <div
-        className="flex flex-col h-full"
-        style={{ backgroundColor: 'var(--bg-primary)' }}
-      >
+      <div className="flex flex-col h-full">
         <WorkspacePanel.Header />
         <WorkspacePanel.Messages />
-        <div
-          className="p-4 flex flex-col gap-3"
-          style={{ borderTop: '1px solid var(--border-subtle)' }}
-        >
+        <div className="p-4 flex flex-col gap-3">
           <ActivityIndicator sessionId={selectedSessionId} />
           <ChatInput
             ref={chatInputRef}
@@ -422,10 +416,7 @@ WorkspacePanel.Header = function Header() {
   const request = useStore((state) => state.request);
 
   return (
-    <div
-      className="flex items-center justify-between h-12 px-4"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between h-12 px-4">
       <h2
         className="text-base font-semibold"
         style={{ color: 'var(--text-primary)' }}
