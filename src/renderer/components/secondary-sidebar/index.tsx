@@ -1,10 +1,10 @@
 import { memo } from 'react';
-import { useAppStore, selectSecondarySidebarTab } from '../../store/app';
+import { useStore } from '../../store';
 import { FileTree } from './file-tree';
 import { GitPanel } from './git-panel';
 
 export const SecondarySidebar = memo(function SecondarySidebar() {
-  const secondarySidebarTab = useAppStore(selectSecondarySidebarTab);
+  const secondarySidebarTab = useStore((s) => s.secondarySidebarTab);
 
   const panelTitle =
     secondarySidebarTab === 'files'

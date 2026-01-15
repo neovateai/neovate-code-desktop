@@ -13,20 +13,15 @@ import {
 import { Separator } from '../ui/separator';
 import { Button } from '../ui/button';
 import { useStore } from '../../store';
-import {
-  useAppStore,
-  selectPrimarySidebarCollapsed,
-  selectSecondarySidebarCollapsed,
-} from '../../store/app';
 import { AddRepoMenu } from '../AddRepoMenu';
 
 export const TitleBar = memo(function TitleBar() {
-  const primarySidebarCollapsed = useAppStore(selectPrimarySidebarCollapsed);
-  const togglePrimarySidebar = useAppStore((s) => s.togglePrimarySidebar);
-  const secondarySidebarCollapsed = useAppStore(
-    selectSecondarySidebarCollapsed,
+  const primarySidebarCollapsed = useStore((s) => s.primarySidebarCollapsed);
+  const togglePrimarySidebar = useStore((s) => s.togglePrimarySidebar);
+  const secondarySidebarCollapsed = useStore(
+    (s) => s.secondarySidebarCollapsed,
   );
-  const toggleSecondarySidebar = useAppStore((s) => s.toggleSecondarySidebar);
+  const toggleSecondarySidebar = useStore((s) => s.toggleSecondarySidebar);
   const setShowSettings = useStore((s) => s.setShowSettings);
 
   const selectedRepoPath = useStore((s) => s.selectedRepoPath);

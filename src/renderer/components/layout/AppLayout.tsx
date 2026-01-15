@@ -1,13 +1,7 @@
 import { useRef, useEffect, type ReactNode } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import type { PanelImperativeHandle } from 'react-resizable-panels';
-import {
-  useAppStore,
-  selectPrimarySidebarCollapsed,
-  selectSecondarySidebarCollapsed,
-  selectSetSecondarySidebarCollapsed,
-  selectTerminalPanelCollapsed,
-} from '../../store/app';
+import { useStore } from '../../store';
 import { cn } from '@/lib/utils';
 
 /*
@@ -51,7 +45,7 @@ interface AppLayoutTasksPanelProps {
 
 export function AppLayoutTasksPanel({ children }: AppLayoutTasksPanelProps) {
   const panelRef = useRef<PanelImperativeHandle>(null);
-  const primarySidebarCollapsed = useAppStore(selectPrimarySidebarCollapsed);
+  const primarySidebarCollapsed = useStore((s) => s.primarySidebarCollapsed);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -102,7 +96,7 @@ interface AppLayoutTabsPanelProps {
 }
 
 export function AppLayoutTabsPanel({ children }: AppLayoutTabsPanelProps) {
-  const terminalPanelCollapsed = useAppStore(selectTerminalPanelCollapsed);
+  const terminalPanelCollapsed = useStore((s) => s.terminalPanelCollapsed);
 
   if (terminalPanelCollapsed) {
     return null;
@@ -128,14 +122,14 @@ interface AppLayoutSecondarySidebarProps {
 export function AppLayoutSecondarySidebar({
   children,
 }: AppLayoutSecondarySidebarProps) {
-  const secondarySidebarCollapsed = useAppStore(
-    selectSecondarySidebarCollapsed,
+  const secondarySidebarCollapsed = useStore(
+    (s) => s.secondarySidebarCollapsed,
   );
-  const secondarySidebarSize = useAppStore((s) => s.secondarySidebarSize);
-  const setSecondarySidebarCollapsed = useAppStore(
-    selectSetSecondarySidebarCollapsed,
+  const secondarySidebarSize = useStore((s) => s.secondarySidebarSize);
+  const setSecondarySidebarCollapsed = useStore(
+    (s) => s.setSecondarySidebarCollapsed,
   );
-  const setSecondarySidebarSize = useAppStore((s) => s.setSecondarySidebarSize);
+  const setSecondarySidebarSize = useStore((s) => s.setSecondarySidebarSize);
 
   const handleResize = (size: { asPercentage: number; inPixels: number }) => {
     const isCollapsed = size.asPercentage === 0;

@@ -9,9 +9,14 @@ interface PersistedState {
   selectedWorkspaceId: string | null;
   selectedSessionId: string | null;
   sessions: Record<string, any>;
-  sidebarCollapsed: boolean;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
+  // UISlice state
+  primarySidebarCollapsed: boolean;
+  secondarySidebarCollapsed: boolean;
+  secondarySidebarSize: number;
+  secondarySidebarTab: 'files' | 'git';
+  terminalPanelCollapsed: boolean;
 }
 
 // Debounce helper
@@ -63,9 +68,14 @@ export function setupPersistence(store: StoreApi<any>): void {
       selectedWorkspaceId: state.selectedWorkspaceId || null,
       selectedSessionId: state.selectedSessionId || null,
       sessions: state.sessions || {},
-      sidebarCollapsed: state.sidebarCollapsed || false,
       openRepoAccordions: state.openRepoAccordions || [],
       expandedSessionGroups: state.expandedSessionGroups || {},
+      // UISlice state
+      primarySidebarCollapsed: state.primarySidebarCollapsed ?? false,
+      secondarySidebarCollapsed: state.secondarySidebarCollapsed ?? true,
+      secondarySidebarSize: state.secondarySidebarSize ?? 300,
+      secondarySidebarTab: state.secondarySidebarTab ?? 'files',
+      terminalPanelCollapsed: state.terminalPanelCollapsed ?? false,
     };
   };
 
@@ -119,9 +129,14 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       selectedWorkspaceId = null,
       selectedSessionId = null,
       sessions = {},
-      sidebarCollapsed = false,
       openRepoAccordions = [],
       expandedSessionGroups = {},
+      // UISlice state
+      primarySidebarCollapsed = false,
+      secondarySidebarCollapsed = true,
+      secondarySidebarSize = 300,
+      secondarySidebarTab = 'files',
+      terminalPanelCollapsed = false,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -160,9 +175,14 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         repos,
         workspaces,
         sessions,
-        sidebarCollapsed,
         openRepoAccordions,
         expandedSessionGroups,
+        // UISlice state
+        primarySidebarCollapsed,
+        secondarySidebarCollapsed,
+        secondarySidebarSize,
+        secondarySidebarTab,
+        terminalPanelCollapsed,
 
         selectedRepoPath: validatedRepoPath,
         selectedWorkspaceId: validatedWorkspaceId,

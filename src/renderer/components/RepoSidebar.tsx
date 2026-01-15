@@ -15,7 +15,6 @@ import {
 import { formatDistanceToNowStrict } from 'date-fns';
 import type { RepoData } from '../client/types/entities';
 import { useStore } from '../store';
-import { useAppStore, selectPrimarySidebarCollapsed } from '../store/app';
 import { cn } from '../lib/utils';
 import { Spinner } from './ui/spinner';
 import { ScrollArea } from './ui/scroll-area';
@@ -86,7 +85,7 @@ export const RepoSidebar = ({
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
   const createSession = useStore((state) => state.createSession);
-  const primarySidebarCollapsed = useAppStore(selectPrimarySidebarCollapsed);
+  const primarySidebarCollapsed = useStore((s) => s.primarySidebarCollapsed);
   const getSessionProcessing = useStore((state) => state.getSessionProcessing);
   const messages = useStore((state) => state.messages);
 

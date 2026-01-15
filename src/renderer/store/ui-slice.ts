@@ -25,7 +25,7 @@ export interface UISlice {
   setTerminalPanelCollapsed: (collapsed: boolean) => void;
 }
 
-export const createUISlice: StateCreator<UISlice> = (set) => ({
+export const createUISlice: StateCreator<UISlice, [], [], UISlice> = (set) => ({
   // Primary Sidebar (left)
   primarySidebarCollapsed: false,
 

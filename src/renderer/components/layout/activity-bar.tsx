@@ -5,27 +5,21 @@ import {
   GitBranchIcon,
   ComputerTerminal01Icon,
 } from '@hugeicons/core-free-icons';
-import {
-  useAppStore,
-  selectSecondarySidebarCollapsed,
-  selectSecondarySidebarTab,
-  selectSetSecondarySidebarCollapsed,
-  selectTerminalPanelCollapsed,
-} from '../../store/app';
+import { useStore } from '../../store';
 import { cn } from '../../lib/utils';
 import { Button, Separator } from '../ui';
 
 export const ActivityBar = memo(function ActivityBar() {
-  const secondarySidebarCollapsed = useAppStore(
-    selectSecondarySidebarCollapsed,
+  const secondarySidebarCollapsed = useStore(
+    (s) => s.secondarySidebarCollapsed,
   );
-  const secondarySidebarTab = useAppStore(selectSecondarySidebarTab);
-  const setSecondarySidebarTab = useAppStore((s) => s.setSecondarySidebarTab);
-  const setSecondarySidebarCollapsed = useAppStore(
-    selectSetSecondarySidebarCollapsed,
+  const secondarySidebarTab = useStore((s) => s.secondarySidebarTab);
+  const setSecondarySidebarTab = useStore((s) => s.setSecondarySidebarTab);
+  const setSecondarySidebarCollapsed = useStore(
+    (s) => s.setSecondarySidebarCollapsed,
   );
-  const terminalPanelCollapsed = useAppStore(selectTerminalPanelCollapsed);
-  const toggleTerminalPanel = useAppStore((s) => s.toggleTerminalPanel);
+  const terminalPanelCollapsed = useStore((s) => s.terminalPanelCollapsed);
+  const toggleTerminalPanel = useStore((s) => s.toggleTerminalPanel);
 
   const handleTabClick = (tab: 'files' | 'git') => {
     if (secondarySidebarTab === tab && !secondarySidebarCollapsed) {
