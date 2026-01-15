@@ -13,4 +13,4 @@ export {
 
 export { TitleBar } from './TitleBar';
 export { ActivityBar } from './ActivityBar';
-export { SecondarySidebar } from '../secondary-sidebar';
+export { SecondarySidebar } from '../SecondarySidebar';

@@ -1,30 +1,30 @@
 import React from 'react';
 import { create } from 'zustand';
-import { WebSocketTransport } from './client/transport/WebSocketTransport';
-import { MessageBus } from './client/messaging/MessageBus';
-import { randomUUID } from './utils/uuid';
-import { getNestedValue, setNestedValue } from './lib/utils';
-import { countTokens } from './lib/tokenUtils';
-import { toastManager } from './components/ui/toast';
+import { WebSocketTransport } from '../client/transport/WebSocketTransport';
+import { MessageBus } from '../client/messaging/MessageBus';
+import { randomUUID } from '../utils/uuid';
+import { getNestedValue, setNestedValue } from '../lib/utils';
+import { countTokens } from '../lib/tokenUtils';
+import { toastManager } from '../components/ui/toast';
 import type {
   RepoData,
   WorkspaceData,
   SessionData,
-} from './client/types/entities';
-import type { NormalizedMessage } from './client/types/message';
+} from '../client/types/entities';
+import type { NormalizedMessage } from '../client/types/message';
 import type {
   HandlerMap,
   HandlerMethod,
   HandlerInput,
   HandlerOutput,
-} from './nodeBridge.types';
+} from '../nodeBridge.types';
 import {
   isSlashCommand,
   parseSlashCommand,
   type CommandEntry,
-} from './slashCommand';
-import { localJSXCommands } from './slash-commands';
-import { createUISlice, type UISlice } from './store/ui-slice';
+} from '../slash-commands/types';
+import { localJSXCommands } from '../slash-commands';
+import { createUISlice, type UISlice } from './slices/ui-slice';
 
 type WorkspaceId = string;
 type SessionId = string;
@@ -379,7 +379,7 @@ const useStore = create<Store>()((set, get, ...rest) => ({
     return response;
   },
 
-  onEvent: <T,>(event: string, handler: (data: T) => void) => {
+  onEvent: <T>(event: string, handler: (data: T) => void) => {
     const { messageBus, state } = get();
 
     if (state !== 'connected' || !messageBus) {
@@ -1110,7 +1110,7 @@ const useStore = create<Store>()((set, get, ...rest) => ({
     }
   },
 
-  getGlobalConfigValue: <T,>(key: string, defaultValue?: T): T | undefined => {
+  getGlobalConfigValue: <T>(key: string, defaultValue?: T): T | undefined => {
     const { globalConfig } = get();
     return getNestedValue<T>(globalConfig, key, defaultValue);
   },

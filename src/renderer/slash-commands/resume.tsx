@@ -8,7 +8,7 @@ import {
 } from '../components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useStore } from '../store';
-import type { LocalJSXCommand } from '../slashCommand';
+import type { LocalJSXCommand } from './types';
 import type { SessionData } from '../client/types/entities';
 
 interface ResumeModalProps {

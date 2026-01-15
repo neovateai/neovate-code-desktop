@@ -1,5 +1,5 @@
 import { useStore } from '../store';
-import type { LocalJSXCommand } from '../slashCommand';
+import type { LocalJSXCommand } from './types';
 
 export const clearCommand: LocalJSXCommand = {
   name: 'clear',

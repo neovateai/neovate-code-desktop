@@ -1,4 +1,4 @@
-import type { LocalJSXCommand } from '../slashCommand';
+import type { LocalJSXCommand } from './types';
 import { clearCommand } from './clear';
 import { resumeCommand } from './resume';
 
