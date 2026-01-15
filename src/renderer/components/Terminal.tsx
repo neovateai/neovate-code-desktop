@@ -1,4 +1,4 @@
-import { Terminal as XTerm } from 'xterm';
+import { Terminal as XTerm, type ITheme } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import React, {
@@ -10,6 +10,77 @@ import React, {
   useCallback,
 } from 'react';
 import { ipcMainCaller } from '../lib/ipc';
+
+// XTerm theme configurations
+const darkTerminalTheme: ITheme = {
+  background: '#0a0a0a',
+  foreground: '#e0e0e0',
+  cursor: '#f0f0f0',
+  cursorAccent: '#0a0a0a',
+  selectionBackground: 'rgba(255, 255, 255, 0.2)',
+  black: '#1d1d1d',
+  red: '#ff5f56',
+  green: '#27c93f',
+  yellow: '#ffbd2e',
+  blue: '#57acf5',
+  magenta: '#c678dd',
+  cyan: '#56b6c2',
+  white: '#abb2bf',
+  brightBlack: '#5c6370',
+  brightRed: '#e06c75',
+  brightGreen: '#98c379',
+  brightYellow: '#e5c07b',
+  brightBlue: '#61afef',
+  brightMagenta: '#c678dd',
+  brightCyan: '#56b6c2',
+  brightWhite: '#ffffff',
+};
+
+const lightTerminalTheme: ITheme = {
+  background: '#fafafa',
+  foreground: '#383a42',
+  cursor: '#526eff',
+  cursorAccent: '#fafafa',
+  selectionBackground: 'rgba(0, 0, 0, 0.1)',
+  black: '#383a42',
+  red: '#e45649',
+  green: '#50a14f',
+  yellow: '#c18401',
+  blue: '#4078f2',
+  magenta: '#a626a4',
+  cyan: '#0184bc',
+  white: '#a0a1a7',
+  brightBlack: '#4f525e',
+  brightRed: '#e06c75',
+  brightGreen: '#98c379',
+  brightYellow: '#e5c07b',
+  brightBlue: '#61afef',
+  brightMagenta: '#c678dd',
+  brightCyan: '#56b6c2',
+  brightWhite: '#ffffff',
+};
+
+// Hook to detect dark mode from document.documentElement
+function useIsDarkMode(): boolean {
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains('dark'),
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.attributeName === 'class') {
+          setIsDark(document.documentElement.classList.contains('dark'));
+        }
+      }
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
 
 // Terminal tab state
 interface TerminalTab {
@@ -28,6 +99,7 @@ interface TerminalContextType {
   addTab: () => void;
   closeTab: (tabId: string) => void;
   cwd: string;
+  isDark: boolean;
 }
 
 // Create the context
@@ -45,36 +117,17 @@ export function useTerminalContext() {
 }
 
 // Create a new xterm instance with configuration
-function createXTermInstance(): { xterm: XTerm; fitAddon: FitAddon } {
+function createXTermInstance(isDark: boolean): {
+  xterm: XTerm;
+  fitAddon: FitAddon;
+} {
   const xterm = new XTerm({
     cursorBlink: true,
     cursorStyle: 'bar',
     fontFamily: 'JetBrains Mono, Menlo, Monaco, "Courier New", monospace',
     fontSize: 13,
     lineHeight: 1.2,
-    theme: {
-      background: '#0d0d0d',
-      foreground: '#e0e0e0',
-      cursor: '#f0f0f0',
-      cursorAccent: '#0d0d0d',
-      selectionBackground: 'rgba(255, 255, 255, 0.2)',
-      black: '#1d1d1d',
-      red: '#ff5f56',
-      green: '#27c93f',
-      yellow: '#ffbd2e',
-      blue: '#57acf5',
-      magenta: '#c678dd',
-      cyan: '#56b6c2',
-      white: '#abb2bf',
-      brightBlack: '#5c6370',
-      brightRed: '#e06c75',
-      brightGreen: '#98c379',
-      brightYellow: '#e5c07b',
-      brightBlue: '#61afef',
-      brightMagenta: '#c678dd',
-      brightCyan: '#56b6c2',
-      brightWhite: '#ffffff',
-    },
+    theme: isDark ? darkTerminalTheme : lightTerminalTheme,
   });
 
   const fitAddon = new FitAddon();
@@ -108,6 +161,8 @@ export const Terminal = ({
   hidden?: boolean;
 }) => {
   console.log('[Terminal] Component render, cwd prop:', cwd);
+  const isDark = useIsDarkMode();
+
   // Create initial tab with stable ID
   const [{ tabs, activeTabId }, setTerminalState] = useState(() => {
     const initialTab = createTerminalTab('Terminal 1');
@@ -180,6 +235,7 @@ export const Terminal = ({
     addTab,
     closeTab,
     cwd,
+    isDark,
   };
 
   return (
@@ -187,7 +243,7 @@ export const Terminal = ({
       <div
         className="flex flex-col flex-1"
         style={{
-          backgroundColor: '#0d0d0d',
+          backgroundColor: 'var(--bg-base)',
           color: 'var(--text-primary)',
           borderTop: '1px solid var(--border-subtle)',
           display: hidden ? 'none' : 'flex',
@@ -209,8 +265,8 @@ Terminal.Tabs = function Tabs() {
     <div
       className="flex items-center"
       style={{
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        backgroundColor: '#161616',
+        borderBottom: '1px solid var(--border-subtle)',
+        backgroundColor: 'var(--bg-elevated)',
       }}
     >
       {tabs.map((tab) => (
@@ -224,8 +280,8 @@ Terminal.Tabs = function Tabs() {
         </Terminal.Tab>
       ))}
       <button
-        className="px-3 py-2 hover:bg-white/5 transition-colors"
-        style={{ color: '#666' }}
+        className="px-3 py-2 transition-colors"
+        style={{ color: 'var(--text-tertiary)' }}
         onClick={addTab}
         title="New Terminal"
       >
@@ -251,22 +307,23 @@ Terminal.Tab = function Tab({
 
   return (
     <div
-      className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer hover:bg-white/5 transition-colors"
+      className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer transition-colors"
       style={
         isActive
           ? {
-              borderBottom: '2px solid #27c93f',
-              color: '#e0e0e0',
+              borderBottom: '2px solid var(--brand-primary)',
+              color: 'var(--text-primary)',
               marginBottom: '-1px',
             }
-          : { color: '#666' }
+          : { color: 'var(--text-tertiary)' }
       }
       onClick={() => setActiveTab(id)}
     >
       <span>{children}</span>
       {onClose && (
         <button
-          className="hover:bg-white/10 rounded p-0.5 transition-colors"
+          className="rounded p-0.5 transition-colors"
+          style={{ opacity: 0.7 }}
           onClick={(e) => {
             e.stopPropagation();
             onClose();
@@ -294,14 +351,28 @@ function TerminalPane({
   tab,
   isActive,
   cwd,
+  isDark,
 }: {
   tab: TerminalTab;
   isActive: boolean;
   cwd: string;
+  isDark: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
-  console.log('[TerminalPane] render', { tabId: tab.id, isActive, cwd });
+  console.log('[TerminalPane] render', {
+    tabId: tab.id,
+    isActive,
+    cwd,
+    isDark,
+  });
+
+  // Update XTerm theme when dark mode changes
+  useEffect(() => {
+    if (tab.xterm && initializedRef.current) {
+      tab.xterm.options.theme = isDark ? darkTerminalTheme : lightTerminalTheme;
+    }
+  }, [isDark, tab.xterm]);
 
   useEffect(() => {
     if (!isActive || !containerRef.current) {
@@ -341,7 +412,7 @@ function TerminalPane({
       }
 
       try {
-        const { xterm, fitAddon } = createXTermInstance();
+        const { xterm, fitAddon } = createXTermInstance(isDark);
         tab.xterm = xterm;
         tab.fitAddon = fitAddon;
 
@@ -428,7 +499,7 @@ function TerminalPane({
         tab.fitAddon = null;
       }
     };
-  }, [isActive, tab, cwd]);
+  }, [isActive, tab, cwd, isDark]);
 
   useEffect(() => {
     if (!containerRef.current || !tab.xterm || !tab.fitAddon) return;
@@ -471,7 +542,7 @@ function TerminalPane({
       className="flex-1 p-2"
       style={{
         minHeight: 0,
-        backgroundColor: '#0d0d0d',
+        backgroundColor: 'var(--bg-base)',
         display: isActive ? 'block' : 'none',
       }}
       onClick={() => tab.xterm?.focus()}
@@ -481,7 +552,7 @@ function TerminalPane({
 
 // XTerm view component - renders all terminal panes
 Terminal.XTermView = function XTermView() {
-  const { activeTabId, tabs, cwd } = useTerminalContext();
+  const { activeTabId, tabs, cwd, isDark } = useTerminalContext();
   console.log('[Terminal.XTermView] render, cwd from context:', cwd);
 
   // Listen for PTY data from main process
@@ -519,6 +590,7 @@ Terminal.XTermView = function XTermView() {
           tab={tab}
           isActive={tab.id === activeTabId}
           cwd={cwd}
+          isDark={isDark}
         />
       ))}
     </div>
