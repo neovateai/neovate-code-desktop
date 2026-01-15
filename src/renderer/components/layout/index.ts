@@ -11,6 +11,6 @@ export {
   AppLayoutSecondaryPanel,
 } from './AppLayout';
 
-export { TitleBar } from './title-bar';
-export { ActivityBar } from './activity-bar';
+export { TitleBar } from './TitleBar';
+export { ActivityBar } from './ActivityBar';
 export { SecondarySidebar } from '../secondary-sidebar';

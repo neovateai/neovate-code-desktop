@@ -7,7 +7,7 @@ import { WorkspacePanel } from './components/WorkspacePanel';
 import { Terminal } from './components/Terminal';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
-import { ServerErrorDialog } from './components/server-error-dialog';
+import { ServerErrorDialog } from './components/ServerErrorDialog';
 import {
   AppLayout,
   AppLayoutTasksPanel,
