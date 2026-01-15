@@ -245,7 +245,6 @@ export const Terminal = ({
         style={{
           backgroundColor: 'var(--bg-base)',
           color: 'var(--text-primary)',
-          borderTop: '1px solid var(--border-subtle)',
           display: hidden ? 'none' : 'flex',
         }}
       >
@@ -256,17 +255,15 @@ export const Terminal = ({
   );
 };
 
-// Tabs component
+// Tabs component - pill-style tab bar
 Terminal.Tabs = function Tabs() {
-  const { activeTabId, tabs, setActiveTab, addTab, closeTab } =
-    useTerminalContext();
+  const { activeTabId, tabs, addTab, closeTab } = useTerminalContext();
 
   return (
     <div
-      className="flex items-center"
+      className="flex items-center gap-1 px-2 py-2"
       style={{
         borderBottom: '1px solid var(--border-subtle)',
-        backgroundColor: 'var(--bg-elevated)',
       }}
     >
       {tabs.map((tab) => (
@@ -280,18 +277,50 @@ Terminal.Tabs = function Tabs() {
         </Terminal.Tab>
       ))}
       <button
-        className="px-3 py-2 transition-colors"
-        style={{ color: 'var(--text-tertiary)' }}
+        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
+        style={{
+          color: 'var(--text-secondary)',
+          backgroundColor: 'var(--bg-surface)',
+        }}
         onClick={addTab}
         title="New Terminal"
       >
-        +
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path d="M7 2v10M2 7h10" />
+        </svg>
       </button>
     </div>
   );
 };
 
-// Tab component
+// Terminal icon component
+function TerminalIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="3" width="12" height="10" rx="1" />
+      <path d="M5 7l2 2-2 2" />
+      <path d="M9 11h2" />
+    </svg>
+  );
+}
+
+// Tab component - pill-style design with 3 states: default, hover, active
 Terminal.Tab = function Tab({
   id,
   children,
@@ -307,23 +336,25 @@ Terminal.Tab = function Tab({
 
   return (
     <div
-      className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer transition-colors"
-      style={
-        isActive
-          ? {
-              borderBottom: '2px solid var(--brand-primary)',
-              color: 'var(--text-primary)',
-              marginBottom: '-1px',
-            }
-          : { color: 'var(--text-tertiary)' }
-      }
+      className={`
+        flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md cursor-pointer transition-colors
+        ${isActive ? '' : 'hover:bg-[var(--bg-hover)]'}
+      `}
+      style={{
+        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+        backgroundColor: isActive ? 'var(--bg-surface)' : undefined,
+        border: isActive
+          ? '1px solid var(--border-subtle)'
+          : '1px solid transparent',
+      }}
       onClick={() => setActiveTab(id)}
     >
+      <TerminalIcon size={14} />
       <span>{children}</span>
       {onClose && (
         <button
-          className="rounded p-0.5 transition-colors"
-          style={{ opacity: 0.7 }}
+          className="flex items-center justify-center w-4 h-4 rounded transition-colors ml-0.5 hover:bg-[var(--bg-active)]"
+          style={{ opacity: 0.6 }}
           onClick={(e) => {
             e.stopPropagation();
             onClose();
@@ -331,14 +362,14 @@ Terminal.Tab = function Tab({
           title="Close Terminal"
         >
           <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
           >
-            <path d="M3 3l6 6M9 3l-6 6" />
+            <path d="M2 2l6 6M8 2l-6 6" />
           </svg>
         </button>
       )}
