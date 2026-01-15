@@ -67,6 +67,11 @@ const compatibleElectronAPI = {
     ipcRenderer.on('menu:open-settings', handler);
     return () => ipcRenderer.removeListener('menu:open-settings', handler);
   },
+  onMenuToggleTheme: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:toggle-theme', handler);
+    return () => ipcRenderer.removeListener('menu:toggle-theme', handler);
+  },
 
   // Expose @electron-toolkit/preload API for typesafe IPC
   ...electronAPI,

@@ -38,6 +38,7 @@ export interface LegacyElectronAPI {
   ) => () => void;
   // Menu events
   onMenuOpenSettings: (callback: () => void) => () => void;
+  onMenuToggleTheme: (callback: () => void) => () => void;
 }
 
 // Extend Window interface for type safety

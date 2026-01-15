@@ -33,19 +33,30 @@ function App() {
     showSettings,
     setShowSettings,
     getGlobalConfigValue,
+    setGlobalConfig,
     initialized,
   } = useStore();
 
-  // Listen for menu events from main process
-  useEffect(() => {
-    const cleanup = window.electron.onMenuOpenSettings(() => {
-      setShowSettings(true);
-    });
-    return cleanup;
-  }, [setShowSettings]);
-
   // Get theme from config (default to 'system')
   const theme = getGlobalConfigValue<string>('desktop.theme', 'system');
+
+  // Listen for menu events from main process
+  useEffect(() => {
+    const cleanupSettings = window.electron.onMenuOpenSettings(() => {
+      setShowSettings(true);
+    });
+
+    const cleanupTheme = window.electron.onMenuToggleTheme(() => {
+      // Toggle between light and dark (Option A behavior)
+      const newTheme = theme === 'dark' ? 'light' : 'dark';
+      setGlobalConfig('desktop.theme', newTheme);
+    });
+
+    return () => {
+      cleanupSettings();
+      cleanupTheme();
+    };
+  }, [setShowSettings, setGlobalConfig, theme]);
 
   // Apply dark/light mode based on theme setting
   useEffect(() => {

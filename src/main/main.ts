@@ -60,6 +60,14 @@ function createMenu() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
+        {
+          label: 'Toggle Theme',
+          accelerator: 'Cmd+Option+T',
+          click: () => {
+            mainWindow?.webContents.send('menu:toggle-theme');
+          },
+        },
+        { type: 'separator' },
         { role: 'togglefullscreen' },
       ],
     },
