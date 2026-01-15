@@ -68,7 +68,7 @@ export function AppLayoutTasksPanel({ children }: AppLayoutTasksPanelProps) {
         collapsedSize={0}
         collapsible
       >
-        <div className="px-2 pt-2">{children}</div>
+        <div className="px-2">{children}</div>
       </Panel>
       <PanelSeparator />
     </>

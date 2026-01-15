@@ -57,7 +57,6 @@ import {
   EmptyDescription,
 } from './ui/empty';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
 
 export const RepoSidebar = ({
   repos,
@@ -116,10 +115,10 @@ export const RepoSidebar = ({
 
   return (
     <div className="h-full flex flex-col">
-      <RepoSidebar.Header />
+      {/* <RepoSidebar.Header /> */}
 
       {!primarySidebarCollapsed && (
-        <ScrollArea className="flex-1 p-2" orientation="vertical">
+        <ScrollArea className="flex-1 p-2 pt-0" orientation="vertical">
           {repos.length === 0 ? (
             <Empty>
               <EmptyMedia variant="icon">
@@ -471,17 +470,7 @@ function InfoRow({
 }
 
 RepoSidebar.Header = memo(function Header() {
-  const [searchValue, setSearchValue] = useState('');
-
-  return (
-    <Input
-      type="search"
-      size="default"
-      value={searchValue}
-      onChange={(e) => setSearchValue(e.target.value)}
-      placeholder="Search..."
-    />
-  );
+  return null;
 });
 
 RepoSidebar.Footer = memo(function Footer(_props: { collapsed: boolean }) {
