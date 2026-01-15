@@ -426,6 +426,17 @@ function TerminalPane({
         xterm.focus();
         console.log('[Terminal] xterm opened and focused', tab.id);
 
+        // Handle keyboard shortcuts (Cmd+K on Mac, Ctrl+K on Windows/Linux to clear)
+        const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+        xterm.attachCustomKeyEventHandler((event) => {
+          const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+          if (event.type === 'keydown' && modifierKey && event.key === 'k') {
+            xterm.clear();
+            return false; // Prevent default handling
+          }
+          return true; // Let xterm handle other keys
+        });
+
         console.log('[Terminal] Setting up input handler', tab.id);
         xterm.onData((data) => {
           console.log('[Terminal] Input received', {
