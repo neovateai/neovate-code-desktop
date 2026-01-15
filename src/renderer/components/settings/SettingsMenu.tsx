@@ -30,7 +30,7 @@ export const SettingsMenu = ({
 
   return (
     <div
-      className="w-56 h-full flex flex-col"
+      className="w-56 h-full flex flex-col pt-8"
       style={{
         backgroundColor: 'var(--bg-surface)',
         borderRight: '1px solid var(--border-subtle)',
@@ -38,7 +38,7 @@ export const SettingsMenu = ({
     >
       {/* Back to app button */}
       <button
-        className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors hover:bg-opacity-50"
+        className="flex items-center gap-3 ml-2 px-4 py-3 text-sm font-medium transition-colors hover:bg-opacity-50"
         style={{
           color: 'var(--text-secondary)',
           borderBottom: '1px solid var(--border-subtle)',
