@@ -11,8 +11,8 @@
     "dev:main": "tsc -p tsconfig.main.json && env -u ELECTRON_RUN_AS_NODE electron dist/main/main/main.js --dev",
     "dev:renderer": "vite",
     "format": "biome format .",
-    "package": "npm run build && electron-builder --mac --config configs/electron-builder.json",
-    "package:dev": "npm run build && electron-builder --mac --config configs/electron-builder.dev.json",
+    "package": "npm run build && electron-builder --mac --config configs/electron-builder.mjs",
+    "package:dev": "npm run build && electron-builder --mac --config configs/electron-builder.dev.mjs",
     "postinstall": "electron-builder install-app-deps",
     "prepare": "husky",
     "preinstall": "npx only-allow npm",
@@ -73,19 +73,19 @@
     "vitest": "^4.0.10",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "@pierre/diffs": "^1.0.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-resizable-panels": "^4.3.3"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@neovate/code": "^0.23.0",
-    "@pierre/diffs": "^1.0.2",
     "electron-updater": "^6.6.2",
     "node-pty": "^1.1.0",
-    "portfinder": "^1.0.32",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-resizable-panels": "^4.3.3"
+    "portfinder": "^1.0.32"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css}": "biome format --write"
