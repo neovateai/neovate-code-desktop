@@ -23,19 +23,17 @@ import {
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
 
-  const {
-    repos,
-    workspaces,
-    selectedRepoPath,
-    selectedWorkspaceId,
-    selectRepo,
-    selectWorkspace,
-    showSettings,
-    setShowSettings,
-    getGlobalConfigValue,
-    setGlobalConfig,
-    initialized,
-  } = useStore();
+  const repos = useStore((s) => s.repos);
+  const workspaces = useStore((s) => s.workspaces);
+  const selectedRepoPath = useStore((s) => s.selectedRepoPath);
+  const selectedWorkspaceId = useStore((s) => s.selectedWorkspaceId);
+  const selectRepo = useStore((s) => s.selectRepo);
+  const selectWorkspace = useStore((s) => s.selectWorkspace);
+  const showSettings = useStore((s) => s.showSettings);
+  const setShowSettings = useStore((s) => s.setShowSettings);
+  const getGlobalConfigValue = useStore((s) => s.getGlobalConfigValue);
+  const setGlobalConfig = useStore((s) => s.setGlobalConfig);
+  const initialized = useStore((s) => s.initialized);
 
   // Get theme from config (default to 'system')
   const theme = getGlobalConfigValue<string>('desktop.theme', 'system');

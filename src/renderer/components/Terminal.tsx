@@ -8,6 +8,7 @@ import React, {
   useRef,
   useEffect,
   useCallback,
+  memo,
 } from 'react';
 import { ipcMainCaller } from '../lib/ipc';
 
@@ -152,154 +153,6 @@ function createTerminalTab(name: string): TerminalTab {
   };
 }
 
-// Main component
-export const Terminal = ({
-  cwd,
-  hidden,
-}: {
-  cwd: string;
-  hidden?: boolean;
-}) => {
-  console.log('[Terminal] Component render, cwd prop:', cwd);
-  const isDark = useIsDarkMode();
-
-  // Create initial tab with stable ID
-  const [{ tabs, activeTabId }, setTerminalState] = useState(() => {
-    const initialTab = createTerminalTab('Terminal 1');
-    return {
-      tabs: [initialTab],
-      activeTabId: initialTab.id,
-    };
-  });
-
-  const setTabs = useCallback(
-    (updater: TerminalTab[] | ((prev: TerminalTab[]) => TerminalTab[])) => {
-      setTerminalState((state) => ({
-        ...state,
-        tabs: typeof updater === 'function' ? updater(state.tabs) : updater,
-      }));
-    },
-    [],
-  );
-
-  const setActiveTabId = useCallback((id: string) => {
-    setTerminalState((state) => ({ ...state, activeTabId: id }));
-  }, []);
-
-  const addTab = useCallback(() => {
-    setTerminalState((state) => {
-      const newTab = createTerminalTab(`Terminal ${state.tabs.length + 1}`);
-      return {
-        tabs: [...state.tabs, newTab],
-        activeTabId: newTab.id,
-      };
-    });
-  }, []);
-
-  const closeTab = useCallback(
-    async (tabId: string) => {
-      const tab = tabs.find((t) => t.id === tabId);
-      if (tab) {
-        if (tab.ptyId) {
-          await ipcMainCaller.terminal.destroy({ ptyId: tab.ptyId });
-        }
-        tab.xterm?.dispose();
-      }
-
-      setTabs((prev) => {
-        const newTabs = prev.filter((t) => t.id !== tabId);
-        if (activeTabId === tabId && newTabs.length > 0) {
-          setActiveTabId(newTabs[newTabs.length - 1].id);
-        }
-        return newTabs;
-      });
-    },
-    [tabs, activeTabId],
-  );
-
-  useEffect(() => {
-    return () => {
-      for (const tab of tabs) {
-        if (tab.ptyId) {
-          ipcMainCaller.terminal.destroy({ ptyId: tab.ptyId });
-        }
-        tab.xterm?.dispose();
-      }
-    };
-  }, []);
-
-  const contextValue: TerminalContextType = {
-    activeTabId,
-    tabs,
-    setActiveTab: setActiveTabId,
-    addTab,
-    closeTab,
-    cwd,
-    isDark,
-  };
-
-  return (
-    <TerminalContext.Provider value={contextValue}>
-      <div
-        className="flex flex-col flex-1"
-        style={{
-          backgroundColor: 'var(--bg-base)',
-          color: 'var(--text-primary)',
-          display: hidden ? 'none' : 'flex',
-        }}
-      >
-        <Terminal.Tabs />
-        <Terminal.XTermView />
-      </div>
-    </TerminalContext.Provider>
-  );
-};
-
-// Tabs component - pill-style tab bar
-Terminal.Tabs = function Tabs() {
-  const { activeTabId, tabs, addTab, closeTab } = useTerminalContext();
-
-  return (
-    <div
-      className="flex items-center gap-1 px-2 py-2"
-      style={{
-        borderBottom: '1px solid var(--border-subtle)',
-      }}
-    >
-      {tabs.map((tab) => (
-        <Terminal.Tab
-          key={tab.id}
-          id={tab.id}
-          isActive={activeTabId === tab.id}
-          onClose={tabs.length > 1 ? () => closeTab(tab.id) : undefined}
-        >
-          {tab.name}
-        </Terminal.Tab>
-      ))}
-      <button
-        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
-        style={{
-          color: 'var(--text-secondary)',
-          backgroundColor: 'var(--bg-surface)',
-        }}
-        onClick={addTab}
-        title="New Terminal"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 14 14"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        >
-          <path d="M7 2v10M2 7h10" />
-        </svg>
-      </button>
-    </div>
-  );
-};
-
 // Terminal icon component
 function TerminalIcon({ size = 14 }: { size?: number }) {
   return (
@@ -321,7 +174,7 @@ function TerminalIcon({ size = 14 }: { size?: number }) {
 }
 
 // Tab component - pill-style design with 3 states: default, hover, active
-Terminal.Tab = function Tab({
+function TerminalTabItem({
   id,
   children,
   isActive,
@@ -375,7 +228,52 @@ Terminal.Tab = function Tab({
       )}
     </div>
   );
-};
+}
+
+// Tabs component - pill-style tab bar
+function TerminalTabs() {
+  const { activeTabId, tabs, addTab, closeTab } = useTerminalContext();
+
+  return (
+    <div
+      className="flex items-center gap-1 px-2 py-2"
+      style={{
+        borderBottom: '1px solid var(--border-subtle)',
+      }}
+    >
+      {tabs.map((tab) => (
+        <TerminalTabItem
+          key={tab.id}
+          id={tab.id}
+          isActive={activeTabId === tab.id}
+          onClose={tabs.length > 1 ? () => closeTab(tab.id) : undefined}
+        >
+          {tab.name}
+        </TerminalTabItem>
+      ))}
+      <button
+        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
+        style={{
+          color: 'var(--text-secondary)',
+          backgroundColor: 'var(--bg-surface)',
+        }}
+        onClick={addTab}
+        title="New Terminal"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path d="M7 2v10M2 7h10" />
+        </svg>
+      </button>
+    </div>
+  );
+}
 
 // Single terminal pane - each tab gets its own instance
 function TerminalPane({
@@ -391,12 +289,6 @@ function TerminalPane({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
-  console.log('[TerminalPane] render', {
-    tabId: tab.id,
-    isActive,
-    cwd,
-    isDark,
-  });
 
   // Update XTerm theme when dark mode changes
   useEffect(() => {
@@ -407,15 +299,10 @@ function TerminalPane({
 
   useEffect(() => {
     if (!isActive || !containerRef.current) {
-      console.log('[Terminal] Skipping - not active or no container', {
-        tabId: tab.id,
-        isActive,
-      });
       return;
     }
 
     if (initializedRef.current && tab.xterm) {
-      console.log('[Terminal] Already initialized, just focusing', tab.id);
       tab.fitAddon?.fit();
       tab.xterm.focus();
       return;
@@ -425,19 +312,10 @@ function TerminalPane({
     let disposed = false;
     let mountTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    console.log('[Terminal] Initializing terminal', {
-      tabId: tab.id,
-      isActive,
-    });
-
     const initialize = async () => {
       if (disposed) return;
 
       if (container.clientWidth === 0 || container.clientHeight === 0) {
-        console.log(
-          '[Terminal] Container has no dimensions, retrying...',
-          tab.id,
-        );
         mountTimeout = setTimeout(initialize, 50);
         return;
       }
@@ -447,15 +325,9 @@ function TerminalPane({
         tab.xterm = xterm;
         tab.fitAddon = fitAddon;
 
-        console.log('[Terminal] Opening xterm', {
-          tabId: tab.id,
-          width: container.clientWidth,
-          height: container.clientHeight,
-        });
         xterm.open(container);
         fitAddon.fit();
         xterm.focus();
-        console.log('[Terminal] xterm opened and focused', tab.id);
 
         // Handle keyboard shortcuts (Cmd+K on Mac, Ctrl+K on Windows/Linux to clear)
         const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
@@ -468,27 +340,13 @@ function TerminalPane({
           return true; // Let xterm handle other keys
         });
 
-        console.log('[Terminal] Setting up input handler', tab.id);
         xterm.onData((data) => {
-          console.log('[Terminal] Input received', {
-            tabId: tab.id,
-            ptyId: tab.ptyId,
-            dataLen: data.length,
-          });
           if (tab.ptyId) {
             ipcMainCaller.terminal.write({ ptyId: tab.ptyId, data });
-          } else {
-            console.warn('[Terminal] No ptyId, cannot send input', tab.id);
           }
         });
 
         if (!tab.ptyId) {
-          console.log('[Terminal] Creating PTY', {
-            tabId: tab.id,
-            cols: xterm.cols,
-            rows: xterm.rows,
-            cwd,
-          });
           const { ptyId } = await ipcMainCaller.terminal.create({
             cwd: cwd || undefined,
             cols: xterm.cols || 80,
@@ -496,19 +354,11 @@ function TerminalPane({
           });
 
           if (disposed) {
-            console.log(
-              '[Terminal] Disposed during PTY creation, destroying PTY',
-              tab.id,
-            );
             ipcMainCaller.terminal.destroy({ ptyId });
             return;
           }
 
           tab.ptyId = ptyId;
-          console.log('[Terminal] PTY created and assigned', {
-            ptyId,
-            tabId: tab.id,
-          });
 
           if (xterm.cols > 0 && xterm.rows > 0) {
             await ipcMainCaller.terminal.resize({
@@ -520,7 +370,6 @@ function TerminalPane({
         }
 
         initializedRef.current = true;
-        console.log('[Terminal] Fully initialized', tab.id);
       } catch (error) {
         console.error('[Terminal] Initialization failed:', error);
         tab.xterm?.writeln('\r\n\x1b[31mFailed to start terminal.\x1b[0m');
@@ -532,7 +381,6 @@ function TerminalPane({
     });
 
     return () => {
-      console.log('[Terminal] Effect cleanup', tab.id);
       disposed = true;
       if (mountTimeout) clearTimeout(mountTimeout);
       if (tab.xterm && !initializedRef.current) {
@@ -593,9 +441,8 @@ function TerminalPane({
 }
 
 // XTerm view component - renders all terminal panes
-Terminal.XTermView = function XTermView() {
+function TerminalXTermView() {
   const { activeTabId, tabs, cwd, isDark } = useTerminalContext();
-  console.log('[Terminal.XTermView] render, cwd from context:', cwd);
 
   // Listen for PTY data from main process
   useEffect(() => {
@@ -637,4 +484,107 @@ Terminal.XTermView = function XTermView() {
       ))}
     </div>
   );
-};
+}
+
+// Main component (internal)
+function TerminalBase({ cwd, hidden }: { cwd: string; hidden?: boolean }) {
+  const isDark = useIsDarkMode();
+
+  // Create initial tab with stable ID
+  const [{ tabs, activeTabId }, setTerminalState] = useState(() => {
+    const initialTab = createTerminalTab('Terminal 1');
+    return {
+      tabs: [initialTab],
+      activeTabId: initialTab.id,
+    };
+  });
+
+  const setTabs = useCallback(
+    (updater: TerminalTab[] | ((prev: TerminalTab[]) => TerminalTab[])) => {
+      setTerminalState((state) => ({
+        ...state,
+        tabs: typeof updater === 'function' ? updater(state.tabs) : updater,
+      }));
+    },
+    [],
+  );
+
+  const setActiveTabId = useCallback((id: string) => {
+    setTerminalState((state) => ({ ...state, activeTabId: id }));
+  }, []);
+
+  const addTab = useCallback(() => {
+    setTerminalState((state) => {
+      const newTab = createTerminalTab(`Terminal ${state.tabs.length + 1}`);
+      return {
+        tabs: [...state.tabs, newTab],
+        activeTabId: newTab.id,
+      };
+    });
+  }, []);
+
+  const closeTab = useCallback(
+    async (tabId: string) => {
+      const tab = tabs.find((t) => t.id === tabId);
+      if (tab) {
+        if (tab.ptyId) {
+          await ipcMainCaller.terminal.destroy({ ptyId: tab.ptyId });
+        }
+        tab.xterm?.dispose();
+      }
+
+      setTabs((prev) => {
+        const newTabs = prev.filter((t) => t.id !== tabId);
+        if (activeTabId === tabId && newTabs.length > 0) {
+          setActiveTabId(newTabs[newTabs.length - 1].id);
+        }
+        return newTabs;
+      });
+    },
+    [tabs, activeTabId, setTabs, setActiveTabId],
+  );
+
+  useEffect(() => {
+    return () => {
+      for (const tab of tabs) {
+        if (tab.ptyId) {
+          ipcMainCaller.terminal.destroy({ ptyId: tab.ptyId });
+        }
+        tab.xterm?.dispose();
+      }
+    };
+  }, []);
+
+  const contextValue: TerminalContextType = {
+    activeTabId,
+    tabs,
+    setActiveTab: setActiveTabId,
+    addTab,
+    closeTab,
+    cwd,
+    isDark,
+  };
+
+  return (
+    <TerminalContext.Provider value={contextValue}>
+      <div
+        className="flex flex-col flex-1"
+        style={{
+          backgroundColor: 'var(--bg-base)',
+          color: 'var(--text-primary)',
+          display: hidden ? 'none' : 'flex',
+        }}
+      >
+        <TerminalTabs />
+        <TerminalXTermView />
+      </div>
+    </TerminalContext.Provider>
+  );
+}
+
+// Export memoized Terminal with compound components
+export const Terminal = Object.assign(memo(TerminalBase), {
+  Tabs: TerminalTabs,
+  Tab: TerminalTabItem,
+  XTermView: TerminalXTermView,
+});
