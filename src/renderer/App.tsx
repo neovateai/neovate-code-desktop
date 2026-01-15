@@ -31,9 +31,18 @@ function App() {
     selectRepo,
     selectWorkspace,
     showSettings,
+    setShowSettings,
     getGlobalConfigValue,
     initialized,
   } = useStore();
+
+  // Listen for menu events from main process
+  useEffect(() => {
+    const cleanup = window.electron.onMenuOpenSettings(() => {
+      setShowSettings(true);
+    });
+    return cleanup;
+  }, [setShowSettings]);
 
   // Get theme from config (default to 'system')
   const theme = getGlobalConfigValue<string>('desktop.theme', 'system');

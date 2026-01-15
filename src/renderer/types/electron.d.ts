@@ -36,6 +36,8 @@ export interface LegacyElectronAPI {
       signal?: number;
     }) => void,
   ) => () => void;
+  // Menu events
+  onMenuOpenSettings: (callback: () => void) => () => void;
 }
 
 // Extend Window interface for type safety
