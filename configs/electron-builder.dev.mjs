@@ -5,6 +5,10 @@ import baseConfig from './electron-builder.mjs';
  */
 const devConfig = {
   ...baseConfig,
+  artifactName: "neovate-dev-${arch}.${ext}",
+  directories: {
+    output: 'release-dev',
+  },
   // Development-specific overrides
   compression: 'store', // Faster builds
   mac: {
