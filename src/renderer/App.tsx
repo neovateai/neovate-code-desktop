@@ -139,67 +139,72 @@ function App() {
       : 'no-workspace'
     : null;
 
-  // Show settings page if enabled
-  if (showSettings) {
-    return (
-      <div className="h-dvh flex flex-col">
+  return (
+    <>
+      {/* Settings Page - hidden with CSS when not active */}
+      <div
+        className="h-dvh flex flex-col"
+        style={{ display: showSettings ? 'flex' : 'none' }}
+      >
         <SettingsPage />
       </div>
-    );
-  }
 
-  return (
-    <div className="flex flex-col h-dvh bg-(--bg-surface)">
-      {/* Custom Title Bar */}
-      <TitleBar />
+      {/* Main App - hidden with CSS when settings is shown */}
+      <div
+        className="flex flex-col h-dvh bg-(--bg-surface)"
+        style={{ display: showSettings ? 'none' : 'flex' }}
+      >
+        {/* Custom Title Bar */}
+        <TitleBar />
 
-      {/* Main Content Area */}
-      <AppLayout>
-        {/* Tasks Panel (left sidebar) */}
-        <AppLayoutTasksPanel>
-          <RepoSidebar
-            repos={Object.values(repos)}
-            selectedRepoPath={selectedRepoPath}
-            selectedWorkspaceId={selectedWorkspaceId}
-            onSelectRepo={selectRepo}
-            onSelectWorkspace={selectWorkspace}
-          />
-        </AppLayoutTasksPanel>
+        {/* Main Content Area */}
+        <AppLayout>
+          {/* Tasks Panel (left sidebar) */}
+          <AppLayoutTasksPanel>
+            <RepoSidebar
+              repos={Object.values(repos)}
+              selectedRepoPath={selectedRepoPath}
+              selectedWorkspaceId={selectedWorkspaceId}
+              onSelectRepo={selectRepo}
+              onSelectWorkspace={selectWorkspace}
+            />
+          </AppLayoutTasksPanel>
 
-        {/* Chat Panel (main content) */}
-        <AppLayoutChatPanel>
-          <WorkspacePanel
-            workspace={selectedWorkspace}
-            emptyStateType={emptyStateType}
-          />
-        </AppLayoutChatPanel>
+          {/* Chat Panel (main content) */}
+          <AppLayoutChatPanel>
+            <WorkspacePanel
+              workspace={selectedWorkspace}
+              emptyStateType={emptyStateType}
+            />
+          </AppLayoutChatPanel>
 
-        {/* Tabs Panel (terminal, logs - conditional) */}
-        <AppLayoutTabsPanel>
-          <div className="h-full flex flex-col">
-            {visitedRepoPathsArray.map((repoPath) => (
-              <Terminal
-                key={repoPath}
-                cwd={repoPath}
-                hidden={repoPath !== selectedRepoPath}
-              />
-            ))}
-          </div>
-        </AppLayoutTabsPanel>
+          {/* Tabs Panel (terminal, logs - conditional) */}
+          <AppLayoutTabsPanel>
+            <div className="h-full flex flex-col">
+              {visitedRepoPathsArray.map((repoPath) => (
+                <Terminal
+                  key={repoPath}
+                  cwd={repoPath}
+                  hidden={repoPath !== selectedRepoPath}
+                />
+              ))}
+            </div>
+          </AppLayoutTabsPanel>
 
-        {/* Secondary Sidebar (files, git - conditional) */}
-        <AppLayoutSecondarySidebar>
-          <SecondarySidebar />
-        </AppLayoutSecondarySidebar>
+          {/* Secondary Sidebar (files, git - conditional) */}
+          <AppLayoutSecondarySidebar>
+            <SecondarySidebar />
+          </AppLayoutSecondarySidebar>
 
-        {/* Activity Bar (always visible) */}
-        <AppLayoutActivityBar>
-          <ActivityBar />
-        </AppLayoutActivityBar>
-      </AppLayout>
+          {/* Activity Bar (always visible) */}
+          <AppLayoutActivityBar>
+            <ActivityBar />
+          </AppLayoutActivityBar>
+        </AppLayout>
 
-      <TestComponent />
-    </div>
+        <TestComponent />
+      </div>
+    </>
   );
 }
 
