@@ -46,6 +46,8 @@ export interface SessionInputState {
   thinkingInitialized: boolean;
   pastedTextMap: Record<string, string>;
   pastedImageMap: Record<string, string>;
+  // Incremented when value is set externally (e.g., from fork) to trigger sync
+  forceUpdateKey: number;
 }
 
 const defaultSessionInputState: SessionInputState = {
@@ -59,6 +61,7 @@ const defaultSessionInputState: SessionInputState = {
   thinkingInitialized: false,
   pastedTextMap: {},
   pastedImageMap: {},
+  forceUpdateKey: 0,
 };
 
 export function getInputMode(value: string): InputMode {
@@ -137,6 +140,10 @@ interface StoreState {
 
   // Local JSX slash command state
   slashCommandJSXBySession: Record<SessionId, React.ReactNode | null>;
+
+  // Fork modal state
+  forkModalVisible: boolean;
+  forkParentUuid: string | null;
 }
 
 interface StoreActions {
@@ -231,6 +238,11 @@ interface StoreActions {
 
   // Connection state setter
   setConnectionState: (state: StoreState['state']) => void;
+
+  // Fork modal actions
+  showForkModal: () => void;
+  hideForkModal: () => void;
+  fork: (targetMessageUuid: string) => void;
 }
 
 type Store = StoreState & StoreActions & UISlice;
@@ -280,6 +292,10 @@ const useStore = create<Store>()((set, get, ...rest) => ({
 
   // Initial local JSX slash command state
   slashCommandJSXBySession: {},
+
+  // Initial fork modal state
+  forkModalVisible: false,
+  forkParentUuid: null,
 
   connect: async () => {
     const { transport, serverUrl } = get();
@@ -696,16 +712,25 @@ const useStore = create<Store>()((set, get, ...rest) => ({
         };
       });
 
+      // Use forkParentUuid if set, otherwise use parentUuid from params
+      const { forkParentUuid } = get();
+      const parentUuid = forkParentUuid || params.parentUuid;
+
       const response = await request('session.send', {
         message,
         sessionId,
         cwd,
         planMode: planModeBoolean,
         thinking,
-        parentUuid: params.parentUuid,
+        parentUuid,
         model,
         attachments,
       });
+
+      // Clear forkParentUuid after sending
+      if (forkParentUuid) {
+        set({ forkParentUuid: null });
+      }
 
       if (response.success) {
         // Reset processing state on success
@@ -1254,6 +1279,87 @@ const useStore = create<Store>()((set, get, ...rest) => ({
   },
 
   setConnectionState: (state) => set({ state }),
+
+  // Fork modal actions
+  showForkModal: () => {
+    console.log('[FORK] showForkModal store action called');
+    // Small delay to let the Escape key event pass before opening the modal
+    // This prevents the Dialog's built-in Escape handling from immediately closing it
+    setTimeout(() => {
+      console.log('[FORK] forkModalVisible set to true (after delay)');
+      set({ forkModalVisible: true });
+    }, 50);
+  },
+
+  hideForkModal: () => {
+    console.log('[FORK] hideForkModal store action called');
+    set({ forkModalVisible: false });
+  },
+
+  fork: (targetMessageUuid: string) => {
+    const { selectedSessionId, messages, setSessionInput } = get();
+
+    if (!selectedSessionId) return;
+
+    const sessionMessages = messages[selectedSessionId] || [];
+
+    // Find the target message
+    const targetMessage = sessionMessages.find(
+      (m) => m.uuid === targetMessageUuid,
+    );
+    if (!targetMessage) {
+      console.error(`Fork error: Message ${targetMessageUuid} not found`);
+      return;
+    }
+
+    // Filter messages up to (but not including) the target
+    const messageIndex = sessionMessages.findIndex(
+      (m) => m.uuid === targetMessageUuid,
+    );
+    const filteredMessages = sessionMessages.slice(0, messageIndex);
+
+    // Extract content from target message for input pre-fill
+    let contentText = '';
+    if (typeof targetMessage.content === 'string') {
+      contentText = targetMessage.content;
+    } else if (Array.isArray(targetMessage.content)) {
+      const textParts = targetMessage.content
+        .filter(
+          (part): part is { type: 'text'; text: string } =>
+            part.type === 'text',
+        )
+        .map((part) => part.text);
+      contentText = textParts.join('');
+    }
+
+    // Extract bash-input content if present
+    const bashInputMatch = contentText.match(
+      /<bash-input>([\s\S]*?)<\/bash-input>/,
+    );
+    if (bashInputMatch) {
+      contentText = bashInputMatch[1];
+    }
+
+    // Update store state
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [selectedSessionId]: filteredMessages,
+      },
+      forkParentUuid: targetMessage.parentUuid,
+      forkModalVisible: false,
+    }));
+
+    // Pre-fill input with the target message content
+    // Increment forceUpdateKey to trigger sync in useInputState
+    const currentInput =
+      get().inputBySession[selectedSessionId] || defaultSessionInputState;
+    setSessionInput(selectedSessionId, {
+      value: contentText,
+      cursorPosition: contentText.length,
+      forceUpdateKey: currentInput.forceUpdateKey + 1,
+    });
+  },
 
   // UI Slice
   ...createUISlice(set, get, ...rest),

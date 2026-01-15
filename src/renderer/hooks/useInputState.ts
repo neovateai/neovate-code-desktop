@@ -39,14 +39,38 @@ export function useInputState(
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSessionIdRef = useRef<string | null>(sessionId);
+  const prevForceUpdateKeyRef = useRef<number>(sessionInput.forceUpdateKey);
 
+  // Sync from store when sessionId changes
   useEffect(() => {
     if (prevSessionIdRef.current !== sessionId) {
       setLocalValue(sessionInput.value);
       setLocalCursorPosition(sessionInput.cursorPosition);
       prevSessionIdRef.current = sessionId;
+      prevForceUpdateKeyRef.current = sessionInput.forceUpdateKey;
     }
-  }, [sessionId, sessionInput.value, sessionInput.cursorPosition]);
+  }, [
+    sessionId,
+    sessionInput.value,
+    sessionInput.cursorPosition,
+    sessionInput.forceUpdateKey,
+  ]);
+
+  // Sync from store when forceUpdateKey changes (external update like fork)
+  useEffect(() => {
+    if (prevForceUpdateKeyRef.current !== sessionInput.forceUpdateKey) {
+      console.log(
+        '[FORK] forceUpdateKey changed, syncing input value from store',
+      );
+      setLocalValue(sessionInput.value);
+      setLocalCursorPosition(sessionInput.cursorPosition);
+      prevForceUpdateKeyRef.current = sessionInput.forceUpdateKey;
+    }
+  }, [
+    sessionInput.forceUpdateKey,
+    sessionInput.value,
+    sessionInput.cursorPosition,
+  ]);
 
   useEffect(() => {
     return () => {

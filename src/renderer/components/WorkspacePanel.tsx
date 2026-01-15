@@ -21,10 +21,10 @@ import type { NormalizedMessage } from '../client/types/message';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
+import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
 import { splitMessages } from './messages/messageHelpers';
 import { OpenAppButton } from './OpenAppButton';
-import { toastManager } from './ui/toast';
 
 // Define the context type
 interface WorkspaceContextType {
@@ -85,6 +85,12 @@ export const WorkspacePanel = ({
   const slashCommandJSXBySession = useStore(
     (state) => state.slashCommandJSXBySession,
   );
+
+  // Fork modal state and actions
+  const forkModalVisible = useStore((state) => state.forkModalVisible);
+  const showForkModal = useStore((state) => state.showForkModal);
+  const hideForkModal = useStore((state) => state.hideForkModal);
+  const fork = useStore((state) => state.fork);
 
   // Get slash command JSX for current session
   const slashCommandJSX = selectedSessionId
@@ -302,12 +308,16 @@ export const WorkspacePanel = ({
   }, [selectedSessionId, cancelSession]);
 
   const handleShowForkModal = useCallback(() => {
-    toastManager.add({
-      type: 'info',
-      title: 'Fork session',
-      description: 'Fork functionality is not implemented yet',
-    });
-  }, []);
+    console.log('[FORK] handleShowForkModal called in WorkspacePanel');
+    showForkModal();
+  }, [showForkModal]);
+
+  const handleForkSelect = useCallback(
+    (uuid: string) => {
+      fork(uuid);
+    },
+    [fork],
+  );
 
   // Create wrapper functions that provide context for ChatInput
   const fetchCommands = useCallback(async () => {
@@ -406,6 +416,14 @@ export const WorkspacePanel = ({
           {slashCommandJSX}
         </div>
       </div>
+
+      {/* Fork Modal */}
+      <ForkModal
+        open={forkModalVisible}
+        onClose={hideForkModal}
+        messages={messages}
+        onSelect={handleForkSelect}
+      />
     </WorkspaceContext.Provider>
   );
 };

@@ -96,7 +96,12 @@ export function useInputHandlers({
     slashCommands.suggestions.length > 0;
 
   const handleDoubleEscape = useDoublePress(
-    onShowForkModal,
+    () => {
+      console.log(
+        '[FORK] onShowForkModal callback triggered in useInputHandlers',
+      );
+      onShowForkModal();
+    },
     () => {
       const currentMode = modeRef.current;
       const currentValue = valueRef.current;
