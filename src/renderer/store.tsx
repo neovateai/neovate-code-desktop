@@ -4,6 +4,7 @@ import { WebSocketTransport } from './client/transport/WebSocketTransport';
 import { MessageBus } from './client/messaging/MessageBus';
 import { randomUUID } from './utils/uuid';
 import { getNestedValue, setNestedValue } from './lib/utils';
+import { countTokens } from './lib/tokenUtils';
 import { toastManager } from './components/ui/toast';
 import type {
   RepoData,
@@ -408,13 +409,24 @@ const useStore = create<Store>()((set, get, ...rest) => ({
     });
 
     onEvent('chunk', (data: any) => {
-      // Increment token count for the session
-      if (data.sessionId) {
-        const { setSessionProcessing, getSessionProcessing } = get();
-        const current = getSessionProcessing(data.sessionId);
-        setSessionProcessing(data.sessionId, {
-          processingToken: current.processingToken + 1,
-        });
+      // Count real tokens from chunk delta
+      if (data.sessionId && data.chunk) {
+        const chunk = data.chunk;
+        // Only count tokens from text/reasoning/tool-input delta events
+        if (
+          chunk.type === 'text-delta' ||
+          chunk.type === 'reasoning-delta' ||
+          chunk.type === 'tool-input-delta'
+        ) {
+          const tokenCount = countTokens(chunk.delta || '');
+          if (tokenCount > 0) {
+            const { setSessionProcessing, getSessionProcessing } = get();
+            const current = getSessionProcessing(data.sessionId);
+            setSessionProcessing(data.sessionId, {
+              processingToken: current.processingToken + tokenCount,
+            });
+          }
+        }
       }
     });
 
