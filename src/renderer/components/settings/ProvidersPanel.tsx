@@ -21,6 +21,13 @@ interface Provider {
   doc?: string;
   env?: string[];
   apiEnv?: string[];
+  api?: string;
+  options?: {
+    baseURL?: string;
+    apiKey?: string;
+    headers?: Record<string, string>;
+    httpProxy?: string;
+  };
   validEnvs: string[];
   hasApiKey: boolean;
 }
@@ -334,7 +341,7 @@ export const ProvidersPanel = () => {
         const baseUrlResult = await request('config.get', {
           cwd: '/tmp',
           isGlobal: true,
-          key: `provider.${selectedProviderId}.options.baseUrl`,
+          key: `provider.${selectedProviderId}.options.baseURL`,
         });
         if (baseUrlResult.success && baseUrlResult.data.value) {
           setBaseUrl(baseUrlResult.data.value);
@@ -401,7 +408,7 @@ export const ProvidersPanel = () => {
         const result = await request('config.set', {
           cwd: '/tmp',
           isGlobal: true,
-          key: `provider.${selectedProviderId}.options.baseUrl`,
+          key: `provider.${selectedProviderId}.options.baseURL`,
           value: baseUrl.trim(),
         });
 
@@ -419,7 +426,7 @@ export const ProvidersPanel = () => {
         const result = await request('config.remove', {
           cwd: '/tmp',
           isGlobal: true,
-          key: `provider.${selectedProviderId}.options.baseUrl`,
+          key: `provider.${selectedProviderId}.options.baseURL`,
         });
         if (result.success) {
           toastManager.add({
@@ -959,7 +966,10 @@ export const ProvidersPanel = () => {
                       type="text"
                       value={baseUrl}
                       onChange={(e) => setBaseUrl(e.target.value)}
-                      placeholder="Custom base URL (leave empty for default)"
+                      placeholder={
+                        selectedProvider.api ||
+                        'Custom base URL (leave empty for default)'
+                      }
                       className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
                       style={{
                         backgroundColor: 'var(--bg-surface)',
