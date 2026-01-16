@@ -19,6 +19,7 @@ import {
   ActivityBar,
   SecondarySidebar,
 } from './components/layout';
+import { getNestedValue } from './lib/utils';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -31,12 +32,13 @@ function App() {
   const selectWorkspace = useStore((s) => s.selectWorkspace);
   const showSettings = useStore((s) => s.showSettings);
   const setShowSettings = useStore((s) => s.setShowSettings);
-  const getGlobalConfigValue = useStore((s) => s.getGlobalConfigValue);
+  const globalConfig = useStore((s) => s.globalConfig);
   const setGlobalConfig = useStore((s) => s.setGlobalConfig);
   const initialized = useStore((s) => s.initialized);
 
   // Get theme from config (default to 'system')
-  const theme = getGlobalConfigValue<string>('desktop.theme', 'system');
+  // Subscribe to globalConfig directly so component re-renders when config changes
+  const theme = getNestedValue<string>(globalConfig, 'desktop.theme', 'system');
 
   // Listen for menu events from main process
   useEffect(() => {
