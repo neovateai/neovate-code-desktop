@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { RefreshIcon } from '@hugeicons/core-free-icons';
+import { RefreshIcon, SettingsIcon } from '@hugeicons/core-free-icons';
 import { Button } from '../ui/button';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
@@ -131,9 +131,10 @@ export const PreferencesPanel = () => {
   return (
     <div>
       <h1
-        className="text-2xl font-semibold mb-6"
+        className="text-xl font-semibold mb-6 flex items-center gap-2"
         style={{ color: 'var(--text-primary)' }}
       >
+        <HugeiconsIcon icon={SettingsIcon} size={22} strokeWidth={1.5} />
         Preferences
       </h1>
 

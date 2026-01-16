@@ -6,6 +6,7 @@ import {
   Tick01Icon,
   Cancel01Icon,
   Loading01Icon,
+  CloudIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
@@ -394,9 +395,10 @@ export const ProvidersPanel = () => {
   return (
     <div>
       <h1
-        className="text-2xl font-semibold mb-6"
+        className="text-xl font-semibold mb-6 flex items-center gap-2"
         style={{ color: 'var(--text-primary)' }}
       >
+        <HugeiconsIcon icon={CloudIcon} size={22} strokeWidth={1.5} />
         Providers
       </h1>
 
