@@ -58,6 +58,8 @@ const config = {
     ],
     // Optimize compression
     compression: 'maximum',
+    identity: "chen cheng (KU8S35TEW8)",
+    notarize: true
   },
 
   /**
