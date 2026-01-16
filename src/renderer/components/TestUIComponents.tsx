@@ -104,8 +104,8 @@ import {
 export function TestUIComponents() {
   const [checkboxChecked, setCheckboxChecked] = useState(false);
   const [radioValue, setRadioValue] = useState('option1');
-  const [selectValue, setSelectValue] = useState('apple');
-  const [comboboxValue, setComboboxValue] = useState('');
+  const [selectValue, setSelectValue] = useState<string | null>('apple');
+  const [comboboxValue, setComboboxValue] = useState<string | null>('');
   const [menuCheckboxes, setMenuCheckboxes] = useState({
     bookmarks: true,
     urls: false,

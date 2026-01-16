@@ -39,13 +39,23 @@ function SelectTrigger({
   );
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+function SelectValue({
+  className,
+  placeholder,
+  children,
+  ...props
+}: SelectPrimitive.Value.Props & {
+  placeholder?: string;
+}) {
   return (
     <SelectPrimitive.Value
       className={cn('flex-1 truncate', className)}
       data-slot="select-value"
       {...props}
-    />
+    >
+      {children ??
+        ((value: unknown) => (value != null ? String(value) : placeholder))}
+    </SelectPrimitive.Value>
   );
 }
 
