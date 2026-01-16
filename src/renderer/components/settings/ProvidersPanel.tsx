@@ -562,21 +562,29 @@ export const ProvidersPanel = () => {
                       border: '1px solid rgba(59, 130, 246, 0.2)',
                     }}
                   >
-                    <div
-                      className="font-medium mb-1"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      OAuth Provider
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className="font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        OAuth Provider
+                      </div>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          toastManager.add({
+                            type: 'warning',
+                            title: 'Not implemented',
+                            description: `OAuth login for ${selectedProvider?.name} is not implemented yet.`,
+                          });
+                        }}
+                      >
+                        Login
+                      </Button>
                     </div>
                     <div style={{ color: 'var(--text-secondary)' }}>
-                      This provider uses OAuth authentication. Use the{' '}
-                      <code
-                        className="px-1 py-0.5 rounded text-xs"
-                        style={{ backgroundColor: 'var(--bg-surface)' }}
-                      >
-                        /login {selectedProviderId}
-                      </code>{' '}
-                      command in the chat to authenticate.
+                      This provider uses OAuth authentication.
                     </div>
                   </div>
                 )}
