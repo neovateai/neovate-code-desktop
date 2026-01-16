@@ -163,3 +163,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Panel collapse/expand animation */
+[data-panel] {
+  transition: flex-grow 50ms ease-out;
+}
+
+/* Disable animation while dragging */
+[data-group]:has([data-separator="active"]) [data-panel] {
+  transition: none;
+}
