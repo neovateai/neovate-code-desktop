@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ViewIcon,
@@ -9,6 +9,9 @@ import {
   CloudIcon,
   Add01Icon,
   Delete01Icon,
+  FlashIcon,
+  ArrowDown01Icon,
+  AlertCircleIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
@@ -114,6 +117,36 @@ export const ProvidersPanel = () => {
   });
   const [newModelId, setNewModelId] = useState('');
   const [newModelName, setNewModelName] = useState('');
+
+  // Model test state
+  const [showTestDropdown, setShowTestDropdown] = useState(false);
+  const [testingModel, setTestingModel] = useState<string | null>(null);
+  const [testStatus, setTestStatus] = useState<
+    'idle' | 'testing' | 'success' | 'error'
+  >('idle');
+  const [testError, setTestError] = useState<string | null>(null);
+  const testDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        testDropdownRef.current &&
+        !testDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowTestDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Reset test status when provider changes
+  useEffect(() => {
+    setTestStatus('idle');
+    setTestError(null);
+    setTestingModel(null);
+  }, [selectedProviderId]);
 
   // Load providers list
   useEffect(() => {
@@ -547,6 +580,49 @@ export const ProvidersPanel = () => {
     [request],
   );
 
+  // Test model handler
+  const handleTestModel = useCallback(
+    async (modelValue: string) => {
+      setTestingModel(modelValue);
+      setTestStatus('testing');
+      setTestError(null);
+      setShowTestDropdown(false);
+
+      try {
+        const result = await request('models.test', {
+          cwd: '/tmp',
+          model: modelValue,
+        });
+
+        if (result.success) {
+          setTestStatus('success');
+          toastManager.add({
+            type: 'success',
+            title: 'Model test passed',
+            description: `${modelValue} is working correctly.`,
+          });
+        } else {
+          setTestStatus('error');
+          setTestError(result.error || 'Unknown error');
+          toastManager.add({
+            type: 'error',
+            title: 'Model test failed',
+            description: result.error || 'Unknown error',
+          });
+        }
+      } catch (error) {
+        setTestStatus('error');
+        setTestError(String(error));
+        toastManager.add({
+          type: 'error',
+          title: 'Model test failed',
+          description: String(error),
+        });
+      }
+    },
+    [request],
+  );
+
   // Filter providers by search query and sort active providers first
   const filteredProviders = providers
     .filter(
@@ -789,6 +865,115 @@ export const ProvidersPanel = () => {
                         : 'Inactive'}
                     </span>
                   </div>
+
+                  {/* Model Test Button */}
+                  {selectedProviderModels.length > 0 && (
+                    <div className="relative" ref={testDropdownRef}>
+                      <button
+                        onClick={() => setShowTestDropdown(!showTestDropdown)}
+                        disabled={testStatus === 'testing'}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors"
+                        style={{
+                          backgroundColor:
+                            testStatus === 'success'
+                              ? 'rgba(34, 197, 94, 0.1)'
+                              : testStatus === 'error'
+                                ? 'rgba(239, 68, 68, 0.1)'
+                                : 'var(--bg-surface)',
+                          border: `1px solid ${
+                            testStatus === 'success'
+                              ? 'rgba(34, 197, 94, 0.3)'
+                              : testStatus === 'error'
+                                ? 'rgba(239, 68, 68, 0.3)'
+                                : 'var(--border-subtle)'
+                          }`,
+                          color:
+                            testStatus === 'success'
+                              ? '#22c55e'
+                              : testStatus === 'error'
+                                ? '#ef4444'
+                                : 'var(--text-secondary)',
+                        }}
+                        title={
+                          testStatus === 'error' && testError
+                            ? testError
+                            : 'Test a model'
+                        }
+                      >
+                        {testStatus === 'testing' ? (
+                          <Spinner className="h-4 w-4" />
+                        ) : testStatus === 'success' ? (
+                          <HugeiconsIcon
+                            icon={Tick01Icon}
+                            size={16}
+                            strokeWidth={1.5}
+                          />
+                        ) : testStatus === 'error' ? (
+                          <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            size={16}
+                            strokeWidth={1.5}
+                          />
+                        ) : (
+                          <HugeiconsIcon
+                            icon={FlashIcon}
+                            size={16}
+                            strokeWidth={1.5}
+                          />
+                        )}
+                        <HugeiconsIcon
+                          icon={ArrowDown01Icon}
+                          size={14}
+                          strokeWidth={1.5}
+                        />
+                      </button>
+
+                      {/* Dropdown */}
+                      {showTestDropdown && (
+                        <div
+                          className="absolute right-0 top-full mt-1 z-10 rounded-md shadow-lg overflow-hidden"
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            border: '1px solid var(--border-subtle)',
+                            minWidth: '200px',
+                            maxHeight: '300px',
+                            overflowY: 'auto',
+                          }}
+                        >
+                          <div
+                            className="px-3 py-2 text-xs font-medium"
+                            style={{
+                              color: 'var(--text-secondary)',
+                              borderBottom: '1px solid var(--border-subtle)',
+                            }}
+                          >
+                            Select a model to test
+                          </div>
+                          {selectedProviderModels.map((model) => (
+                            <button
+                              key={model.modelId}
+                              onClick={() => handleTestModel(model.value)}
+                              className="w-full px-3 py-2 text-sm text-left transition-colors"
+                              style={{
+                                color: 'var(--text-primary)',
+                                backgroundColor: 'transparent',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  'var(--bg-base-hover)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  'transparent';
+                              }}
+                            >
+                              {model.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Documentation Link */}
