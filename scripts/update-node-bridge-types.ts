@@ -124,6 +124,17 @@ async function main(): Promise<void> {
 
   await Bun.write(args.dest, processed);
   console.log(`Updated ${args.dest}`);
+
+  // Run typecheck to validate the generated file
+  console.log('Running typecheck...');
+  const result = Bun.spawnSync(['npm', 'run', 'typecheck'], {
+    stdout: 'inherit',
+    stderr: 'inherit',
+  });
+  if (result.exitCode !== 0) {
+    throw new Error('Typecheck failed');
+  }
+  console.log('Typecheck passed');
 }
 
 main().catch((err) => {

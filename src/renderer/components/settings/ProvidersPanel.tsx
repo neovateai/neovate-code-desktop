@@ -836,8 +836,12 @@ export const ProvidersPanel = () => {
                   <div
                     className="p-3 rounded-md text-sm"
                     style={{
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      border: '1px solid rgba(59, 130, 246, 0.2)',
+                      backgroundColor: selectedProvider.hasApiKey
+                        ? 'rgba(34, 197, 94, 0.1)'
+                        : 'rgba(59, 130, 246, 0.1)',
+                      border: selectedProvider.hasApiKey
+                        ? '1px solid rgba(34, 197, 94, 0.2)'
+                        : '1px solid rgba(59, 130, 246, 0.2)',
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -847,22 +851,39 @@ export const ProvidersPanel = () => {
                       >
                         OAuth Provider
                       </div>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => {
-                          toastManager.add({
-                            type: 'warning',
-                            title: 'Not implemented',
-                            description: `OAuth login for ${selectedProvider?.name} is not implemented yet.`,
-                          });
-                        }}
-                      >
-                        Login
-                      </Button>
+                      {selectedProvider.hasApiKey ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemoveApiKey}
+                          disabled={isSaving}
+                        >
+                          {isSaving ? (
+                            <Spinner className="h-4 w-4" />
+                          ) : (
+                            'Logout'
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            toastManager.add({
+                              type: 'warning',
+                              title: 'Not implemented',
+                              description: `OAuth login for ${selectedProvider?.name} is not implemented yet.`,
+                            });
+                          }}
+                        >
+                          Login
+                        </Button>
+                      )}
                     </div>
                     <div style={{ color: 'var(--text-secondary)' }}>
-                      This provider uses OAuth authentication.
+                      {selectedProvider.hasApiKey
+                        ? 'You are logged in. Click Logout to remove your credentials.'
+                        : 'This provider uses OAuth authentication.'}
                     </div>
                   </div>
                 )}
