@@ -35,6 +35,7 @@ const APP_NAMES: Record<App, string> = {
   antigravity: 'Antigravity',
   finder: 'Finder',
   sourcetree: 'Sourcetree',
+  fork: 'Fork',
 };
 
 const APP_ICON_SRC: Partial<Record<App, string>> = {

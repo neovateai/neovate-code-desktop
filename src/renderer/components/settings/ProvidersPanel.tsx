@@ -954,52 +954,54 @@ export const ProvidersPanel = () => {
                 )}
 
                 {/* Base URL Input */}
-                <div className="space-y-2">
-                  <label
-                    className="block text-sm font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    Base URL (Optional)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={baseUrl}
-                      onChange={(e) => setBaseUrl(e.target.value)}
-                      placeholder={
-                        selectedProvider.api ||
-                        'Custom base URL (leave empty for default)'
-                      }
-                      className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        border: '1px solid var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--accent)';
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor =
-                          'var(--border-subtle)';
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSaveBaseUrl}
-                      disabled={isSaving}
+                {!isOAuthProvider && (
+                  <div className="space-y-2">
+                    <label
+                      className="block text-sm font-medium"
+                      style={{ color: 'var(--text-primary)' }}
                     >
-                      {isSaving ? <Spinner className="h-4 w-4" /> : 'Save'}
-                    </Button>
+                      Base URL (Optional)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={baseUrl}
+                        onChange={(e) => setBaseUrl(e.target.value)}
+                        placeholder={
+                          selectedProvider.api ||
+                          'Custom base URL (leave empty for default)'
+                        }
+                        className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--accent)';
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            'var(--border-subtle)';
+                        }}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSaveBaseUrl}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? <Spinner className="h-4 w-4" /> : 'Save'}
+                      </Button>
+                    </div>
+                    <p
+                      className="text-xs"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      Leave empty to use the default API endpoint
+                    </p>
                   </div>
-                  <p
-                    className="text-xs"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    Leave empty to use the default API endpoint
-                  </p>
-                </div>
+                )}
 
                 {/* Models List */}
                 {selectedProviderModels.length > 0 && (

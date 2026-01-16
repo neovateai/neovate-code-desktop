@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
 
-interface ParsedArgs {
+interface UpdateTypesArgs {
   help: boolean;
   source: string;
   dest: string;
+  dryRun: boolean;
 }
 
-function parseArgs(): ParsedArgs {
+function parseArgs(): UpdateTypesArgs {
   const args = Bun.argv.slice(2);
   const sourceArg = args.find((a) => a.startsWith('--source='))?.split('=')[1];
   const source = sourceArg ?? process.env.NODE_BRIDGE_TYPE;
@@ -21,6 +22,7 @@ function parseArgs(): ParsedArgs {
     dest:
       args.find((a) => a.startsWith('--dest='))?.split('=')[1] ??
       'src/renderer/nodeBridge.types.ts',
+    dryRun: args.includes('-n') || args.includes('--dry-run'),
   };
 }
 
@@ -99,7 +101,10 @@ function processContent(content: string): string {
     }
   }
 
-  return processedLines.join('\n');
+  // Replace inline import('./context').Context with any
+  return processedLines
+    .join('\n')
+    .replace(/import\(['"]\.\/context['"]\)\.Context/g, 'any');
 }
 
 async function main(): Promise<void> {

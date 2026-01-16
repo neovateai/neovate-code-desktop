@@ -1168,6 +1168,6 @@ export type HandlerMethod = keyof HandlerMap;
 export type NodeBridgeHandlers = Partial<{
   [K in keyof HandlerMap]: (
     data: HandlerMap[K]['input'],
-    context: import('./context').Context,
+    context: any,
   ) => Promise<HandlerMap[K]['output']> | HandlerMap[K]['output'];
 }>;
