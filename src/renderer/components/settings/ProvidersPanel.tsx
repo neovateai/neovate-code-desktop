@@ -7,6 +7,8 @@ import {
   Cancel01Icon,
   Loading01Icon,
   CloudIcon,
+  Add01Icon,
+  Delete01Icon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
@@ -22,6 +24,24 @@ interface Provider {
   validEnvs: string[];
   hasApiKey: boolean;
 }
+
+// Custom provider interface
+interface CustomProvider {
+  id: string;
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+  apiFormat: 'chat-completions' | 'responses' | 'anthropic';
+  models: { id: string; name: string }[]; // key/value pairs for models
+  createModelType?: 'anthropic';
+}
+
+// API format options
+const API_FORMAT_OPTIONS = [
+  { value: 'chat-completions', label: 'Chat Completions (/chat/completions)' },
+  { value: 'responses', label: 'Responses (/responses)' },
+  { value: 'anthropic', label: 'Anthropic Messages (/v1/messages)' },
+] as const;
 
 // OAuth providers that need special handling
 const OAUTH_PROVIDERS = ['github-copilot', 'antigravity'];
@@ -74,6 +94,19 @@ export const ProvidersPanel = () => {
   const [currentSmallModel, setCurrentSmallModel] = useState<string | null>(
     null,
   );
+
+  // Custom provider state
+  const [customProviders, setCustomProviders] = useState<CustomProvider[]>([]);
+  const [showAddProviderModal, setShowAddProviderModal] = useState(false);
+  const [newProvider, setNewProvider] = useState<Omit<CustomProvider, 'id'>>({
+    name: '',
+    baseUrl: '',
+    apiKey: '',
+    apiFormat: 'chat-completions',
+    models: [],
+  });
+  const [newModelId, setNewModelId] = useState('');
+  const [newModelName, setNewModelName] = useState('');
 
   // Load providers list
   useEffect(() => {
@@ -131,6 +164,145 @@ export const ProvidersPanel = () => {
     };
     loadModels();
   }, [request]);
+
+  // Load custom providers from config
+  useEffect(() => {
+    const loadCustomProviders = async () => {
+      try {
+        const result = await request('config.get', {
+          cwd: '/tmp',
+          isGlobal: true,
+          key: 'customProviders',
+        });
+        if (result.success && result.data.value) {
+          const parsed =
+            typeof result.data.value === 'string'
+              ? JSON.parse(result.data.value)
+              : result.data.value;
+          setCustomProviders(parsed);
+        }
+      } catch (error) {
+        console.error('Failed to load custom providers:', error);
+      }
+    };
+    loadCustomProviders();
+  }, [request]);
+
+  // Save custom provider
+  const handleSaveCustomProvider = useCallback(async () => {
+    if (!newProvider.name.trim() || !newProvider.baseUrl.trim()) {
+      toastManager.add({
+        type: 'error',
+        title: 'Validation Error',
+        description: 'Name and Base URL are required.',
+      });
+      return;
+    }
+
+    const customProvider: CustomProvider = {
+      id: `custom-${Date.now()}`,
+      name: newProvider.name.trim(),
+      baseUrl: newProvider.baseUrl.trim(),
+      apiKey: newProvider.apiKey.trim(),
+      apiFormat: newProvider.apiFormat,
+      models: newProvider.models,
+      ...(newProvider.apiFormat === 'anthropic'
+        ? { createModelType: 'anthropic' as const }
+        : {}),
+    };
+
+    const updatedProviders = [...customProviders, customProvider];
+
+    try {
+      const result = await request('config.set', {
+        cwd: '/tmp',
+        isGlobal: true,
+        key: 'customProviders',
+        value: JSON.stringify(updatedProviders),
+      });
+
+      if (result.success) {
+        setCustomProviders(updatedProviders);
+        setShowAddProviderModal(false);
+        setNewProvider({
+          name: '',
+          baseUrl: '',
+          apiKey: '',
+          apiFormat: 'chat-completions',
+          models: [],
+        });
+        setNewModelId('');
+        setNewModelName('');
+        toastManager.add({
+          type: 'success',
+          title: 'Custom provider added',
+          description: `${customProvider.name} has been added.`,
+        });
+      }
+    } catch (error) {
+      toastManager.add({
+        type: 'error',
+        title: 'Failed to save custom provider',
+        description: String(error),
+      });
+    }
+  }, [newProvider, customProviders, request]);
+
+  // Delete custom provider
+  const handleDeleteCustomProvider = useCallback(
+    async (providerId: string) => {
+      const updatedProviders = customProviders.filter(
+        (p) => p.id !== providerId,
+      );
+
+      try {
+        const result = await request('config.set', {
+          cwd: '/tmp',
+          isGlobal: true,
+          key: 'customProviders',
+          value: JSON.stringify(updatedProviders),
+        });
+
+        if (result.success) {
+          setCustomProviders(updatedProviders);
+          if (selectedProviderId === providerId) {
+            setSelectedProviderId(providers[0]?.id || null);
+          }
+          toastManager.add({
+            type: 'info',
+            title: 'Custom provider deleted',
+          });
+        }
+      } catch (error) {
+        toastManager.add({
+          type: 'error',
+          title: 'Failed to delete custom provider',
+          description: String(error),
+        });
+      }
+    },
+    [customProviders, selectedProviderId, providers, request],
+  );
+
+  // Add model to new provider
+  const handleAddModel = useCallback(() => {
+    if (!newModelId.trim()) return;
+    const modelName = newModelName.trim() || newModelId.trim();
+    setNewProvider((prev) => ({
+      ...prev,
+      models: [...prev.models, { id: newModelId.trim(), name: modelName }],
+    }));
+    setNewModelId('');
+    setNewModelName('');
+  }, [newModelId, newModelName]);
+
+  // Remove model from new provider
+  const handleRemoveModel = useCallback((index: number) => {
+    setNewProvider((prev) => ({
+      ...prev,
+      models: prev.models.filter((_, i) => i !== index),
+    }));
+  }, []);
 
   // Load selected provider's config
   useEffect(() => {
@@ -473,6 +645,103 @@ export const ProvidersPanel = () => {
                 )}
               </button>
             ))}
+
+            {/* Custom Providers */}
+            {customProviders
+              .filter(
+                (p) =>
+                  p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  p.id.toLowerCase().includes(searchQuery.toLowerCase()),
+              )
+              .map((customProvider) => (
+                <div
+                  key={customProvider.id}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group"
+                  style={{
+                    backgroundColor:
+                      selectedProviderId === customProvider.id
+                        ? 'var(--accent)'
+                        : 'transparent',
+                    color:
+                      selectedProviderId === customProvider.id
+                        ? 'var(--text-primary)'
+                        : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setSelectedProviderId(customProvider.id)}
+                  onMouseEnter={(e) => {
+                    if (selectedProviderId !== customProvider.id) {
+                      e.currentTarget.style.backgroundColor =
+                        'var(--bg-base-hover)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedProviderId !== customProvider.id) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <span className="flex-1 truncate">{customProvider.name}</span>
+                  <span
+                    className="px-1 py-0.5 text-xs rounded"
+                    style={{
+                      backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                      color: '#8b5cf6',
+                    }}
+                  >
+                    Custom
+                  </span>
+                  {customProvider.apiKey && (
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: '#22c55e' }}
+                      title="Active"
+                    />
+                  )}
+                  <button
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity"
+                    style={{ color: 'var(--text-secondary)' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCustomProvider(customProvider.id);
+                    }}
+                    title="Delete custom provider"
+                  >
+                    <HugeiconsIcon
+                      icon={Delete01Icon}
+                      size={14}
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                </div>
+              ))}
+          </div>
+
+          {/* Add custom provider button */}
+          <div
+            className="p-2"
+            style={{ borderTop: '1px solid var(--border-subtle)' }}
+          >
+            <button
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors"
+              style={{
+                backgroundColor: 'var(--bg-base)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-secondary)',
+              }}
+              onClick={() => setShowAddProviderModal(true)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
+                e.currentTarget.style.borderColor = 'var(--accent)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-base)';
+                e.currentTarget.style.borderColor = 'var(--border-subtle)';
+              }}
+            >
+              <HugeiconsIcon icon={Add01Icon} size={16} strokeWidth={1.5} />
+              Add custom provider
+            </button>
           </div>
         </div>
 
@@ -834,6 +1103,346 @@ export const ProvidersPanel = () => {
           )}
         </div>
       </div>
+
+      {/* Add Custom Provider Modal */}
+      {showAddProviderModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          onClick={() => setShowAddProviderModal(false)}
+        >
+          <div
+            className="rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              className="px-4 py-3 flex items-center justify-between"
+              style={{ borderBottom: '1px solid var(--border-subtle)' }}
+            >
+              <h3
+                className="text-lg font-semibold"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Add Custom Provider
+              </h3>
+              <button
+                onClick={() => setShowAddProviderModal(false)}
+                className="p-1 rounded hover:bg-opacity-10 transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <HugeiconsIcon
+                  icon={Cancel01Icon}
+                  size={20}
+                  strokeWidth={1.5}
+                />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 space-y-4">
+              {/* Name */}
+              <div className="space-y-1">
+                <label
+                  className="block text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  Name <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newProvider.name}
+                  onChange={(e) =>
+                    setNewProvider((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g., My Custom Provider"
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-base)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  }}
+                />
+              </div>
+
+              {/* Base URL */}
+              <div className="space-y-1">
+                <label
+                  className="block text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  Base URL <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newProvider.baseUrl}
+                  onChange={(e) =>
+                    setNewProvider((prev) => ({
+                      ...prev,
+                      baseUrl: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g., https://api.example.com/v1"
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-base)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  }}
+                />
+              </div>
+
+              {/* API Key */}
+              <div className="space-y-1">
+                <label
+                  className="block text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  value={newProvider.apiKey}
+                  onChange={(e) =>
+                    setNewProvider((prev) => ({
+                      ...prev,
+                      apiKey: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter your API key"
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-base)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  }}
+                />
+              </div>
+
+              {/* API Format */}
+              <div className="space-y-1">
+                <label
+                  className="block text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  API Format
+                </label>
+                <select
+                  value={newProvider.apiFormat}
+                  onChange={(e) =>
+                    setNewProvider((prev) => ({
+                      ...prev,
+                      apiFormat: e.target.value as CustomProvider['apiFormat'],
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--bg-base)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  {API_FORMAT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {newProvider.apiFormat === 'anthropic' && (
+                  <p
+                    className="text-xs mt-1"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    This will set{' '}
+                    <code style={{ color: '#8b5cf6' }}>
+                      createModelType: anthropic
+                    </code>{' '}
+                    in the config.
+                  </p>
+                )}
+              </div>
+
+              {/* Models */}
+              <div className="space-y-2">
+                <label
+                  className="block text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  Models
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newModelId}
+                      onChange={(e) => setNewModelId(e.target.value)}
+                      placeholder="Model ID (e.g., gpt-4)"
+                      className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
+                      style={{
+                        backgroundColor: 'var(--bg-base)',
+                        border: '1px solid var(--border-subtle)',
+                        color: 'var(--text-primary)',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--accent)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor =
+                          'var(--border-subtle)';
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddModel();
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newModelName}
+                      onChange={(e) => setNewModelName(e.target.value)}
+                      placeholder="Display Name (optional, defaults to ID)"
+                      className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
+                      style={{
+                        backgroundColor: 'var(--bg-base)',
+                        border: '1px solid var(--border-subtle)',
+                        color: 'var(--text-primary)',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--accent)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor =
+                          'var(--border-subtle)';
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddModel();
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddModel}
+                      disabled={!newModelId.trim()}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+                {newProvider.models.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {newProvider.models.map((model, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md"
+                        style={{
+                          backgroundColor: 'var(--bg-base)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                        title={`ID: ${model.id}`}
+                      >
+                        {model.name}
+                        <span
+                          style={{
+                            color: 'var(--text-secondary)',
+                            fontSize: '10px',
+                          }}
+                        >
+                          ({model.id})
+                        </span>
+                        <button
+                          onClick={() => handleRemoveModel(index)}
+                          className="p-0.5 rounded hover:bg-opacity-20 transition-colors"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          <HugeiconsIcon
+                            icon={Cancel01Icon}
+                            size={12}
+                            strokeWidth={1.5}
+                          />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p
+                  className="text-xs"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Enter model ID and optional display name. Press Enter or click
+                  Add.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              className="px-4 py-3 flex items-center justify-end gap-2"
+              style={{ borderTop: '1px solid var(--border-subtle)' }}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowAddProviderModal(false);
+                  setNewProvider({
+                    name: '',
+                    baseUrl: '',
+                    apiKey: '',
+                    apiFormat: 'chat-completions',
+                    models: [],
+                  });
+                  setNewModelId('');
+                  setNewModelName('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSaveCustomProvider}
+                disabled={
+                  !newProvider.name.trim() || !newProvider.baseUrl.trim()
+                }
+              >
+                Add Provider
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
