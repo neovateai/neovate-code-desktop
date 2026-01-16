@@ -99,12 +99,9 @@ export const PreferencesPanel = () => {
   };
 
   const handleSendFeedback = () => {
-    // Placeholder - will be implemented later
-    toastManager.add({
-      type: 'info',
-      title: 'Send feedback',
-      description: 'Send feedback functionality is not implemented yet',
-    });
+    window.electron?.openExternal(
+      'https://github.com/neovateai/neovate-code/issues',
+    );
   };
 
   const handleCheckForUpdates = async () => {
