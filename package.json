@@ -12,7 +12,7 @@
     "dev:renderer": "vite",
     "format": "biome format .",
     "package": "npm run build && electron-builder --mac --config configs/electron-builder.mjs",
-    "package:dev": "npm run build && BUILD_MODE=dev electron-builder --mac --config configs/electron-builder.mjs",
+    "package:dev": "npm run build && BUILD_MODE=dev electron-builder --mac --config configs/electron-builder.dev.mjs",
     "postinstall": "electron-builder install-app-deps",
     "prepare": "husky",
     "preinstall": "npx only-allow npm",
