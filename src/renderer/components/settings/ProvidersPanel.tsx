@@ -598,7 +598,7 @@ export const ProvidersPanel = () => {
                     >
                       API Key
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                       <div className="flex-1 relative">
                         <input
                           type={showApiKey ? 'text' : 'password'}
@@ -683,7 +683,7 @@ export const ProvidersPanel = () => {
                   >
                     Base URL (Optional)
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={baseUrl}
