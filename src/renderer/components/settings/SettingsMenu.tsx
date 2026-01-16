@@ -4,6 +4,7 @@ import {
   ArrowLeftIcon,
   SettingsIcon,
   CodeIcon,
+  CloudIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import type { SettingsMenuId } from './SettingsPage';
@@ -16,6 +17,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
+  { id: 'providers', label: 'Providers', icon: CloudIcon },
   { id: 'mcp', label: 'MCP', icon: CodeIcon },
 ];
 

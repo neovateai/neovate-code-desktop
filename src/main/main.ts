@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import { is, platform } from '@electron-toolkit/utils';
 import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs/promises';
@@ -219,6 +219,11 @@ ipcMain.handle('store:load', async () => {
 
 ipcMain.on('app:quit', () => {
   app.quit();
+});
+
+// Open external URL in system default browser
+ipcMain.handle('shell:openExternal', async (_event, url: string) => {
+  await shell.openExternal(url);
 });
 
 process.on('uncaughtException', (error) => {

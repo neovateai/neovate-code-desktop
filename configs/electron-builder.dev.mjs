@@ -5,7 +5,7 @@ import baseConfig from './electron-builder.mjs';
  */
 const devConfig = {
   ...baseConfig,
-  artifactName: "neovate-dev-${arch}.${ext}",
+  artifactName: 'neovate-dev-${arch}.${ext}',
   directories: {
     output: 'release-dev',
   },

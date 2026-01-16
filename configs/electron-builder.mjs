@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import { getAsarUnpackPatterns } from './native-deps.config.mjs';
 
-
 // Keep only these Electron Framework localization folders (*.lproj)
 // Reduces app size by ~30MB on macOS
 const keepLanguages = new Set(['en', 'en_GB', 'en-US', 'en_US']);
@@ -64,7 +63,7 @@ const config = {
   /**
    * AfterPack hook to remove unused Electron Framework localizations
    * This reduces the app size by ~30MB on macOS
-   * 
+   *
    * Background:
    * - Electron Framework includes 34+ language packs (*.lproj)
    * - Each pack is ~1MB, totaling ~34MB
@@ -114,7 +113,9 @@ const config = {
         }),
       );
 
-      console.log(`\n✨ Removed ${removedCount} language packs, saved ~${Math.round(removedCount * 1)}MB\n`);
+      console.log(
+        `\n✨ Removed ${removedCount} language packs, saved ~${Math.round(removedCount * 1)}MB\n`,
+      );
     } catch (error) {
       // Non-critical: folder may not exist depending on packaging details
       console.warn('⚠️  Failed to clean up language packs:', error.message);

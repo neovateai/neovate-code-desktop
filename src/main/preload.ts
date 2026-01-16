@@ -35,6 +35,9 @@ const compatibleElectronAPI = {
 
   quitApp: () => ipcRenderer.send('app:quit'),
 
+  // Open external URL in system default browser
+  openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
+
   // Terminal PTY events (main → renderer)
   onTerminalData: (
     callback: (data: { ptyId: string; data: string }) => void,

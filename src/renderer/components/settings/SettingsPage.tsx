@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { SettingsMenu } from './SettingsMenu';
 import { PreferencesPanel } from './PreferencesPanel';
+import { ProvidersPanel } from './ProvidersPanel';
 import { MCPPanel } from './MCPPanel';
 
-export type SettingsMenuId = 'preferences' | 'mcp';
+export type SettingsMenuId = 'preferences' | 'providers' | 'mcp';
 
 export const SettingsPage = () => {
   const [activeMenu, setActiveMenu] = useState<SettingsMenuId>('preferences');
@@ -23,6 +24,7 @@ export const SettingsPage = () => {
       >
         <div className="max-w-2xl">
           {activeMenu === 'preferences' && <PreferencesPanel />}
+          {activeMenu === 'providers' && <ProvidersPanel />}
           {activeMenu === 'mcp' && <MCPPanel />}
         </div>
       </div>
