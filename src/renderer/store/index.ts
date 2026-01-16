@@ -126,6 +126,7 @@ interface StoreState {
   selectedWorkspaceId: WorkspaceId | null;
   selectedSessionId: SessionId | null;
   showSettings: boolean;
+  settingsActiveTab: 'preferences' | 'providers' | 'mcp';
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
@@ -217,6 +218,7 @@ interface StoreActions {
   selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
+  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
   setTestComponentVisible: (visible: boolean) => void;
@@ -278,6 +280,7 @@ const useStore = create<Store>()((set, get, ...rest) => ({
   selectedWorkspaceId: null,
   selectedSessionId: null,
   showSettings: false,
+  settingsActiveTab: 'preferences',
   openRepoAccordions: [],
   expandedSessionGroups: {},
   isTestComponentVisible: false,
@@ -1059,6 +1062,12 @@ const useStore = create<Store>()((set, get, ...rest) => ({
   setShowSettings: (show: boolean) => {
     set(() => ({
       showSettings: show,
+    }));
+  },
+
+  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => {
+    set(() => ({
+      settingsActiveTab: tab,
     }));
   },
 
