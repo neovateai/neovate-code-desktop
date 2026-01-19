@@ -163,3 +163,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Panel collapse/expand animation - scoped to app layout */
+  [data-app-layout] [data-panel] {
+    transition: flex-grow 50ms ease-out;
+  }
+
+  [data-app-layout]:has([data-separator="active"]) [data-panel] {
+    transition: none;
+  }
+}

@@ -8,25 +8,28 @@ import {
 import { useStore } from '../../store';
 import { cn } from '../../lib/utils';
 import { Button, Separator } from '../ui';
+import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
+import type { SecondarySidebarTab } from '../../store/slices/ui';
 
-export const ActivityBar = memo(function ActivityBar() {
-  const secondarySidebarCollapsed = useStore(
-    (s) => s.secondarySidebarCollapsed,
-  );
+export const ActivityBar = function ActivityBar() {
+  const {
+    isContentPanelCollapsed,
+    isSecondarySidebarCollapsed,
+    toggleContentPanel,
+    toggleSecondarySidebar,
+  } = useAppLayoutPanels();
+
   const secondarySidebarTab = useStore((s) => s.secondarySidebarTab);
   const setSecondarySidebarTab = useStore((s) => s.setSecondarySidebarTab);
-  const setSecondarySidebarCollapsed = useStore(
-    (s) => s.setSecondarySidebarCollapsed,
-  );
-  const terminalPanelCollapsed = useStore((s) => s.terminalPanelCollapsed);
-  const toggleTerminalPanel = useStore((s) => s.toggleTerminalPanel);
 
-  const handleTabClick = (tab: 'files' | 'git') => {
-    if (secondarySidebarTab === tab && !secondarySidebarCollapsed) {
-      setSecondarySidebarCollapsed(true);
+  const handleTabClick = (tab: SecondarySidebarTab) => {
+    if (secondarySidebarTab === tab && !isSecondarySidebarCollapsed()) {
+      toggleSecondarySidebar();
     } else {
       setSecondarySidebarTab(tab);
-      setSecondarySidebarCollapsed(false);
+      if (isSecondarySidebarCollapsed()) {
+        toggleSecondarySidebar();
+      }
     }
   };
 
@@ -35,25 +38,27 @@ export const ActivityBar = memo(function ActivityBar() {
       <ActivityBarButton
         icon={FolderIcon}
         onClick={() => handleTabClick('files')}
-        active={secondarySidebarTab === 'files' && !secondarySidebarCollapsed}
+        active={
+          secondarySidebarTab === 'files' && !isSecondarySidebarCollapsed()
+        }
         title="Files"
       />
       <ActivityBarButton
         icon={GitBranchIcon}
         onClick={() => handleTabClick('git')}
-        active={secondarySidebarTab === 'git' && !secondarySidebarCollapsed}
+        active={secondarySidebarTab === 'git' && !isSecondarySidebarCollapsed()}
         title="Git"
       />
       <Separator className="w-6 my-1" />
       <ActivityBarButton
         icon={ComputerTerminal01Icon}
-        onClick={toggleTerminalPanel}
-        active={!terminalPanelCollapsed}
+        onClick={toggleContentPanel}
+        active={!isContentPanelCollapsed()}
         title="Terminal"
       />
     </div>
   );
-});
+};
 
 interface ActivityBarButtonProps {
   icon: typeof FolderIcon;

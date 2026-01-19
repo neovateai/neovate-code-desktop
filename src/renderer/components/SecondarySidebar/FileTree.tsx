@@ -1,9 +1,7 @@
-import { memo } from 'react';
+import { FileIcon, FolderIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { FolderIcon, FileIcon } from '@hugeicons/core-free-icons';
 
-export const FileTree = memo(function FileTree() {
-  // Placeholder - will be implemented with actual file listing
+export function FileTree() {
   return (
     <div className="p-2">
       <div
@@ -14,7 +12,7 @@ export const FileTree = memo(function FileTree() {
       </div>
     </div>
   );
-});
+}
 
 interface FileTreeItemProps {
   path: string;
@@ -26,7 +24,7 @@ export function FileTreeItem({ path, isFolder }: FileTreeItemProps) {
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-[var(--bg-hover)] cursor-pointer text-sm"
+      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-(--bg-hover) cursor-pointer text-sm"
       style={{ color: 'var(--text-primary)' }}
     >
       <HugeiconsIcon

@@ -10,16 +10,18 @@ import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
 import {
   AppLayout,
-  AppLayoutTasksPanel,
+  AppLayoutTitleBar,
+  AppLayoutPrimarySidebar,
   AppLayoutChatPanel,
-  AppLayoutTabsPanel,
+  AppLayoutContentPanel,
   AppLayoutSecondarySidebar,
   AppLayoutActivityBar,
-  TitleBar,
   ActivityBar,
   SecondarySidebar,
 } from './components/layout';
+import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { getNestedValue } from './lib/utils';
+import { TitleBar } from './components/app/TitleBar';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -170,60 +172,65 @@ function App() {
       </div>
 
       {/* Main App - hidden with CSS when settings is shown */}
-      <div
-        className="flex flex-col h-dvh bg-(--bg-surface)"
-        style={{ display: showSettings ? 'none' : 'flex' }}
-      >
-        {/* Custom Title Bar */}
-        <TitleBar />
+      <AppLayout>
+        <div
+          className="flex flex-col h-dvh bg-(--bg-surface)"
+          style={{ display: showSettings ? 'none' : 'flex' }}
+        >
+          {/* Custom Title Bar */}
+          <AppLayoutTitleBar>
+            <TitleBar />
+          </AppLayoutTitleBar>
 
-        {/* Main Content Area */}
-        <AppLayout>
-          {/* Tasks Panel (left sidebar) */}
-          <AppLayoutTasksPanel>
-            <RepoSidebar
-              repos={Object.values(repos)}
-              selectedRepoPath={selectedRepoPath}
-              selectedWorkspaceId={selectedWorkspaceId}
-              onSelectRepo={selectRepo}
-              onSelectWorkspace={selectWorkspace}
-            />
-          </AppLayoutTasksPanel>
-
-          {/* Chat Panel (main content) */}
-          <AppLayoutChatPanel>
-            <WorkspacePanel
-              workspace={selectedWorkspace}
-              emptyStateType={emptyStateType}
-            />
-          </AppLayoutChatPanel>
-
-          {/* Tabs Panel (terminal, logs - conditional) */}
-          <AppLayoutTabsPanel>
-            <div className="h-full flex flex-col">
-              {visitedRepoPathsArray.map((repoPath) => (
-                <Terminal
-                  key={repoPath}
-                  cwd={repoPath}
-                  hidden={repoPath !== selectedRepoPath}
+          <div className="flex-1 flex flex-row min-h-0">
+            <AppLayoutPanelGroup>
+              {/* Tasks Panel (left sidebar) */}
+              <AppLayoutPrimarySidebar>
+                <RepoSidebar
+                  repos={Object.values(repos)}
+                  selectedRepoPath={selectedRepoPath}
+                  selectedWorkspaceId={selectedWorkspaceId}
+                  onSelectRepo={selectRepo}
+                  onSelectWorkspace={selectWorkspace}
                 />
-              ))}
-            </div>
-          </AppLayoutTabsPanel>
+              </AppLayoutPrimarySidebar>
 
-          {/* Secondary Sidebar (files, git - conditional) */}
-          <AppLayoutSecondarySidebar>
-            <SecondarySidebar />
-          </AppLayoutSecondarySidebar>
+              {/* Chat Panel (main content) */}
+              <AppLayoutChatPanel>
+                <WorkspacePanel
+                  workspace={selectedWorkspace}
+                  emptyStateType={emptyStateType}
+                />
+              </AppLayoutChatPanel>
 
-          {/* Activity Bar (always visible) */}
-          <AppLayoutActivityBar>
-            <ActivityBar />
-          </AppLayoutActivityBar>
-        </AppLayout>
+              {/* Tabs Panel (terminal, logs - conditional) */}
+              <AppLayoutContentPanel>
+                <div className="h-full flex flex-col">
+                  {visitedRepoPathsArray.map((repoPath) => (
+                    <Terminal
+                      key={repoPath}
+                      cwd={repoPath}
+                      hidden={repoPath !== selectedRepoPath}
+                    />
+                  ))}
+                </div>
+              </AppLayoutContentPanel>
 
-        <TestComponent />
-      </div>
+              {/* Secondary Sidebar (files, git - conditional) */}
+              <AppLayoutSecondarySidebar>
+                <SecondarySidebar />
+              </AppLayoutSecondarySidebar>
+            </AppLayoutPanelGroup>
+
+            {/* Activity Bar (always visible) */}
+            <AppLayoutActivityBar>
+              <ActivityBar />
+            </AppLayoutActivityBar>
+          </div>
+
+          <TestComponent />
+        </div>
+      </AppLayout>
     </>
   );
 }

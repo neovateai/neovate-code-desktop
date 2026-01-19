@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
+import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
 
 // Define the persistable state shape
 interface PersistedState {
@@ -12,11 +13,9 @@ interface PersistedState {
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   // UISlice state
-  primarySidebarCollapsed: boolean;
-  secondarySidebarCollapsed: boolean;
-  secondarySidebarSize: number;
-  secondarySidebarTab: 'files' | 'git';
-  terminalPanelCollapsed: boolean;
+  contentPanelTabs: ContentPanelTab[];
+  contentPanelActiveTab: ContentPanelTab | null;
+  secondarySidebarTab: SecondarySidebarTab;
 }
 
 // Debounce helper
@@ -71,11 +70,9 @@ export function setupPersistence(store: StoreApi<any>): void {
       openRepoAccordions: state.openRepoAccordions || [],
       expandedSessionGroups: state.expandedSessionGroups || {},
       // UISlice state
-      primarySidebarCollapsed: state.primarySidebarCollapsed ?? false,
-      secondarySidebarCollapsed: state.secondarySidebarCollapsed ?? true,
-      secondarySidebarSize: state.secondarySidebarSize ?? 300,
+      contentPanelTabs: state.contentPanelTabs ?? ['terminal'],
+      contentPanelActiveTab: state.contentPanelActiveTab ?? 'terminal',
       secondarySidebarTab: state.secondarySidebarTab ?? 'files',
-      terminalPanelCollapsed: state.terminalPanelCollapsed ?? false,
     };
   };
 
@@ -132,11 +129,9 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       openRepoAccordions = [],
       expandedSessionGroups = {},
       // UISlice state
-      primarySidebarCollapsed = false,
-      secondarySidebarCollapsed = true,
-      secondarySidebarSize = 300,
+      contentPanelTabs = ['terminal'],
+      contentPanelActiveTab = 'terminal',
       secondarySidebarTab = 'files',
-      terminalPanelCollapsed = false,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -160,14 +155,6 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       validatedWorkspaceId = null;
     }
 
-    // Check if selected session exists
-    // if (validatedSessionId && !sessions[validatedSessionId]) {
-    //   console.warn(
-    //     `Selected session ID ${validatedSessionId} not found in loaded sessions, resetting selection`,
-    //   );
-    //   validatedSessionId = null;
-    // }
-
     // Merge persisted state into store
     // Note: We explicitly DON'T set connection state or runtime objects
     store.setState(
@@ -178,11 +165,9 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         openRepoAccordions,
         expandedSessionGroups,
         // UISlice state
-        primarySidebarCollapsed,
-        secondarySidebarCollapsed,
-        secondarySidebarSize,
+        contentPanelTabs,
+        contentPanelActiveTab,
         secondarySidebarTab,
-        terminalPanelCollapsed,
 
         selectedRepoPath: validatedRepoPath,
         selectedWorkspaceId: validatedWorkspaceId,

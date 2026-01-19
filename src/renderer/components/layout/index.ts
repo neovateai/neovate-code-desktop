@@ -1,16 +1,13 @@
 export {
   AppLayout,
-  AppLayoutTasksPanel,
+  AppLayoutTitleBar,
+  AppLayoutPrimarySidebar,
   AppLayoutChatPanel,
-  AppLayoutTabsPanel,
+  AppLayoutContentPanel,
   AppLayoutSecondarySidebar,
   AppLayoutActivityBar,
-  // Legacy aliases for backward compatibility
-  AppLayoutSidebar,
-  AppLayoutPrimaryPanel,
-  AppLayoutSecondaryPanel,
 } from './AppLayout';
 
-export { TitleBar } from './TitleBar';
-export { ActivityBar } from './ActivityBar';
+export { useAppLayoutPanels } from './AppLayoutProvider';
+export { ActivityBar } from '../app/ActivityBar';
 export { SecondarySidebar } from '../SecondarySidebar';

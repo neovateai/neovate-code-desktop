@@ -1,59 +1,44 @@
 import type { StateCreator } from 'zustand';
 
+export type ContentPanelTab = 'terminal';
+export type SecondarySidebarTab = 'files' | 'git';
+
 export interface UISlice {
-  // Primary Sidebar (left - tasks/repos)
-  primarySidebarCollapsed: boolean;
+  // Content Panel (terminal, logs, etc.) - supports multiple open tabs
+  contentPanelTabs: ContentPanelTab[];
+  contentPanelActiveTab: ContentPanelTab | null;
+  openContentPanelTab: (tab: ContentPanelTab) => void;
+  closeContentPanelTab: (tab: ContentPanelTab) => void;
+  setContentPanelActiveTab: (tab: ContentPanelTab) => void;
 
-  // Secondary Sidebar (right - files/git)
-  secondarySidebarCollapsed: boolean;
-  secondarySidebarSize: number;
-  secondarySidebarTab: 'files' | 'git';
-
-  // Terminal Panel
-  terminalPanelCollapsed: boolean;
-
-  // Actions
-  togglePrimarySidebar: () => void;
-  setPrimarySidebarCollapsed: (collapsed: boolean) => void;
-
-  toggleSecondarySidebar: () => void;
-  setSecondarySidebarCollapsed: (collapsed: boolean) => void;
-  setSecondarySidebarSize: (size: number) => void;
-  setSecondarySidebarTab: (tab: 'files' | 'git') => void;
-
-  toggleTerminalPanel: () => void;
-  setTerminalPanelCollapsed: (collapsed: boolean) => void;
+  // Secondary Sidebar (files, git)
+  secondarySidebarTab: SecondarySidebarTab;
+  setSecondarySidebarTab: (tab: SecondarySidebarTab) => void;
 }
 
 export const createUISlice: StateCreator<UISlice, [], [], UISlice> = (set) => ({
-  // Primary Sidebar (left)
-  primarySidebarCollapsed: false,
+  // Content Panel - multiple tabs support
+  contentPanelTabs: ['terminal'],
+  contentPanelActiveTab: 'terminal',
+  openContentPanelTab: (tab) =>
+    set((state) => ({
+      contentPanelTabs: state.contentPanelTabs.includes(tab)
+        ? state.contentPanelTabs
+        : [...state.contentPanelTabs, tab],
+      contentPanelActiveTab: tab,
+    })),
+  closeContentPanelTab: (tab) =>
+    set((state) => {
+      const newTabs = state.contentPanelTabs.filter((t) => t !== tab);
+      const newActiveTab =
+        state.contentPanelActiveTab === tab
+          ? (newTabs[newTabs.length - 1] ?? null)
+          : state.contentPanelActiveTab;
+      return { contentPanelTabs: newTabs, contentPanelActiveTab: newActiveTab };
+    }),
+  setContentPanelActiveTab: (tab) => set({ contentPanelActiveTab: tab }),
 
-  // Secondary Sidebar (right)
-  secondarySidebarCollapsed: true,
-  secondarySidebarSize: 300,
+  // Secondary Sidebar
   secondarySidebarTab: 'files',
-
-  // Terminal Panel
-  terminalPanelCollapsed: false,
-
-  // Primary Sidebar actions
-  togglePrimarySidebar: () =>
-    set((s) => ({ primarySidebarCollapsed: !s.primarySidebarCollapsed })),
-  setPrimarySidebarCollapsed: (collapsed) =>
-    set({ primarySidebarCollapsed: collapsed }),
-
-  // Secondary Sidebar actions
-  toggleSecondarySidebar: () =>
-    set((s) => ({ secondarySidebarCollapsed: !s.secondarySidebarCollapsed })),
-  setSecondarySidebarCollapsed: (collapsed) =>
-    set({ secondarySidebarCollapsed: collapsed }),
-  setSecondarySidebarSize: (size) => set({ secondarySidebarSize: size }),
   setSecondarySidebarTab: (tab) => set({ secondarySidebarTab: tab }),
-
-  // Terminal Panel actions
-  toggleTerminalPanel: () =>
-    set((s) => ({ terminalPanelCollapsed: !s.terminalPanelCollapsed })),
-  setTerminalPanelCollapsed: (collapsed) =>
-    set({ terminalPanelCollapsed: collapsed }),
 });
