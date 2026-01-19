@@ -368,6 +368,85 @@ const useStore = create<Store>()((set, get, api) => ({
       });
     }
 
+    // Handle bash mode: execute shell commands directly (starts with !)
+    if (message && message.startsWith('!')) {
+      const command = message.slice(1).trim();
+      if (!command) return; // Empty command, do nothing
+
+      // Set processing state
+      setSessionProcessing(sessionId, {
+        status: 'processing',
+        processingStartTime: Date.now(),
+        processingToken: 0,
+        error: null,
+        retryInfo: null,
+      });
+
+      try {
+        // Add bash-input message to session
+        const bashInputMsg = {
+          role: 'user' as const,
+          content: `<bash-input>${command}</bash-input>`,
+        };
+        await request('session.addMessages', {
+          cwd,
+          sessionId,
+          messages: [bashInputMsg],
+        });
+
+        // Execute command via backend
+        const result = await request('utils.tool.executeBash', {
+          cwd,
+          command,
+        });
+
+        // Add output message
+        // API returns: { success, data: { returnDisplay, llmContent, isError? } }
+        const isError = !result.success || result.error || result.data?.isError;
+        const output =
+          result.data?.returnDisplay ||
+          result.data?.llmContent ||
+          result.error?.message ||
+          'Command executed (no output)';
+        const bashOutputMsg = {
+          role: 'user' as const,
+          content: isError
+            ? `<bash-stderr>${output}</bash-stderr>`
+            : `<bash-stdout>${output}</bash-stdout>`,
+        };
+        await request('session.addMessages', {
+          cwd,
+          sessionId,
+          messages: [bashOutputMsg],
+        });
+
+        // Reset processing state
+        setSessionProcessing(sessionId, {
+          status: 'idle',
+          processingStartTime: null,
+          processingToken: 0,
+          error: null,
+          retryInfo: null,
+        });
+      } catch (error) {
+        // Handle API/network error
+        toastManager.add({
+          type: 'error',
+          title: 'Bash execution failed',
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
+        setSessionProcessing(sessionId, {
+          status: 'idle',
+          processingStartTime: null,
+          processingToken: 0,
+          error: null,
+          retryInfo: null,
+        });
+      }
+
+      return; // Don't continue to normal AI message flow
+    }
+
     if (message && isSlashCommand(message)) {
       const parsed = parseSlashCommand(message);
 
