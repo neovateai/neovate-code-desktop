@@ -281,6 +281,8 @@ type ModelsListOutput = {
 type ModelsTestInput = {
   cwd?: string;
   model: string;
+  timeout?: number; // Default 15000ms (15 seconds)
+  prompt?: string; // Default 'hi'
 };
 type ModelsTestOutput =
   | {
@@ -291,6 +293,11 @@ type ModelsTestOutput =
         modelName: string;
         prompt: string;
         response: string;
+        responseTime: number; // in milliseconds
+        usage: {
+          input_tokens: number;
+          output_tokens: number;
+        } | null;
       };
     }
   | {
