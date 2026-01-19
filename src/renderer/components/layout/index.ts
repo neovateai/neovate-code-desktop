@@ -8,6 +8,6 @@ export {
   AppLayoutActivityBar,
 } from './AppLayout';
 
-export { useAppLayoutPanels } from './app-layout-provider';
-export { ActivityBar } from './ActivityBar';
+export { useAppLayoutPanels } from './AppLayoutProvider';
+export { ActivityBar } from '../app/ActivityBar';
 export { SecondarySidebar } from '../SecondarySidebar';

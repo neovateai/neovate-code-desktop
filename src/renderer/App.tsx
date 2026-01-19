@@ -21,6 +21,7 @@ import {
 } from './components/layout';
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { getNestedValue } from './lib/utils';
+import { TitleBar } from './components/app/TitleBar';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -177,7 +178,9 @@ function App() {
           style={{ display: showSettings ? 'none' : 'flex' }}
         >
           {/* Custom Title Bar */}
-          <AppLayoutTitleBar />
+          <AppLayoutTitleBar>
+            <TitleBar />
+          </AppLayoutTitleBar>
 
           <div className="flex-1 flex flex-row min-h-0">
             <AppLayoutPanelGroup>
@@ -214,9 +217,9 @@ function App() {
               </AppLayoutContentPanel>
 
               {/* Secondary Sidebar (files, git - conditional) */}
-              {/* <AppLayoutSecondarySidebar>
+              <AppLayoutSecondarySidebar>
                 <SecondarySidebar />
-              </AppLayoutSecondarySidebar> */}
+              </AppLayoutSecondarySidebar>
             </AppLayoutPanelGroup>
 
             {/* Activity Bar (always visible) */}

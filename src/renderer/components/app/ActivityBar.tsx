@@ -8,36 +8,28 @@ import {
 import { useStore } from '../../store';
 import { cn } from '../../lib/utils';
 import { Button, Separator } from '../ui';
-import { useAppLayoutPanels, AppLayoutPanelId } from './app-layout-provider';
-import type { SecondarySidebarTab } from '../../store/slices/ui-slice';
+import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
+import type { SecondarySidebarTab } from '../../store/slices/ui';
 
-export const ActivityBar = memo(function ActivityBar() {
-  const { panels, layout } = useAppLayoutPanels();
+export const ActivityBar = function ActivityBar() {
+  const {
+    isContentPanelCollapsed,
+    isSecondarySidebarCollapsed,
+    toggleContentPanel,
+    toggleSecondarySidebar,
+  } = useAppLayoutPanels();
 
   const secondarySidebarTab = useStore((s) => s.secondarySidebarTab);
   const setSecondarySidebarTab = useStore((s) => s.setSecondarySidebarTab);
 
-  const contentPanel = panels[AppLayoutPanelId.ContentPanel];
-  const secondarySidebar = panels[AppLayoutPanelId.SecondarySidebar];
-
-  const contentPanelCollapsed = layout[AppLayoutPanelId.ContentPanel] === 0;
-  const secondarySidebarCollapsed =
-    layout[AppLayoutPanelId.SecondarySidebar] === 0;
-
   const handleTabClick = (tab: SecondarySidebarTab) => {
-    if (secondarySidebarTab === tab && !secondarySidebar?.isCollapsed()) {
-      secondarySidebar?.collapse();
+    if (secondarySidebarTab === tab && !isSecondarySidebarCollapsed()) {
+      toggleSecondarySidebar();
     } else {
       setSecondarySidebarTab(tab);
-      secondarySidebar?.expand();
-    }
-  };
-
-  const toggleContentPanel = () => {
-    if (contentPanel?.isCollapsed()) {
-      contentPanel?.expand();
-    } else {
-      contentPanel?.collapse();
+      if (isSecondarySidebarCollapsed()) {
+        toggleSecondarySidebar();
+      }
     }
   };
 
@@ -46,25 +38,27 @@ export const ActivityBar = memo(function ActivityBar() {
       <ActivityBarButton
         icon={FolderIcon}
         onClick={() => handleTabClick('files')}
-        active={secondarySidebarTab === 'files' && !secondarySidebarCollapsed}
+        active={
+          secondarySidebarTab === 'files' && !isSecondarySidebarCollapsed()
+        }
         title="Files"
       />
       <ActivityBarButton
         icon={GitBranchIcon}
         onClick={() => handleTabClick('git')}
-        active={secondarySidebarTab === 'git' && !secondarySidebarCollapsed}
+        active={secondarySidebarTab === 'git' && !isSecondarySidebarCollapsed()}
         title="Git"
       />
       <Separator className="w-6 my-1" />
       <ActivityBarButton
         icon={ComputerTerminal01Icon}
         onClick={toggleContentPanel}
-        active={!contentPanelCollapsed}
+        active={!isContentPanelCollapsed()}
         title="Terminal"
       />
     </div>
   );
-});
+};
 
 interface ActivityBarButtonProps {
   icon: typeof FolderIcon;

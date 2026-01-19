@@ -1,9 +1,6 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
-import type {
-  ContentPanelTab,
-  SecondarySidebarTab,
-} from './store/slices/ui-slice';
+import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
 
 // Define the persistable state shape
 interface PersistedState {
