@@ -135,7 +135,11 @@ export const RepoSidebar = ({
             </EmptyHeader>
           </Empty>
         ) : (
-          <Accordion value={openRepos} onValueChange={setOpenRepoAccordions}>
+          <Accordion
+            value={openRepos}
+            onValueChange={setOpenRepoAccordions}
+            multiple
+          >
             {repos.map((repo) => (
               <AccordionItem key={repo.path} value={repo.path}>
                 <AccordionTrigger className="px-3 py-2 hover:bg-opacity-50">
