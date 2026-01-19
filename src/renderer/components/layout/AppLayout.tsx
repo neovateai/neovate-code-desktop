@@ -42,6 +42,7 @@ export function AppLayoutPanelGroup({ children }: { children: ReactNode }) {
     <Group
       orientation="horizontal"
       className="flex-1"
+      data-app-layout
       groupRef={groupRef}
       defaultLayout={defaultLayout}
       onLayoutChanged={handleLayoutChanged}

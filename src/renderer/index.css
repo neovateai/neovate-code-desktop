@@ -164,12 +164,13 @@
   }
 }
 
-/* Panel collapse/expand animation */
-[data-panel] {
-  transition: flex-grow 50ms ease-out;
-}
+@layer components {
+  /* Panel collapse/expand animation - scoped to app layout */
+  [data-app-layout] [data-panel] {
+    transition: flex-grow 50ms ease-out;
+  }
 
-/* Disable animation while dragging */
-[data-group]:has([data-separator="active"]) [data-panel] {
-  transition: none;
+  [data-app-layout]:has([data-separator="active"]) [data-panel] {
+    transition: none;
+  }
 }
