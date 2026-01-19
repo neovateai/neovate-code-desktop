@@ -1,9 +1,8 @@
-import { memo } from 'react';
 import { useStore } from '../../store';
 import { FileTree } from './FileTree';
 import { GitPanel } from './GitPanel';
 
-export const SecondarySidebar = memo(function SecondarySidebar() {
+export function SecondarySidebar() {
   const secondarySidebarTab = useStore((s) => s.secondarySidebarTab);
 
   const panelTitle =
@@ -32,4 +31,4 @@ export const SecondarySidebar = memo(function SecondarySidebar() {
       </div>
     </div>
   );
-});
+}
