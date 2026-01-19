@@ -15,6 +15,8 @@ const devConfig = {
     ...baseConfig.mac,
     // Sign with ad-hoc identity for faster dev builds
     identity: null,
+    // Skip notarization for dev builds
+    notarize: false,
   },
 };
 

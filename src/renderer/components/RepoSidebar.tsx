@@ -84,7 +84,7 @@ export const RepoSidebar = ({
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
   const createSession = useStore((state) => state.createSession);
-  const getSessionProcessing = useStore((state) => state.getSessionProcessing);
+  const sessionProcessing = useStore((state) => state.sessionProcessing);
   const messages = useStore((state) => state.messages);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -242,9 +242,9 @@ export const RepoSidebar = ({
                                   ? `${session.summary.slice(0, 20)}…`
                                   : session.summary || 'New session';
 
-                              const processing = getSessionProcessing(
-                                session.sessionId,
-                              );
+                              const processing = sessionProcessing[
+                                session.sessionId
+                              ] || { status: 'idle' };
                               const isProcessing =
                                 processing.status === 'processing';
                               const isFailed = processing.status === 'failed';
