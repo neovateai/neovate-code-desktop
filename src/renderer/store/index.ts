@@ -300,6 +300,22 @@ const useStore = create<Store>()((set, get, api) => ({
       }
     });
 
+    // Listen for sub-agent progress events
+    onEvent('agent.progress', (data: any) => {
+      if (data.parentToolUseId) {
+        const { updateAgentProgress } = get();
+        updateAgentProgress({
+          parentToolUseId: data.parentToolUseId,
+          agentId: data.agentId,
+          agentType: data.agentType,
+          prompt: data.prompt,
+          message: data.message,
+          status: data.status,
+          model: data.model,
+        });
+      }
+    });
+
     set({ initialized: true });
   },
 
@@ -695,6 +711,8 @@ const useStore = create<Store>()((set, get, api) => ({
         ...state.sessionProcessing,
         [sessionId]: defaultSessionProcessingState,
       },
+      // Clear agent progress state
+      agentProgressMap: {},
     }));
   },
 

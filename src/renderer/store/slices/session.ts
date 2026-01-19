@@ -1,5 +1,6 @@
 import React from 'react';
 import type { StateCreator } from 'zustand';
+import type { NormalizedMessage } from '../../client/types/message';
 
 type WorkspaceId = string;
 type SessionId = string;
@@ -66,6 +67,37 @@ export const defaultSessionProcessingState: SessionProcessingState = {
   retryInfo: null,
 };
 
+// Agent progress state for sub-agent (task tool) real-time display
+export interface AgentProgressState {
+  agentId: string;
+  agentType: string;
+  prompt: string;
+  messages: NormalizedMessage[];
+  status: 'running' | 'completed' | 'failed';
+  lastUpdate: number;
+  model?: string;
+}
+
+// Agent result display returned from task tool
+export interface AgentResultDisplay {
+  type: 'agent_result';
+  agentId: string;
+  agentType: string;
+  description: string;
+  prompt: string;
+  content: string;
+  model?: string;
+  stats: {
+    toolCalls: number;
+    duration: number;
+    tokens: {
+      input: number;
+      output: number;
+    };
+  };
+  status: 'completed' | 'failed';
+}
+
 export interface SessionSliceState {
   // Session-scoped processing state
   sessionProcessing: Record<SessionId, SessionProcessingState>;
@@ -78,6 +110,9 @@ export interface SessionSliceState {
 
   // Local JSX slash command state
   slashCommandJSXBySession: Record<SessionId, React.ReactNode | null>;
+
+  // Agent progress state for sub-agent real-time display (indexed by parentToolUseId)
+  agentProgressMap: Record<string, AgentProgressState>;
 }
 
 export interface SessionSliceActions {
@@ -102,6 +137,19 @@ export interface SessionSliceActions {
 
   // Local JSX slash command actions
   setSlashCommandJSX: (sessionId: string, jsx: React.ReactNode | null) => void;
+
+  // Agent progress actions
+  updateAgentProgress: (data: {
+    parentToolUseId: string;
+    agentId: string;
+    agentType: string;
+    prompt: string;
+    message: NormalizedMessage;
+    status: 'running' | 'completed' | 'failed';
+    model?: string;
+  }) => void;
+  clearAgentProgress: (toolUseId: string) => void;
+  clearAllAgentProgress: () => void;
 }
 
 export type SessionSlice = SessionSliceState & SessionSliceActions;
@@ -123,6 +171,9 @@ export const createSessionSlice: StateCreator<
 
   // Initial local JSX slash command state
   slashCommandJSXBySession: {},
+
+  // Initial agent progress state
+  agentProgressMap: {},
 
   getSessionProcessing: (sessionId: string): SessionProcessingState => {
     const { sessionProcessing } = get();
@@ -199,5 +250,46 @@ export const createSessionSlice: StateCreator<
         [sessionId]: jsx,
       },
     }));
+  },
+
+  updateAgentProgress: (data) => {
+    const {
+      parentToolUseId,
+      agentId,
+      agentType,
+      prompt,
+      message,
+      status,
+      model,
+    } = data;
+    const { agentProgressMap } = get();
+
+    const existing = agentProgressMap[parentToolUseId];
+
+    set({
+      agentProgressMap: {
+        ...agentProgressMap,
+        [parentToolUseId]: {
+          agentId,
+          agentType,
+          prompt,
+          messages: existing ? [...existing.messages, message] : [message],
+          status,
+          lastUpdate: Date.now(),
+          model,
+        },
+      },
+    });
+  },
+
+  clearAgentProgress: (toolUseId: string) => {
+    const { agentProgressMap } = get();
+    const newMap = { ...agentProgressMap };
+    delete newMap[toolUseId];
+    set({ agentProgressMap: newMap });
+  },
+
+  clearAllAgentProgress: () => {
+    set({ agentProgressMap: {} });
   },
 });
