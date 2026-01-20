@@ -16,7 +16,7 @@ $ npm run dev
 
 Then you should see the desktop app running in your browser.
 
-![](https://pic.sorrycc.com/proxy/1765346778934-394421333.png)
+![](https://pic.sorrycc.com/proxy/1768919602086-390844259.png)
 
 ## Local Development with Custom @neovate/code
 
@@ -32,3 +32,9 @@ NEOVATE_CODE_CLI_PATH=/path/to/neovate-code/dist/cli.mjs npm run dev
 ```
 
 > **Note:** You must run `npm run build` in the `neovate-code` repo whenever you make changes, as the `dist/cli.mjs` file needs to be regenerated.
+
+## Tips
+
+### Debug Mode
+
+Double hit `Ctrl+L` to toggle the UI into debug mode, which renders a Test Component for debugging purposes.
