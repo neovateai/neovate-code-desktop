@@ -374,11 +374,12 @@ type ProjectGetRepoInfoOutput = {
         lastAccessed: number;
         settings: any;
       };
-      gitRemote: {
+      gitRemote?: {
         originUrl: string | null;
         defaultBranch: string | null;
       };
     };
+    timings?: Record<string, number>;
   };
 };
 
