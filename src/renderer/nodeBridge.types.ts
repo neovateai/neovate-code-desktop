@@ -494,6 +494,30 @@ type ProjectGenerateCommitOutput = {
   };
 };
 
+type ProjectsListInput = {
+  cwd: string;
+  includeSessionDetails?: boolean;
+};
+
+type ProjectsListOutput = {
+  success: boolean;
+  error?: string;
+  data?: {
+    projects: Array<{
+      path: string;
+      lastAccessed: number | null;
+      sessionCount: number;
+      sessions?: Array<{
+        sessionId: string;
+        modified: Date;
+        created: Date;
+        messageCount: number;
+        summary: string;
+      }>;
+    }>;
+  };
+};
+
 // ============================================================================
 // Providers Handlers
 // ============================================================================
@@ -1045,6 +1069,12 @@ export type HandlerMap = {
   'project.generateCommit': {
     input: ProjectGenerateCommitInput;
     output: ProjectGenerateCommitOutput;
+  };
+
+  // Projects handlers
+  'projects.list': {
+    input: ProjectsListInput;
+    output: ProjectsListOutput;
   };
 
   // Providers handlers
