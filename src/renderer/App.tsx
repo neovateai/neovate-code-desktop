@@ -22,6 +22,7 @@ import {
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { getNestedValue } from './lib/utils';
 import { TitleBar } from './components/app/TitleBar';
+import { OnboardingModal } from './components/Onboarding';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -231,6 +232,9 @@ function App() {
           <TestComponent />
         </div>
       </AppLayout>
+
+      {/* Onboarding Modal - renders on top when visible */}
+      <OnboardingModal />
     </>
   );
 }

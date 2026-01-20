@@ -30,6 +30,12 @@ import {
   defaultSessionProcessingState,
 } from './slices/session';
 import { createConfigSlice, type ConfigSlice } from './slices/config';
+import {
+  createOnboardingSlice,
+  type OnboardingSlice,
+  type OnboardingStep,
+  defaultOnboardingState,
+} from './slices/onboarding';
 
 // Re-export types from slices
 export type {
@@ -40,6 +46,7 @@ export type {
   InputMode,
 } from './slices/session';
 export { defaultSessionInputState, getInputMode } from './slices/session';
+export type { OnboardingStep } from './slices/onboarding';
 
 // Connection state types
 interface ConnectionState {
@@ -129,7 +136,8 @@ type Store = CoreState &
   EntitiesSlice &
   SessionSlice &
   ConfigSlice &
-  UISlice;
+  UISlice &
+  OnboardingSlice;
 
 const useStore = create<Store>()((set, get, api) => ({
   // ==================== Core State ====================
@@ -897,6 +905,7 @@ const useStore = create<Store>()((set, get, api) => ({
   ...createSessionSlice(set, get, api),
   ...createConfigSlice(set, get, api),
   ...createUISlice(set, get, api),
+  ...createOnboardingSlice(set, get, api),
 }));
 
 export { useStore };

@@ -16,6 +16,8 @@ interface PersistedState {
   contentPanelTabs: ContentPanelTab[];
   contentPanelActiveTab: ContentPanelTab | null;
   secondarySidebarTab: SecondarySidebarTab;
+  // Onboarding state
+  onboardingCompleted: boolean;
 }
 
 // Debounce helper
@@ -73,6 +75,8 @@ export function setupPersistence(store: StoreApi<any>): void {
       contentPanelTabs: state.contentPanelTabs ?? ['terminal'],
       contentPanelActiveTab: state.contentPanelActiveTab ?? 'terminal',
       secondarySidebarTab: state.secondarySidebarTab ?? 'files',
+      // Onboarding state
+      onboardingCompleted: state.onboardingCompleted ?? false,
     };
   };
 
@@ -132,6 +136,8 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       contentPanelTabs = ['terminal'],
       contentPanelActiveTab = 'terminal',
       secondarySidebarTab = 'files',
+      // Onboarding state
+      onboardingCompleted = false,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -175,6 +181,13 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         state: 'idle',
         transport: null,
         messageBus: null,
+
+        // Onboarding state
+        onboardingCompleted,
+        // Runtime state derived from persisted: show onboarding if not completed
+        onboardingVisible: !onboardingCompleted,
+        onboardingStep: 'import',
+        importedProjects: [],
       },
       false,
     );

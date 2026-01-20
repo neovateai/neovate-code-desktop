@@ -42,6 +42,12 @@ const TestComponent = () => {
     filesByWorkspace,
     slashCommandsByWorkspace,
     globalConfig,
+    // Onboarding state
+    onboardingCompleted,
+    onboardingVisible,
+    onboardingStep,
+    resetOnboarding,
+    showOnboarding,
   } = useStore();
 
   const handleClearSelections = () => {
@@ -220,6 +226,34 @@ const TestComponent = () => {
           )}
         </div>
       </div>
+
+      {/* Onboarding Control */}
+      <div
+        style={{
+          marginTop: '8px',
+          fontSize: '12px',
+          color: 'var(--text-secondary)',
+          borderTop: '1px solid var(--border-subtle)',
+          paddingTop: '8px',
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+          Onboarding Control:
+        </div>
+        <div style={{ marginBottom: '8px' }}>
+          Completed: {onboardingCompleted ? 'Yes' : 'No'} | Visible:{' '}
+          {onboardingVisible ? 'Yes' : 'No'} | Step: {onboardingStep}
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button variant="outline" size="sm" onClick={resetOnboarding}>
+            Reset Onboarding
+          </Button>
+          <Button variant="outline" size="sm" onClick={showOnboarding}>
+            Show Onboarding
+          </Button>
+        </div>
+      </div>
+
       <div style={{ marginTop: '16px' }}>
         <TestHugeIcons />
       </div>
