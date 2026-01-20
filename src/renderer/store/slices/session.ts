@@ -2,6 +2,27 @@ import React from 'react';
 import type { StateCreator } from 'zustand';
 import type { NormalizedMessage } from '../../client/types/message';
 
+// Tool approval types
+export type ApprovalResult =
+  | 'approve_once'
+  | 'approve_always_edit'
+  | 'approve_always_tool'
+  | 'deny';
+
+export interface ToolUse {
+  id: string;
+  name: string;
+  params: Record<string, any>;
+}
+
+export type ApprovalCategory = 'write' | 'bash' | 'mcp' | 'other';
+
+export interface ApprovalModalState {
+  toolUse: ToolUse;
+  category?: ApprovalCategory;
+  resolve: (result: ApprovalResult, params?: Record<string, unknown>) => void;
+}
+
 type WorkspaceId = string;
 type SessionId = string;
 
@@ -113,6 +134,9 @@ export interface SessionSliceState {
 
   // Agent progress state for sub-agent real-time display (indexed by parentToolUseId)
   agentProgressMap: Record<string, AgentProgressState>;
+
+  // Tool approval state (session-scoped)
+  approvalBySession: Record<SessionId, ApprovalModalState | null>;
 }
 
 export interface SessionSliceActions {
@@ -150,6 +174,19 @@ export interface SessionSliceActions {
   }) => void;
   clearAgentProgress: (toolUseId: string) => void;
   clearAllAgentProgress: () => void;
+
+  // Tool approval actions
+  approveToolUse: (params: {
+    sessionId: string;
+    toolUse: ToolUse;
+    category?: ApprovalCategory;
+  }) => Promise<{
+    approved: boolean;
+    params?: Record<string, unknown>;
+    denyReason?: string;
+  }>;
+  getApproval: (sessionId: string) => ApprovalModalState | null;
+  clearApproval: (sessionId: string) => void;
 }
 
 export type SessionSlice = SessionSliceState & SessionSliceActions;
@@ -174,6 +211,9 @@ export const createSessionSlice: StateCreator<
 
   // Initial agent progress state
   agentProgressMap: {},
+
+  // Initial tool approval state
+  approvalBySession: {},
 
   getSessionProcessing: (sessionId: string): SessionProcessingState => {
     const { sessionProcessing } = get();
@@ -291,5 +331,70 @@ export const createSessionSlice: StateCreator<
 
   clearAllAgentProgress: () => {
     set({ agentProgressMap: {} });
+  },
+
+  // Tool approval actions
+  approveToolUse: (params: {
+    sessionId: string;
+    toolUse: ToolUse;
+    category?: ApprovalCategory;
+  }): Promise<{
+    approved: boolean;
+    params?: Record<string, unknown>;
+    denyReason?: string;
+  }> => {
+    const { sessionId, toolUse, category } = params;
+
+    return new Promise((resolve) => {
+      set((state) => ({
+        approvalBySession: {
+          ...state.approvalBySession,
+          [sessionId]: {
+            toolUse,
+            category,
+            resolve: (
+              result: ApprovalResult,
+              resultParams?: Record<string, unknown>,
+            ) => {
+              // Clear approval state
+              set((s) => ({
+                approvalBySession: {
+                  ...s.approvalBySession,
+                  [sessionId]: null,
+                },
+              }));
+
+              const isApproved = result !== 'deny';
+
+              // Extract denyReason if denied
+              let denyReason: string | undefined;
+              if (!isApproved && resultParams?.denyReason) {
+                denyReason = resultParams.denyReason as string;
+              }
+
+              resolve({
+                approved: isApproved,
+                params: isApproved ? resultParams : undefined,
+                denyReason,
+              });
+            },
+          },
+        },
+      }));
+    });
+  },
+
+  getApproval: (sessionId: string): ApprovalModalState | null => {
+    const { approvalBySession } = get();
+    return approvalBySession[sessionId] || null;
+  },
+
+  clearApproval: (sessionId: string) => {
+    set((state) => ({
+      approvalBySession: {
+        ...state.approvalBySession,
+        [sessionId]: null,
+      },
+    }));
   },
 });

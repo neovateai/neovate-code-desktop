@@ -316,6 +316,20 @@ const useStore = create<Store>()((set, get, api) => ({
       }
     });
 
+    // Register toolApproval handler for backend tool approval requests
+    const { messageBus } = get();
+    if (messageBus) {
+      messageBus.registerHandler('toolApproval', async (data: any) => {
+        const { toolUse, category } = data;
+        const sessionId = get().selectedSessionId;
+        if (!sessionId) {
+          return { approved: false, denyReason: 'No active session' };
+        }
+        const { approveToolUse } = get();
+        return approveToolUse({ sessionId, toolUse, category });
+      });
+    }
+
     set({ initialized: true });
   },
 

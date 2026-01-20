@@ -20,6 +20,7 @@ import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
+import { ApprovalPanel } from './ApprovalPanel';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
@@ -91,6 +92,12 @@ export const WorkspacePanel = ({
   const showForkModal = useStore((state) => state.showForkModal);
   const hideForkModal = useStore((state) => state.hideForkModal);
   const fork = useStore((state) => state.fork);
+
+  // Get approval state for current session
+  const approvalBySession = useStore((state) => state.approvalBySession);
+  const hasApproval = selectedSessionId
+    ? !!approvalBySession[selectedSessionId]
+    : false;
 
   // Get slash command JSX for current session
   const slashCommandJSX = selectedSessionId
@@ -396,23 +403,31 @@ export const WorkspacePanel = ({
         <WorkspacePanel.Messages />
         <div className="p-4 flex flex-col gap-3">
           <ActivityIndicator sessionId={selectedSessionId} />
-          <ChatInput
-            ref={chatInputRef}
-            onSubmit={sendMessage}
-            onCancel={handleCancel}
-            onShowForkModal={handleShowForkModal}
-            fetchCommands={fetchCommands}
-            placeholder={
-              selectedSessionId
-                ? 'Ask anything, @ for context'
-                : 'Ask anything, @ for context with a new session...'
-            }
-            modelName={workspace.context.settings?.model}
-            isProcessing={isLoading}
-            sessionId={selectedSessionId || undefined}
-            cwd={workspace.repoPath}
-            request={request}
-          />
+          {/* Show ApprovalPanel when there's a pending approval, otherwise show ChatInput */}
+          {hasApproval && selectedSessionId ? (
+            <ApprovalPanel
+              sessionId={selectedSessionId}
+              cwd={workspace.worktreePath}
+            />
+          ) : (
+            <ChatInput
+              ref={chatInputRef}
+              onSubmit={sendMessage}
+              onCancel={handleCancel}
+              onShowForkModal={handleShowForkModal}
+              fetchCommands={fetchCommands}
+              placeholder={
+                selectedSessionId
+                  ? 'Ask anything, @ for context'
+                  : 'Ask anything, @ for context with a new session...'
+              }
+              modelName={workspace.context.settings?.model}
+              isProcessing={isLoading}
+              sessionId={selectedSessionId || undefined}
+              cwd={workspace.repoPath}
+              request={request}
+            />
+          )}
           {slashCommandJSX}
         </div>
       </div>
