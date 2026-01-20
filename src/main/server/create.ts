@@ -31,12 +31,7 @@ export async function createNeovateServer(): Promise<ServerInstance> {
   const cwd = isDev ? process.cwd() : process.resourcesPath;
   const cliPath = await resolveCliPath();
 
-  const args = [
-    `server`,
-    `--hostname=${hostname}`,
-    `--port=${port}`,
-    '--quiet',
-  ];
+  const args = [`server`, `--hostname=${hostname}`, `--port=${port}`];
 
   // Run the CLI entry with Electron's embedded Node runtime.
   const command = process.execPath;

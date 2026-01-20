@@ -21,6 +21,7 @@ import type { NormalizedMessage } from '../client/types/message';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
 import { ApprovalPanel } from './ApprovalPanel';
+import { AskQuestionPanel } from './AskQuestionPanel';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
@@ -95,9 +96,13 @@ export const WorkspacePanel = ({
 
   // Get approval state for current session
   const approvalBySession = useStore((state) => state.approvalBySession);
-  const hasApproval = selectedSessionId
-    ? !!approvalBySession[selectedSessionId]
-    : false;
+  const currentApproval = selectedSessionId
+    ? approvalBySession[selectedSessionId]
+    : null;
+  const hasApproval = !!currentApproval;
+
+  // Check if approval is for AskUserQuestion tool
+  const isAskQuestion = currentApproval?.toolUse?.name === 'AskUserQuestion';
 
   // Get slash command JSX for current session
   const slashCommandJSX = selectedSessionId
@@ -403,8 +408,27 @@ export const WorkspacePanel = ({
         <WorkspacePanel.Messages />
         <div className="p-4 flex flex-col gap-3">
           <ActivityIndicator sessionId={selectedSessionId} />
-          {/* Show ApprovalPanel when there's a pending approval, otherwise show ChatInput */}
-          {hasApproval && selectedSessionId ? (
+          {/* Show AskQuestionPanel for AskUserQuestion tool, ApprovalPanel for other tools, otherwise ChatInput */}
+          {hasApproval &&
+          selectedSessionId &&
+          isAskQuestion &&
+          currentApproval ? (
+            <AskQuestionPanel
+              sessionId={selectedSessionId}
+              questions={currentApproval.toolUse.params.questions || []}
+              onResolve={(result, answers) => {
+                if (result === 'deny') {
+                  currentApproval.resolve('deny');
+                } else {
+                  // Pass updated params with answers
+                  currentApproval.resolve('approve_once', {
+                    ...currentApproval.toolUse.params,
+                    answers,
+                  });
+                }
+              }}
+            />
+          ) : hasApproval && selectedSessionId ? (
             <ApprovalPanel
               sessionId={selectedSessionId}
               cwd={workspace.worktreePath}
