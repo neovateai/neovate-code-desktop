@@ -25,7 +25,6 @@ const repo = {
   gitRemote: {
     originUrl: 'https://github.com/test/repo',
     defaultBranch: 'main',
-    syncStatus: 'synced',
   },
 };
 

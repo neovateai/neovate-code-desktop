@@ -377,7 +377,6 @@ type ProjectGetRepoInfoOutput = {
       gitRemote: {
         originUrl: string | null;
         defaultBranch: string | null;
-        syncStatus: any;
       };
     };
   };

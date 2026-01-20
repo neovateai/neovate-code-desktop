@@ -9,7 +9,6 @@ export interface RepoData {
   gitRemote: {
     originUrl: string | null;
     defaultBranch: string | null;
-    syncStatus: 'synced' | 'ahead' | 'behind' | 'diverged' | 'unknown';
   };
 }
 
