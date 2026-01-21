@@ -19,9 +19,16 @@ import { cn } from '../lib/utils';
 import { Spinner } from './ui/spinner';
 import { ScrollArea } from './ui/scroll-area';
 
-// Helper function to format relative time using date-fns
+// Helper function to format relative time in short format (e.g., "4m", "2h")
 function formatRelativeTime(timestamp: number): string {
-  return formatDistanceToNowStrict(timestamp, { addSuffix: false });
+  const distance = formatDistanceToNowStrict(timestamp, { addSuffix: false });
+  return distance
+    .replace(/ seconds?/, 's')
+    .replace(/ minutes?/, 'm')
+    .replace(/ hours?/, 'h')
+    .replace(/ days?/, 'd')
+    .replace(/ months?/, 'mo')
+    .replace(/ years?/, 'y');
 }
 
 const DEFAULT_SESSION_LIMIT = 5;
