@@ -3,9 +3,12 @@
 import { ipcMain } from 'electron';
 import crypto from 'node:crypto';
 import type {
+  AnyFunction,
   CreateMainHandlerFn,
   GetRendererCaller,
+  MainHandlerContext,
   MainHandlers,
+  MainHandlersOf,
   RendererHandlers,
 } from './types';
 
@@ -96,4 +99,61 @@ export function getRendererCaller<TRendererHandlers extends RendererHandlers>(
       });
     },
   });
+}
+
+/**
+ * Expose class methods as IPC handlers.
+ *
+ * Methods receive { context, input } object where:
+ * - context.sender: WebContents of the caller (for sending events back)
+ * - input: The input payload from renderer (undefined if not provided)
+ *
+ * @param instance - The class instance (use `this` in instance property initializer)
+ * @param methods - Array of method names to expose as handlers
+ * @returns MainHandlersOf<T> - Object with handlers for IPC registration
+ *
+ * @example
+ * // Define simple interface (input/output only)
+ * interface IUpdaterIpcMethods {
+ *   getState(): UpdaterState;
+ *   check(): void;
+ * }
+ *
+ * class UpdaterService implements WithIpcMainHandlers<IUpdaterIpcMethods> {
+ *   private _check() { autoUpdater.checkForUpdates(); }
+ *
+ *   private startScheduledChecks() {
+ *     this._check();
+ *   }
+ *
+ *   // IPC handlers exposed to renderer
+ *   mainHandlers = exposeAsMainHandlers(this, ['getState', 'check']);
+ *   getState() { return this.state; }
+ *   check() { this._check(); }
+ * }
+ *
+ * // In ipc/index.ts
+ * export const ipcMainHandlers = {
+ *   updater: updaterService.mainHandlers,
+ * };
+ */
+export function exposeAsMainHandlers<
+  T extends Record<K, AnyFunction>,
+  K extends keyof T,
+>(instance: T, methods: K[]): MainHandlersOf<Pick<T, K>> {
+  const result = {} as MainHandlersOf<Pick<T, K>>;
+
+  for (const method of methods) {
+    (result as any)[method] = {
+      handler: async (args: {
+        context: MainHandlerContext;
+        input: unknown;
+      }) => {
+        // Pass { context, input } object directly - methods destructure what they need
+        return instance[method].call(instance, args);
+      },
+    };
+  }
+
+  return result;
 }

@@ -1,6 +1,7 @@
 import { createMainHandler } from '../../shared/lib/ipc/main';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
+import { updaterService } from '../updater';
 
 export const ipcMainHandlers = {
   neovateServer: {
@@ -36,12 +37,19 @@ export const ipcMainHandlers = {
       ptyManager.destroy(input.ptyId);
     }),
   },
+
+  updater: updaterService.mainHandlers,
 };
 
 export type IPCMainHandlers = typeof ipcMainHandlers;
 
 export type IPCRendererHandlers = {
-  demo: {
-    helloFromMain: (message: string) => void;
+  updater: {
+    checking: () => void;
+    upToDate: () => void;
+    updateAvailable: (version: string) => void;
+    downloadProgress: (version: string, percent: number) => void;
+    updateReady: (version: string) => void;
+    error: (message: string) => void;
   };
 };

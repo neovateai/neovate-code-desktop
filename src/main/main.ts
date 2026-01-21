@@ -1,6 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import { is, platform } from '@electron-toolkit/utils';
-import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,6 +7,7 @@ import { registerMainHandlers } from '../shared/lib/ipc/main';
 import { ipcMainHandlers } from './ipc';
 import { ptyManager } from './pty';
 import { neovateServerManager } from './server';
+import { updaterService } from './updater';
 
 // declare const _dirname: string;
 
@@ -19,6 +19,12 @@ function createMenu() {
       label: app.name,
       submenu: [
         { role: 'about' },
+        {
+          label: 'Check for Updates...',
+          click: () => {
+            updaterService.manualCheck();
+          },
+        },
         { type: 'separator' },
         {
           label: 'Settings',
@@ -100,6 +106,11 @@ function createWindow() {
     },
   });
 
+  // Initialize updater service after window is created
+  if (mainWindow) {
+    updaterService.init(mainWindow);
+  }
+
   // Load renderer
   if (is.dev) {
     mainWindow.loadURL('http://localhost:5173');
@@ -108,10 +119,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../../renderer/index.html'));
   }
 
-  // Check for updates in production
-  if (!is.dev) {
-    autoUpdater.checkForUpdatesAndNotify();
-  }
+  // Updates are checked when renderer calls updater.check
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -235,10 +243,6 @@ process.on('unhandledRejection', (reason) => {
 });
 
 app.whenReady().then(() => {
-  autoUpdater.on('error', (error) => {
-    console.error('Auto updater error', error);
-  });
-
   // Set dev icon in dock when running in development mode (macOS)
   if (is.dev && platform.isMacOS && app.dock) {
     const devIconPath = path.join(process.cwd(), 'build/icons/icon-dev.png');
@@ -261,8 +265,9 @@ app.on('activate', () => {
   }
 });
 
-// Register shutdown handler to clean up server and PTYs on app quit
+// Register shutdown handler to clean up server, PTYs, and updater on app quit
 app.on('before-quit', () => {
+  updaterService.destroy();
   ptyManager.destroyAll();
   neovateServerManager.stop();
 });

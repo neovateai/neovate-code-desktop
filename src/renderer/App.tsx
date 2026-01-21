@@ -8,6 +8,7 @@ import { Terminal } from './components/Terminal';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
+import { UpdaterToast } from './components/UpdaterToast';
 import {
   AppLayout,
   AppLayoutTitleBar,
@@ -235,6 +236,7 @@ function App() {
 
       {/* Onboarding Modal - renders on top when visible */}
       <OnboardingModal />
+      <UpdaterToast />
     </>
   );
 }
