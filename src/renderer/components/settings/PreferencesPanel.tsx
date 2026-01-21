@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { RefreshIcon, SettingsIcon } from '@hugeicons/core-free-icons';
 import { Button } from '../ui/button';
@@ -11,8 +10,8 @@ import {
 } from '../ui/select';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
-import { toastManager } from '../ui/toast';
 import { ModelSelect } from './ModelSelect';
+import { ipcMainCaller } from '../../lib/ipc';
 
 type ThemeValue = 'light' | 'dark' | 'system';
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
@@ -92,8 +91,6 @@ const ThemeOption = ({
 };
 
 export const PreferencesPanel = () => {
-  const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false);
-
   const globalConfig = useStore((state) => state.globalConfig);
   const isConfigLoading = useStore((state) => state.isConfigLoading);
   const isConfigSaving = useStore((state) => state.isConfigSaving);
@@ -141,17 +138,8 @@ export const PreferencesPanel = () => {
     );
   };
 
-  const handleCheckForUpdates = async () => {
-    if (isCheckingForUpdates) return;
-    setIsCheckingForUpdates(true);
-    // Simulate a brief loading state
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setIsCheckingForUpdates(false);
-    toastManager.add({
-      type: 'info',
-      title: 'Check for updates',
-      description: 'Check for updates functionality is not implemented yet',
-    });
+  const handleCheckForUpdates = () => {
+    ipcMainCaller.updater.check();
   };
 
   if (isConfigLoading || globalConfig === null) {
