@@ -3,7 +3,6 @@ import { useStore } from './store';
 import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
 import { WorkspacePanel } from './components/WorkspacePanel';
-// import { WorkspaceChanges } from './components/WorkspaceChanges';
 import { Terminal } from './components/Terminal';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
@@ -15,10 +14,8 @@ import {
   AppLayoutPrimarySidebar,
   AppLayoutChatPanel,
   AppLayoutContentPanel,
-  AppLayoutSecondarySidebar,
   AppLayoutActivityBar,
   ActivityBar,
-  SecondarySidebar,
 } from './components/layout';
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { getNestedValue } from './lib/utils';
@@ -219,9 +216,9 @@ function App() {
               </AppLayoutContentPanel>
 
               {/* Secondary Sidebar (files, git - conditional) */}
-              <AppLayoutSecondarySidebar>
+              {/* <AppLayoutSecondarySidebar>
                 <SecondarySidebar />
-              </AppLayoutSecondarySidebar>
+              </AppLayoutSecondarySidebar> */}
             </AppLayoutPanelGroup>
 
             {/* Activity Bar (always visible) */}
