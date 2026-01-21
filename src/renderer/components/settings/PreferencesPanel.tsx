@@ -11,8 +11,8 @@ import {
 } from '../ui/select';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
-import { toastManager } from '../ui/toast';
 import { ModelSelect } from './ModelSelect';
+import { ipcMainCaller } from '../../lib/ipc';
 
 type ThemeValue = 'light' | 'dark' | 'system';
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
@@ -172,14 +172,11 @@ export const PreferencesPanel = () => {
   const handleCheckForUpdates = async () => {
     if (isCheckingForUpdates) return;
     setIsCheckingForUpdates(true);
-    // Simulate a brief loading state
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setIsCheckingForUpdates(false);
-    toastManager.add({
-      type: 'info',
-      title: 'Check for updates',
-      description: 'Check for updates functionality is not implemented yet',
-    });
+    try {
+      await ipcMainCaller.updater.check();
+    } finally {
+      setIsCheckingForUpdates(false);
+    }
   };
 
   if (isConfigLoading || globalConfig === null) {
