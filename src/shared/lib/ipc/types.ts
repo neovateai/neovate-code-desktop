@@ -107,3 +107,21 @@ export type RendererHandlersListener<T extends RendererHandlers> = {
     };
   };
 };
+
+// exposeAsMainHandlers utility types
+
+/** Generic function type */
+export type AnyFunction = (...args: any[]) => any;
+
+/** Converts method types to MainHandler wrapper objects */
+export type MainHandlersOf<T> = {
+  [K in keyof T]: T[K] extends AnyFunction
+    ? {
+        handler: MainHandler<
+          // Extract just the 'input' field, not the whole { context, input } object
+          Parameters<T[K]>[0] extends { input: infer I } ? I : void,
+          Awaited<ReturnType<T[K]>>
+        >;
+      }
+    : never;
+};
