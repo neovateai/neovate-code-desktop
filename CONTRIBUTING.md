@@ -45,7 +45,7 @@ Add your handler in the [nodeBridge.ts](https://github.com/neovateai/neovate-cod
 
 ### Step 2: Test and Update Types
 
-Follow the [neovate-code CONTRIBUTING.md](https://github.com/neovateai/neovate-code/blob/master/CONTRIBUTING.md) to test your handler:
+Follow the [neovate-code CONTRIBUTING.md](https://github.com/neovateai/neovate-code/blob/master/CONTRIBUTING.md#testing-nodebridge-handlers) to test your handler:
 
 ```bash
 bun scripts/test-nodebridge.ts
