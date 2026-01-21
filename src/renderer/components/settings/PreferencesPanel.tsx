@@ -16,6 +16,7 @@ import { ModelSelect } from './ModelSelect';
 
 type ThemeValue = 'light' | 'dark' | 'system';
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
+type NotificationValue = 'off' | 'default' | string;
 
 interface SettingsRowProps {
   title: string;
@@ -99,15 +100,42 @@ export const PreferencesPanel = () => {
   const isConfigSaving = useStore((state) => state.isConfigSaving);
   const getGlobalConfigValue = useStore((state) => state.getGlobalConfigValue);
   const setGlobalConfig = useStore((state) => state.setGlobalConfig);
+  const request = useStore((state) => state.request);
 
   const theme = getGlobalConfigValue<ThemeValue>('desktop.theme', 'system');
   const model = getGlobalConfigValue<string>('model');
   const smallModel = getGlobalConfigValue<string>('smallModel');
   const language = getGlobalConfigValue<string>('language', 'English');
 
+  // Notification config: false = 'off', true = 'default', string = custom sound
+  const notificationRaw = getGlobalConfigValue<boolean | string>(
+    'notification',
+    true,
+  );
+  const notification: NotificationValue =
+    notificationRaw === false
+      ? 'off'
+      : notificationRaw === true || notificationRaw === undefined
+        ? 'default'
+        : notificationRaw;
+
   const handleLanguageChange = async (newLanguage: string) => {
     if (newLanguage === language || isConfigSaving) return;
     await setGlobalConfig('language', newLanguage);
+  };
+
+  const handleNotificationChange = async (value: NotificationValue) => {
+    if (isConfigSaving) return;
+    // Convert UI value to config value: 'off' -> false, 'default' -> true, else string
+    const configValue =
+      value === 'off' ? false : value === 'default' ? true : value;
+    await setGlobalConfig('notification', configValue);
+
+    // Play sound preview when selecting a non-off option
+    if (value !== 'off') {
+      const sound = value === 'default' ? 'Funk' : value;
+      request('utils.playSound', { sound });
+    }
   };
 
   const handleThemeChange = async (newTheme: ThemeValue) => {
@@ -243,6 +271,38 @@ export const PreferencesPanel = () => {
               <SelectItem value="default">Default</SelectItem>
               <SelectItem value="autoEdit">Auto Edit</SelectItem>
               <SelectItem value="yolo">YOLO</SelectItem>
+            </SelectPopup>
+          </Select>
+        </SettingsRow>
+
+        {/* Notification */}
+        <SettingsRow
+          title="Notification"
+          description="Sound notification when task completes"
+        >
+          <Select
+            value={notification}
+            onValueChange={(val) =>
+              handleNotificationChange(val as NotificationValue)
+            }
+            disabled={isConfigSaving}
+          >
+            <SelectTrigger size="sm" className="w-36">
+              <SelectValue>
+                {(value: NotificationValue | null) => {
+                  if (!value || value === 'off') return 'Off';
+                  if (value === 'default') return 'Default';
+                  return value;
+                }}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectPopup>
+              <SelectItem value="off">Off</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="Glass">Glass</SelectItem>
+              <SelectItem value="Ping">Ping</SelectItem>
+              <SelectItem value="Pop">Pop</SelectItem>
+              <SelectItem value="Funk">Funk</SelectItem>
             </SelectPopup>
           </Select>
         </SettingsRow>
