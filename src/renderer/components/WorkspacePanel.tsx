@@ -20,11 +20,13 @@ import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
+import { ApprovalPanel } from './ApprovalPanel';
+import { AskQuestionPanel } from './AskQuestionPanel';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
+import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
 import { splitMessages } from './messages/messageHelpers';
 import { OpenAppButton } from './OpenAppButton';
-import { toastManager } from './ui/toast';
 
 // Define the context type
 interface WorkspaceContextType {
@@ -85,6 +87,22 @@ export const WorkspacePanel = ({
   const slashCommandJSXBySession = useStore(
     (state) => state.slashCommandJSXBySession,
   );
+
+  // Fork modal state and actions
+  const forkModalVisible = useStore((state) => state.forkModalVisible);
+  const showForkModal = useStore((state) => state.showForkModal);
+  const hideForkModal = useStore((state) => state.hideForkModal);
+  const fork = useStore((state) => state.fork);
+
+  // Get approval state for current session
+  const approvalBySession = useStore((state) => state.approvalBySession);
+  const currentApproval = selectedSessionId
+    ? approvalBySession[selectedSessionId]
+    : null;
+  const hasApproval = !!currentApproval;
+
+  // Check if approval is for AskUserQuestion tool
+  const isAskQuestion = currentApproval?.toolUse?.name === 'AskUserQuestion';
 
   // Get slash command JSX for current session
   const slashCommandJSX = selectedSessionId
@@ -302,12 +320,16 @@ export const WorkspacePanel = ({
   }, [selectedSessionId, cancelSession]);
 
   const handleShowForkModal = useCallback(() => {
-    toastManager.add({
-      type: 'info',
-      title: 'Fork session',
-      description: 'Fork functionality is not implemented yet',
-    });
-  }, []);
+    console.log('[FORK] handleShowForkModal called in WorkspacePanel');
+    showForkModal();
+  }, [showForkModal]);
+
+  const handleForkSelect = useCallback(
+    (uuid: string) => {
+      fork(uuid);
+    },
+    [fork],
+  );
 
   // Create wrapper functions that provide context for ChatInput
   const fetchCommands = useCallback(async () => {
@@ -381,37 +403,66 @@ export const WorkspacePanel = ({
 
   return (
     <WorkspaceContext.Provider value={contextValue}>
-      <div
-        className="flex flex-col h-full"
-        style={{ backgroundColor: 'var(--bg-primary)' }}
-      >
+      <div className="flex flex-col h-full">
         <WorkspacePanel.Header />
         <WorkspacePanel.Messages />
-        <div
-          className="p-4 flex flex-col gap-3"
-          style={{ borderTop: '1px solid var(--border-subtle)' }}
-        >
+        <div className="p-4 flex flex-col gap-3">
           <ActivityIndicator sessionId={selectedSessionId} />
-          <ChatInput
-            ref={chatInputRef}
-            onSubmit={sendMessage}
-            onCancel={handleCancel}
-            onShowForkModal={handleShowForkModal}
-            fetchCommands={fetchCommands}
-            placeholder={
-              selectedSessionId
-                ? 'Ask anything, @ for context'
-                : 'Ask anything, @ for context with a new session...'
-            }
-            modelName={workspace.context.settings?.model}
-            isProcessing={isLoading}
-            sessionId={selectedSessionId || undefined}
-            cwd={workspace.repoPath}
-            request={request}
-          />
+          {/* Show AskQuestionPanel for AskUserQuestion tool, ApprovalPanel for other tools, otherwise ChatInput */}
+          {hasApproval &&
+          selectedSessionId &&
+          isAskQuestion &&
+          currentApproval ? (
+            <AskQuestionPanel
+              sessionId={selectedSessionId}
+              questions={currentApproval.toolUse.params.questions || []}
+              onResolve={(result, answers) => {
+                if (result === 'deny') {
+                  currentApproval.resolve('deny');
+                } else {
+                  // Pass updated params with answers
+                  currentApproval.resolve('approve_once', {
+                    ...currentApproval.toolUse.params,
+                    answers,
+                  });
+                }
+              }}
+            />
+          ) : hasApproval && selectedSessionId ? (
+            <ApprovalPanel
+              sessionId={selectedSessionId}
+              cwd={workspace.worktreePath}
+            />
+          ) : (
+            <ChatInput
+              ref={chatInputRef}
+              onSubmit={sendMessage}
+              onCancel={handleCancel}
+              onShowForkModal={handleShowForkModal}
+              fetchCommands={fetchCommands}
+              placeholder={
+                selectedSessionId
+                  ? 'Ask anything, @ for context'
+                  : 'Ask anything, @ for context with a new session...'
+              }
+              modelName={workspace.context.settings?.model}
+              isProcessing={isLoading}
+              sessionId={selectedSessionId || undefined}
+              cwd={workspace.repoPath}
+              request={request}
+            />
+          )}
           {slashCommandJSX}
         </div>
       </div>
+
+      {/* Fork Modal */}
+      <ForkModal
+        open={forkModalVisible}
+        onClose={hideForkModal}
+        messages={messages}
+        onSelect={handleForkSelect}
+      />
     </WorkspaceContext.Provider>
   );
 };
@@ -422,10 +473,7 @@ WorkspacePanel.Header = function Header() {
   const request = useStore((state) => state.request);
 
   return (
-    <div
-      className="flex items-center justify-between h-12 px-4"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between h-12 px-4">
       <h2
         className="text-base font-semibold"
         style={{ color: 'var(--text-primary)' }}

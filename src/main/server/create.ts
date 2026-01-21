@@ -30,6 +30,7 @@ export async function createNeovateServer(): Promise<ServerInstance> {
     '-h',
     hostname,
   ]);
+  const args = [`server`, `--hostname=${hostname}`, `--port=${port}`];
 
   const { shutdown } = await runNeovate({
     productName: 'neovate-desktop',

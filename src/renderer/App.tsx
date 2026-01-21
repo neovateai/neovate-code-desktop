@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useStore } from './store';
 import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
@@ -7,31 +7,59 @@ import { WorkspacePanel } from './components/WorkspacePanel';
 import { Terminal } from './components/Terminal';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
-import { ServerErrorDialog } from './components/server-error-dialog';
+import { ServerErrorDialog } from './components/ServerErrorDialog';
 import {
   AppLayout,
-  AppLayoutSidebar,
-  AppLayoutPrimaryPanel,
-  AppLayoutSecondaryPanel,
+  AppLayoutTitleBar,
+  AppLayoutPrimarySidebar,
+  AppLayoutChatPanel,
+  AppLayoutContentPanel,
+  AppLayoutSecondarySidebar,
+  AppLayoutActivityBar,
+  ActivityBar,
+  SecondarySidebar,
 } from './components/layout';
+import { AppLayoutPanelGroup } from './components/layout/AppLayout';
+import { getNestedValue } from './lib/utils';
+import { TitleBar } from './components/app/TitleBar';
+import { OnboardingModal } from './components/Onboarding';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
 
-  const {
-    repos,
-    workspaces,
-    selectedRepoPath,
-    selectedWorkspaceId,
-    selectRepo,
-    selectWorkspace,
-    showSettings,
-    getGlobalConfigValue,
-    initialized,
-  } = useStore();
+  const repos = useStore((s) => s.repos);
+  const workspaces = useStore((s) => s.workspaces);
+  const selectedRepoPath = useStore((s) => s.selectedRepoPath);
+  const selectedWorkspaceId = useStore((s) => s.selectedWorkspaceId);
+  const selectRepo = useStore((s) => s.selectRepo);
+  const selectWorkspace = useStore((s) => s.selectWorkspace);
+  const showSettings = useStore((s) => s.showSettings);
+  const setShowSettings = useStore((s) => s.setShowSettings);
+  const globalConfig = useStore((s) => s.globalConfig);
+  const setGlobalConfig = useStore((s) => s.setGlobalConfig);
+  const initialized = useStore((s) => s.initialized);
 
   // Get theme from config (default to 'system')
-  const theme = getGlobalConfigValue<string>('desktop.theme', 'system');
+  // Subscribe to globalConfig directly so component re-renders when config changes
+  const theme = getNestedValue<string>(globalConfig, 'desktop.theme', 'system');
+
+  // Listen for menu events from main process
+  useEffect(() => {
+    const cleanupSettings = window.electron.onMenuOpenSettings(() => {
+      setShowSettings(true);
+    });
+
+    const cleanupTheme = window.electron.onMenuToggleTheme(() => {
+      // Toggle between light and dark (Option A behavior)
+      const newTheme = theme === 'dark' ? 'light' : 'dark';
+      setGlobalConfig('desktop.theme', newTheme);
+    });
+
+    return () => {
+      cleanupSettings();
+      cleanupTheme();
+    };
+  }, [setShowSettings, setGlobalConfig, theme]);
 
   // Apply dark/light mode based on theme setting
   useEffect(() => {
@@ -90,6 +118,21 @@ function App() {
     }
   }, [theme]);
 
+  const [visitedRepoPaths, setVisitedRepoPaths] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  useEffect(() => {
+    if (selectedRepoPath && !visitedRepoPaths.has(selectedRepoPath)) {
+      setVisitedRepoPaths((prev) => new Set(prev).add(selectedRepoPath));
+    }
+  }, [selectedRepoPath]);
+
+  const visitedRepoPathsArray = useMemo(
+    () => Array.from(visitedRepoPaths),
+    [visitedRepoPaths],
+  );
+
   if (connectionState === 'error') {
     return (
       <ServerErrorDialog
@@ -112,14 +155,6 @@ function App() {
     ? workspaces[selectedWorkspaceId]
     : null;
 
-  // Mock function to execute a command
-  const handleExecuteCommand = async (command: string) => {
-    // In a real implementation, this would send the command via WebSocket
-    console.log(`Executing command: ${command}`);
-    // For now, we'll just simulate the execution
-    return Promise.resolve();
-  };
-
   // Determine empty state type
   const emptyStateType = !selectedWorkspace
     ? Object.keys(repos).length === 0
@@ -127,51 +162,80 @@ function App() {
       : 'no-workspace'
     : null;
 
-  // Show settings page if enabled
-  if (showSettings) {
-    return (
-      <div className="h-dvh flex flex-col">
+  return (
+    <>
+      {/* Settings Page - hidden with CSS when not active */}
+      <div
+        className="h-dvh flex flex-col"
+        style={{ display: showSettings ? 'flex' : 'none' }}
+      >
         <SettingsPage />
       </div>
-    );
-  }
 
-  return (
-    <div
-      className="flex flex-col h-dvh"
-      style={{ backgroundColor: 'var(--bg-primary)' }}
-    >
+      {/* Main App - hidden with CSS when settings is shown */}
       <AppLayout>
-        {/* Sidebar */}
-        <AppLayoutSidebar>
-          <RepoSidebar
-            repos={Object.values(repos)}
-            selectedRepoPath={selectedRepoPath}
-            selectedWorkspaceId={selectedWorkspaceId}
-            onSelectRepo={selectRepo}
-            onSelectWorkspace={selectWorkspace}
-          />
-        </AppLayoutSidebar>
+        <div
+          className="flex flex-col h-dvh bg-(--bg-surface)"
+          style={{ display: showSettings ? 'none' : 'flex' }}
+        >
+          {/* Custom Title Bar */}
+          <AppLayoutTitleBar>
+            <TitleBar />
+          </AppLayoutTitleBar>
 
-        {/* Main Content */}
-        <AppLayoutPrimaryPanel>
-          <WorkspacePanel
-            workspace={selectedWorkspace}
-            emptyStateType={emptyStateType}
-          />
-        </AppLayoutPrimaryPanel>
+          <div className="flex-1 flex flex-row min-h-0">
+            <AppLayoutPanelGroup>
+              {/* Tasks Panel (left sidebar) */}
+              <AppLayoutPrimarySidebar>
+                <RepoSidebar
+                  repos={Object.values(repos)}
+                  selectedRepoPath={selectedRepoPath}
+                  selectedWorkspaceId={selectedWorkspaceId}
+                  onSelectRepo={selectRepo}
+                  onSelectWorkspace={selectWorkspace}
+                />
+              </AppLayoutPrimarySidebar>
 
-        {/* Right Panel */}
-        <AppLayoutSecondaryPanel>
-          <div className="h-full flex flex-col">
-            {/* <WorkspaceChanges workspace={selectedWorkspace} /> */}
-            <Terminal onExecuteCommand={handleExecuteCommand} />
+              {/* Chat Panel (main content) */}
+              <AppLayoutChatPanel>
+                <WorkspacePanel
+                  workspace={selectedWorkspace}
+                  emptyStateType={emptyStateType}
+                />
+              </AppLayoutChatPanel>
+
+              {/* Tabs Panel (terminal, logs - conditional) */}
+              <AppLayoutContentPanel>
+                <div className="h-full flex flex-col">
+                  {visitedRepoPathsArray.map((repoPath) => (
+                    <Terminal
+                      key={repoPath}
+                      cwd={repoPath}
+                      hidden={repoPath !== selectedRepoPath}
+                    />
+                  ))}
+                </div>
+              </AppLayoutContentPanel>
+
+              {/* Secondary Sidebar (files, git - conditional) */}
+              <AppLayoutSecondarySidebar>
+                <SecondarySidebar />
+              </AppLayoutSecondarySidebar>
+            </AppLayoutPanelGroup>
+
+            {/* Activity Bar (always visible) */}
+            <AppLayoutActivityBar>
+              <ActivityBar />
+            </AppLayoutActivityBar>
           </div>
-        </AppLayoutSecondaryPanel>
+
+          <TestComponent />
+        </div>
       </AppLayout>
 
-      <TestComponent />
-    </div>
+      {/* Onboarding Modal - renders on top when visible */}
+      <OnboardingModal />
+    </>
   );
 }
 

@@ -1,20 +1,97 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
+import { is, platform } from '@electron-toolkit/utils';
 import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { registerMainHandlers } from '../shared/lib/ipc/main';
 import { ipcMainHandlers } from './ipc';
+import { ptyManager } from './pty';
 import { neovateServerManager } from './server';
 
 // declare const _dirname: string;
 
 let mainWindow: BrowserWindow | null = null;
 
+function createMenu() {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        {
+          label: 'Settings',
+          accelerator: 'Cmd+,',
+          click: () => {
+            mainWindow?.webContents.send('menu:open-settings');
+          },
+        },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        {
+          label: 'Toggle Theme',
+          accelerator: 'Cmd+Option+T',
+          click: () => {
+            mainWindow?.webContents.send('menu:toggle-theme');
+          },
+        },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        { type: 'separator' },
+        { role: 'front' },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 12, y: 14 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -24,9 +101,7 @@ function createWindow() {
   });
 
   // Load renderer
-  const isDev = process.argv.includes('--dev');
-
-  if (isDev) {
+  if (is.dev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
@@ -34,7 +109,7 @@ function createWindow() {
   }
 
   // Check for updates in production
-  if (!isDev) {
+  if (!is.dev) {
     autoUpdater.checkForUpdatesAndNotify();
   }
   mainWindow.on('closed', () => {
@@ -146,6 +221,11 @@ ipcMain.on('app:quit', () => {
   app.quit();
 });
 
+// Open external URL in system default browser
+ipcMain.handle('shell:openExternal', async (_event, url: string) => {
+  await shell.openExternal(url);
+});
+
 process.on('uncaughtException', (error) => {
   console.error('Uncaught exception', error);
 });
@@ -158,11 +238,19 @@ app.whenReady().then(() => {
   autoUpdater.on('error', (error) => {
     console.error('Auto updater error', error);
   });
+
+  // Set dev icon in dock when running in development mode (macOS)
+  if (is.dev && platform.isMacOS && app.dock) {
+    const devIconPath = path.join(process.cwd(), 'build/icons/icon-dev.png');
+    app.dock.setIcon(devIconPath);
+  }
+
+  createMenu();
   createWindow();
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (!platform.isMacOS) {
     app.quit();
   }
 });
@@ -173,7 +261,8 @@ app.on('activate', () => {
   }
 });
 
-// Register shutdown handler to clean up server on app quit
+// Register shutdown handler to clean up server and PTYs on app quit
 app.on('before-quit', () => {
+  ptyManager.destroyAll();
   neovateServerManager.stop();
 });

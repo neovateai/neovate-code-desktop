@@ -76,9 +76,12 @@ jobs:
           name: neovate-dev-${{ matrix.arch }}
           path: release-dev/*-${{ matrix.arch }}.*
           if-no-files-found: error
+
   comment:
     needs: build-mac-dev
     runs-on: ubuntu-latest
+    # Skip comment for fork PRs (no write permission)
+    if: github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       pull-requests: write
     steps:
@@ -95,7 +98,6 @@ jobs:
             const path = require('path');
             const identifier = '<!-- neovate-build -->';
 
-            // Read size information from downloaded artifacts
             const readSizeInfo = (arch) => {
               try {
                 const sizeFile = path.join('size-info', `size-info-${arch}`, `${arch}-sizes.txt`);
@@ -129,12 +131,12 @@ jobs:
 
             const body = [
               identifier,
-              '## 🎉 Build Ready',
+              '## Build Ready',
               '',
               '| Architecture | Download | DMG Size | ZIP Size |',
               '|--------------|----------|----------|----------|',
-              `| Apple Silicon | ${arm64 ? `[Download](${artifactUrl(arm64)})` : '⏳'} | ${arm64Sizes.dmg} | ${arm64Sizes.zip} |`,
-              `| Intel | ${x64 ? `[Download](${artifactUrl(x64)})` : '⏳'} | ${x64Sizes.dmg} | ${x64Sizes.zip} |`,
+              `| Apple Silicon | ${arm64 ? `[Download](${artifactUrl(arm64)})` : 'N/A'} | ${arm64Sizes.dmg} | ${arm64Sizes.zip} |`,
+              `| Intel | ${x64 ? `[Download](${artifactUrl(x64)})` : 'N/A'} | ${x64Sizes.dmg} | ${x64Sizes.zip} |`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({

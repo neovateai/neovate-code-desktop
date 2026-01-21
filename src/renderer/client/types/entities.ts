@@ -6,10 +6,9 @@ export interface RepoData {
     lastAccessed: number;
     settings?: Record<string, any>;
   };
-  gitRemote: {
+  gitRemote?: {
     originUrl: string | null;
     defaultBranch: string | null;
-    syncStatus: 'synced' | 'ahead' | 'behind' | 'diverged' | 'unknown';
   };
 }
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
-interface ParsedArgs {
+interface UpgradeArgs {
   help: boolean;
   dryRun: boolean;
 }
 
-function parseArgs(): ParsedArgs {
+function parseArgs(): UpgradeArgs {
   const args = Bun.argv.slice(2);
   return {
     help: args.includes('-h') || args.includes('--help'),

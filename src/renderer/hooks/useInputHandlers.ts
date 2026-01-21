@@ -96,7 +96,12 @@ export function useInputHandlers({
     slashCommands.suggestions.length > 0;
 
   const handleDoubleEscape = useDoublePress(
-    onShowForkModal,
+    () => {
+      console.log(
+        '[FORK] onShowForkModal callback triggered in useInputHandlers',
+      );
+      onShowForkModal();
+    },
     () => {
       const currentMode = modeRef.current;
       const currentValue = valueRef.current;
@@ -125,7 +130,7 @@ export function useInputHandlers({
     const newValue = `${before}${prefix}${selected} ${after}`.trim();
 
     inputState.setValue(newValue);
-    inputState.setCursorPosition(`${before}${prefix}${selected} `.length);
+    inputState.setCursorPosition(newValue.length);
     setForceTabTrigger(false);
     fileSuggestion.reset();
   }, [fileSuggestion, inputState]);
@@ -167,11 +172,11 @@ export function useInputHandlers({
       return;
     }
 
-    if (currentMode === 'memory' || currentMode === 'bash') {
+    if (currentMode === 'memory') {
       toastManager.add({
         type: 'info',
-        title: `${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)} mode`,
-        description: `${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)} mode is not implemented yet`,
+        title: 'Memory mode',
+        description: 'Memory mode is not implemented yet',
       });
       return;
     }

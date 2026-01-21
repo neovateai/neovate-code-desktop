@@ -18,6 +18,7 @@ import { diffLines } from 'diff';
 import { DiffViewer } from './DiffViewer';
 import { TodoList } from './TodoList';
 import type { TodoItemProps } from './TodoItem';
+import { TaskMessage } from './TaskMessage';
 
 interface ToolMessageProps {
   pair: ToolPair;
@@ -106,6 +107,11 @@ function calculateDiffStats(
  */
 export function ToolMessage({ pair }: ToolMessageProps) {
   const { toolUse, toolResult } = pair;
+
+  // Delegate to TaskMessage for task tool (sub-agent)
+  if (toolUse.name === 'task') {
+    return <TaskMessage toolUse={toolUse} toolResult={toolResult} />;
+  }
 
   // Get display name or fallback to tool name
   const displayName = toolUse.displayName || toolUse.name;

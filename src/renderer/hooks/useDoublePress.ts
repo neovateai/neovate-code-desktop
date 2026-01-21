@@ -12,8 +12,16 @@ export function useDoublePress(
     const now = Date.now();
     const lastPress = lastPressRef.current;
 
+    console.log('[FORK] useDoublePress handlePress called', {
+      now,
+      lastPress,
+      timeSinceLastPress: lastPress ? now - lastPress : null,
+      timeout,
+    });
+
     if (lastPress && now - lastPress < timeout) {
       // Double press detected - clear timeout and call onDouble
+      console.log('[FORK] Double press detected! Calling onDouble');
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -22,6 +30,7 @@ export function useDoublePress(
       onDouble();
     } else {
       // First press - call onSingle immediately, then track for potential double press
+      console.log('[FORK] First press, calling onSingle');
       lastPressRef.current = now;
       onSingle?.();
 

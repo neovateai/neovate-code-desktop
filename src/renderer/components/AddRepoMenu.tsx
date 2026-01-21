@@ -6,7 +6,7 @@ import { toastManager } from './ui';
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from './ui/menu';
 
 interface AddRepoMenuProps {
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
 }
 
 export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
@@ -151,7 +151,7 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
 
   return (
     <Menu open={open} onOpenChange={setOpen}>
-      <MenuTrigger>{children}</MenuTrigger>
+      <MenuTrigger render={children} />
       <MenuPopup side="top" align="start">
         <MenuItem onClick={handleOpenProject} disabled={isLoading}>
           <HugeiconsIcon icon={FolderIcon} size={16} strokeWidth={1.5} />

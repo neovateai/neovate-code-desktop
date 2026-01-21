@@ -1,103 +1,169 @@
-import { useRef, useEffect, ReactNode } from 'react';
-import { Group, Panel, Separator } from 'react-resizable-panels';
-import type { PanelImperativeHandle } from 'react-resizable-panels';
-import { useStore } from '../../store';
+import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
+import {
+  Group,
+  Panel,
+  Separator,
+  useDefaultLayout,
+} from 'react-resizable-panels';
+import {
+  AppLayoutPanelId,
+  AppLayoutPanelProvider,
+  useAppLayoutPanels,
+} from './AppLayoutProvider';
 
-/*
-+------------------+--------------+---------+---------+---------------+
-| Panel            | defaultSize  | minSize | maxSize | collapsedSize |
-+------------------+--------------+---------+---------+---------------+
-| AppLayoutSidebar | "20%"        | 250     | "30%"   | 48            |
-| AppLayoutPrimary | "55%"        | "30%"   | -       | -             |
-| AppLayoutSecond  | "25%"        | "15%"   | "35%"   | -             |
-+------------------+--------------+---------+---------+---------------+
-*/
+const APP_LAYOUT_KEY_STORAGE_KEY = 'neovate-app-layout';
+const CHAT_PANEL_MIN_SIZE = 300;
+const CONTENT_PANEL_MIN_SIZE = 300;
 
-interface AppLayoutProps {
-  children: ReactNode;
+export function AppLayout({ children }: { children: ReactNode }) {
+  return <AppLayoutPanelProvider>{children}</AppLayoutPanelProvider>;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
-  return <Group orientation="horizontal">{children}</Group>;
-}
+export function AppLayoutPanelGroup({ children }: { children: ReactNode }) {
+  const { groupRef, setLayout } = useAppLayoutPanels();
 
-interface AppLayoutSidebarProps {
-  children: ReactNode;
-}
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: APP_LAYOUT_KEY_STORAGE_KEY,
+    panelIds: [
+      AppLayoutPanelId.PrimarySidebar,
+      AppLayoutPanelId.ChatPanel,
+      AppLayoutPanelId.ContentPanel,
+      AppLayoutPanelId.SecondarySidebar,
+    ],
+  });
 
-export function AppLayoutSidebar({ children }: AppLayoutSidebarProps) {
-  const sidebarPanelRef = useRef<PanelImperativeHandle>(null);
-  const sidebarCollapsed = useStore((state) => state.sidebarCollapsed);
-  const setSidebarCollapsed = useStore((state) => state.setSidebarCollapsed);
-
-  useEffect(() => {
-    const panel = sidebarPanelRef.current;
-    if (!panel) return;
-
-    if (sidebarCollapsed) {
-      panel.collapse();
-    } else {
-      panel.expand();
-    }
-  }, [sidebarCollapsed]);
-
-  const handleResize = () => {
-    const panel = sidebarPanelRef.current;
-    if (!panel) return;
-
-    const isCollapsed = panel.isCollapsed();
-    if (isCollapsed !== sidebarCollapsed) {
-      setSidebarCollapsed(isCollapsed);
-    }
+  const handleLayoutChanged = (layout: Record<string, number>) => {
+    onLayoutChanged(layout);
+    setLayout(layout);
   };
+
+  return (
+    <Group
+      orientation="horizontal"
+      className="flex-1"
+      data-app-layout
+      groupRef={groupRef}
+      defaultLayout={defaultLayout}
+      onLayoutChanged={handleLayoutChanged}
+    >
+      {children}
+    </Group>
+  );
+}
+
+export function AppLayoutPrimarySidebar({ children }: { children: ReactNode }) {
+  const { panelRefs } = useAppLayoutPanels();
 
   return (
     <>
       <Panel
-        panelRef={sidebarPanelRef}
-        defaultSize="20%"
-        minSize={250}
-        maxSize="30%"
-        collapsedSize={48}
+        id={AppLayoutPanelId.PrimarySidebar}
         collapsible
-        onResize={handleResize}
+        collapsedSize={0}
+        defaultSize={300}
+        minSize={240}
+        panelRef={panelRefs[AppLayoutPanelId.PrimarySidebar]}
       >
-        {children}
+        <div className="px-2 h-full">{children}</div>
       </Panel>
-
-      <Separator className="w-px bg-(--border-subtle) outline-none origin-center transition-[transform,background-color,opacity] data-[separator=hover]:scale-x-[2] data-[separator=active]:scale-x-[2] data-[separator=hover]:bg-[#3b82f6] data-[separator=active]:bg-[#3b82f6] data-[separator=hover]:opacity-90 data-[separator=active]:opacity-100" />
+      <PanelSeparator />
     </>
   );
 }
 
-interface AppLayoutPrimaryPanelProps {
-  children: ReactNode;
-}
+export function AppLayoutChatPanel({ children }: { children: ReactNode }) {
+  const { panelRefs } = useAppLayoutPanels();
 
-export function AppLayoutPrimaryPanel({
-  children,
-}: AppLayoutPrimaryPanelProps) {
   return (
-    <Panel defaultSize="55%" minSize="30%">
-      {children}
+    <Panel
+      id={AppLayoutPanelId.ChatPanel}
+      minSize={CHAT_PANEL_MIN_SIZE}
+      panelRef={panelRefs[AppLayoutPanelId.ChatPanel]}
+    >
+      <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">
+        {children}
+      </div>
     </Panel>
   );
 }
 
-interface AppLayoutSecondaryPanelProps {
-  children: ReactNode;
-}
+export function AppLayoutContentPanel({ children }: { children: ReactNode }) {
+  const { panelRefs } = useAppLayoutPanels();
 
-export function AppLayoutSecondaryPanel({
-  children,
-}: AppLayoutSecondaryPanelProps) {
   return (
     <>
-      <Separator className="w-px bg-(--border-subtle) outline-none origin-center transition-[transform,background-color,opacity] data-[separator=hover]:scale-x-[2] data-[separator=active]:scale-x-[2] data-[separator=hover]:bg-[#3b82f6] data-[separator=active]:bg-[#3b82f6] data-[separator=hover]:opacity-90 data-[separator=active]:opacity-100" />
-
-      <Panel defaultSize="25%" minSize="15%" maxSize="35%">
-        {children}
+      <PanelSeparator />
+      <Panel
+        id={AppLayoutPanelId.ContentPanel}
+        collapsible
+        collapsedSize={0}
+        defaultSize={0}
+        minSize={CONTENT_PANEL_MIN_SIZE}
+        panelRef={panelRefs[AppLayoutPanelId.ContentPanel]}
+      >
+        <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">
+          {children}
+        </div>
       </Panel>
     </>
+  );
+}
+
+export function AppLayoutSecondarySidebar({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const { panelRefs } = useAppLayoutPanels();
+
+  return (
+    <>
+      <PanelSeparator />
+      <Panel
+        id={AppLayoutPanelId.SecondarySidebar}
+        collapsible
+        collapsedSize={0}
+        defaultSize={0}
+        minSize={240}
+        maxSize={400}
+        panelRef={panelRefs[AppLayoutPanelId.SecondarySidebar]}
+      >
+        <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">
+          {children}
+        </div>
+      </Panel>
+    </>
+  );
+}
+
+export function AppLayoutActivityBar({ children }: { children: ReactNode }) {
+  return <>{children}</>;
+}
+
+export function AppLayoutTitleBar({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="h-11 flex items-center px-3 select-none shrink-0"
+      // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
+      style={{ WebkitAppRegion: 'drag' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PanelSeparator({ className }: { className?: string }) {
+  return (
+    <Separator
+      className={cn(
+        'w-0 relative data-[orientation=horizontal]:h-full',
+        'before:absolute before:inset-y-0 before:w-0.5 before:left-0.75',
+        'before:bg-transparent before:transition-colors',
+        'before:mask-[linear-gradient(to_bottom,transparent,black_35%,black_65%,transparent)]',
+        'data-[separator=hover]:before:bg-[#93c5fd] data-[separator=active]:before:bg-[#3b82f6]',
+        className,
+      )}
+    />
   );
 }

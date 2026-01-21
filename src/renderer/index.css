@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
   /* Custom semantic colors */
   --bg-base: #fafafa;
   --bg-primary: #ffffff;
@@ -100,6 +101,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* Custom semantic colors for dark mode */
   --bg-base: #0a0a0a;
   --bg-primary: #18181b;
@@ -159,5 +161,16 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Panel collapse/expand animation - scoped to app layout */
+  [data-app-layout] [data-panel] {
+    transition: flex-grow 50ms ease-out;
+  }
+
+  [data-app-layout]:has([data-separator="active"]) [data-panel] {
+    transition: none;
   }
 }

@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
+import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
 
 // Define the persistable state shape
 interface PersistedState {
@@ -9,9 +10,14 @@ interface PersistedState {
   selectedWorkspaceId: string | null;
   selectedSessionId: string | null;
   sessions: Record<string, any>;
-  sidebarCollapsed: boolean;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
+  // UISlice state
+  contentPanelTabs: ContentPanelTab[];
+  contentPanelActiveTab: ContentPanelTab | null;
+  secondarySidebarTab: SecondarySidebarTab;
+  // Onboarding state
+  onboardingCompleted: boolean;
 }
 
 // Debounce helper
@@ -63,9 +69,14 @@ export function setupPersistence(store: StoreApi<any>): void {
       selectedWorkspaceId: state.selectedWorkspaceId || null,
       selectedSessionId: state.selectedSessionId || null,
       sessions: state.sessions || {},
-      sidebarCollapsed: state.sidebarCollapsed || false,
       openRepoAccordions: state.openRepoAccordions || [],
       expandedSessionGroups: state.expandedSessionGroups || {},
+      // UISlice state
+      contentPanelTabs: state.contentPanelTabs ?? ['terminal'],
+      contentPanelActiveTab: state.contentPanelActiveTab ?? 'terminal',
+      secondarySidebarTab: state.secondarySidebarTab ?? 'files',
+      // Onboarding state
+      onboardingCompleted: state.onboardingCompleted ?? false,
     };
   };
 
@@ -119,9 +130,14 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       selectedWorkspaceId = null,
       selectedSessionId = null,
       sessions = {},
-      sidebarCollapsed = false,
       openRepoAccordions = [],
       expandedSessionGroups = {},
+      // UISlice state
+      contentPanelTabs = ['terminal'],
+      contentPanelActiveTab = 'terminal',
+      secondarySidebarTab = 'files',
+      // Onboarding state
+      onboardingCompleted = false,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -145,14 +161,6 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       validatedWorkspaceId = null;
     }
 
-    // Check if selected session exists
-    // if (validatedSessionId && !sessions[validatedSessionId]) {
-    //   console.warn(
-    //     `Selected session ID ${validatedSessionId} not found in loaded sessions, resetting selection`,
-    //   );
-    //   validatedSessionId = null;
-    // }
-
     // Merge persisted state into store
     // Note: We explicitly DON'T set connection state or runtime objects
     store.setState(
@@ -160,9 +168,12 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         repos,
         workspaces,
         sessions,
-        sidebarCollapsed,
         openRepoAccordions,
         expandedSessionGroups,
+        // UISlice state
+        contentPanelTabs,
+        contentPanelActiveTab,
+        secondarySidebarTab,
 
         selectedRepoPath: validatedRepoPath,
         selectedWorkspaceId: validatedWorkspaceId,
@@ -170,6 +181,13 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         state: 'idle',
         transport: null,
         messageBus: null,
+
+        // Onboarding state
+        onboardingCompleted,
+        // Runtime state derived from persisted: show onboarding if not completed
+        onboardingVisible: !onboardingCompleted,
+        onboardingStep: 'import',
+        importedProjects: [],
       },
       false,
     );

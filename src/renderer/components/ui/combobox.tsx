@@ -1,6 +1,6 @@
 'use client';
 
-import { Combobox as ComboboxPrimitive } from '@base-ui-components/react/combobox';
+import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import * as React from 'react';
 
@@ -16,11 +16,9 @@ const ComboboxContext = React.createContext<{
   multiple: false,
 });
 
-function Combobox<
-  ItemValue,
-  SelectedValue = ItemValue,
-  Multiple extends boolean | undefined = false,
->(props: ComboboxPrimitive.Root.Props<ItemValue, SelectedValue, Multiple>) {
+function Combobox<Value, Multiple extends boolean | undefined = false>(
+  props: ComboboxPrimitive.Root.Props<Value, Multiple>,
+) {
   const chipsRef = React.useRef<HTMLDivElement | null>(null);
   return (
     <ComboboxContext.Provider value={{ chipsRef, multiple: !!props.multiple }}>
