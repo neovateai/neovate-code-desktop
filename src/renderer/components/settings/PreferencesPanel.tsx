@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { RefreshIcon, SettingsIcon } from '@hugeicons/core-free-icons';
 import { Button } from '../ui/button';
@@ -91,6 +92,8 @@ const ThemeOption = ({
 };
 
 export const PreferencesPanel = () => {
+  const isCheckingRef = useRef(false);
+
   const globalConfig = useStore((state) => state.globalConfig);
   const isConfigLoading = useStore((state) => state.isConfigLoading);
   const isConfigSaving = useStore((state) => state.isConfigSaving);
@@ -138,8 +141,14 @@ export const PreferencesPanel = () => {
     );
   };
 
-  const handleCheckForUpdates = () => {
-    ipcMainCaller.updater.check();
+  const handleCheckForUpdates = async () => {
+    if (isCheckingRef.current) return;
+    isCheckingRef.current = true;
+    try {
+      await ipcMainCaller.updater.check();
+    } finally {
+      isCheckingRef.current = false;
+    }
   };
 
   if (isConfigLoading || globalConfig === null) {
