@@ -3,7 +3,6 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ArrowLeftIcon,
   SettingsIcon,
-  CodeIcon,
   CloudIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
@@ -18,7 +17,6 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
   { id: 'providers', label: 'Providers', icon: CloudIcon },
-  { id: 'mcp', label: 'MCP', icon: CodeIcon },
 ];
 
 export const SettingsMenu = ({
