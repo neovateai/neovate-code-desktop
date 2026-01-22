@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
+import { logger } from './lib/logger';
 import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
 
 // Define the persistable state shape
@@ -192,10 +193,13 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       false,
     );
 
-    console.log('Store hydrated successfully from persisted state');
+    logger.info(
+      '[PERSIST]',
+      'Store hydrated successfully from persisted state',
+    );
     return true;
   } catch (error) {
-    console.error('Failed to hydrate store:', error);
+    logger.error('[PERSIST]', 'Failed to hydrate store:', error);
     return false;
   }
 }

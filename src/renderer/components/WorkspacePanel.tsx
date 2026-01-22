@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/empty';
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
+import { logger } from '../lib/logger';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
 import { ApprovalPanel } from './ApprovalPanel';
@@ -320,7 +321,7 @@ export const WorkspacePanel = ({
   }, [selectedSessionId, cancelSession]);
 
   const handleShowForkModal = useCallback(() => {
-    console.log('[FORK] handleShowForkModal called in WorkspacePanel');
+    logger.debug('[UI]', 'handleShowForkModal called in WorkspacePanel');
     showForkModal();
   }, [showForkModal]);
 

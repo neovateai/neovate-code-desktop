@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toastManager } from '../components/ui/toast';
+import { logger } from '../lib/logger';
 import type {
   HandlerInput,
   HandlerMethod,
@@ -97,8 +98,9 @@ export function useInputHandlers({
 
   const handleDoubleEscape = useDoublePress(
     () => {
-      console.log(
-        '[FORK] onShowForkModal callback triggered in useInputHandlers',
+      logger.debug(
+        '[HOOK]',
+        'onShowForkModal callback triggered in useInputHandlers',
       );
       onShowForkModal();
     },

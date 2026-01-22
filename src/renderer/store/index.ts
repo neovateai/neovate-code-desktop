@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { WebSocketTransport } from '../client/transport/WebSocketTransport';
 import { MessageBus } from '../client/messaging/MessageBus';
 import { countTokens } from '../lib/tokenUtils';
+import { logger } from '../lib/logger';
 import { toastManager } from '../components/ui/toast';
 import type { NormalizedMessage } from '../client/types/message';
 import type {
@@ -237,12 +238,14 @@ const useStore = create<Store>()((set, get, api) => ({
       );
     }
 
-    console.log('[REQUEST]', method, params);
+    logger.debug(
+      `[STORE] REQUEST ${method} --data "${JSON.stringify(params).replace(/"/g, '\\"')}"`,
+    );
     const response = await messageBus.request<
       HandlerInput<K>,
       HandlerOutput<K>
     >(method, params);
-    console.log('[RESPONSE]', method, response);
+    logger.debug('[STORE]', 'RESPONSE', method, response);
     return response;
   },
 
@@ -263,7 +266,7 @@ const useStore = create<Store>()((set, get, api) => ({
 
     // Only initialize once
     if (initialized) {
-      console.log('Already initialized, skipping');
+      logger.debug('[STORE]', 'Already initialized, skipping');
       return;
     }
 
@@ -298,7 +301,7 @@ const useStore = create<Store>()((set, get, api) => ({
     });
 
     onEvent('streamResult', (data: any) => {
-      console.log('streamResult', data);
+      logger.debug('[STORE]', 'streamResult', data);
       // Update retry info if present
       if (data.sessionId && data.retryInfo) {
         const { setSessionProcessing } = get();
@@ -821,17 +824,17 @@ const useStore = create<Store>()((set, get, api) => ({
 
   // Fork modal actions
   showForkModal: () => {
-    console.log('[FORK] showForkModal store action called');
+    logger.debug('[STORE]', 'showForkModal action called');
     // Small delay to let the Escape key event pass before opening the modal
     // This prevents the Dialog's built-in Escape handling from immediately closing it
     setTimeout(() => {
-      console.log('[FORK] forkModalVisible set to true (after delay)');
+      logger.debug('[STORE]', 'forkModalVisible set to true (after delay)');
       set({ forkModalVisible: true });
     }, 50);
   },
 
   hideForkModal: () => {
-    console.log('[FORK] hideForkModal store action called');
+    logger.debug('[STORE]', 'hideForkModal action called');
     set({ forkModalVisible: false });
   },
 
