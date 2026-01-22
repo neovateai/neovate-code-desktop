@@ -2,6 +2,13 @@ import { createMainHandler } from '../../shared/lib/ipc/main';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
 import { updaterService } from '../updater';
+import {
+  saveTerminalState,
+  loadTerminalState,
+  deleteTerminalState,
+  getPtyCwd,
+  type PersistedTerminalState,
+} from '../terminal-state';
 
 export const ipcMainHandlers = {
   neovateServer: {
@@ -36,6 +43,44 @@ export const ipcMainHandlers = {
     destroy: createMainHandler<{ ptyId: string }, void>(async ({ input }) => {
       ptyManager.destroy(input.ptyId);
     }),
+
+    // Get current working directory of a PTY
+    getCwd: createMainHandler<{ ptyId: string }, { cwd: string | null }>(
+      async ({ input }) => {
+        const pid = ptyManager.getPid(input.ptyId);
+        if (!pid) {
+          return { cwd: null };
+        }
+        const cwd = await getPtyCwd(pid);
+        return { cwd };
+      },
+    ),
+
+    // Save terminal state to disk
+    saveState: createMainHandler<Omit<PersistedTerminalState, 'savedAt'>, void>(
+      async ({ input }) => {
+        await saveTerminalState({
+          ...input,
+          savedAt: Date.now(),
+        });
+      },
+    ),
+
+    // Load terminal state from disk
+    loadState: createMainHandler<
+      { repoPath: string; tabId: string },
+      { state: PersistedTerminalState | null }
+    >(async ({ input }) => {
+      const state = await loadTerminalState(input.repoPath, input.tabId);
+      return { state };
+    }),
+
+    // Delete terminal state from disk
+    deleteState: createMainHandler<{ repoPath: string; tabId: string }, void>(
+      async ({ input }) => {
+        await deleteTerminalState(input.repoPath, input.tabId);
+      },
+    ),
   },
 
   updater: updaterService.mainHandlers,

@@ -151,6 +151,14 @@ class PTYManager {
   }
 
   /**
+   * Get the PID of a PTY process
+   */
+  getPid(ptyId: string): number | null {
+    const instance = this.ptys.get(ptyId);
+    return instance ? instance.pty.pid : null;
+  }
+
+  /**
    * Destroy all PTY instances (for cleanup on app quit)
    */
   destroyAll(): void {

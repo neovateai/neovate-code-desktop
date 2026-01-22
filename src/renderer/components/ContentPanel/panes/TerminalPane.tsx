@@ -1,6 +1,7 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { Terminal as XTerm, type ITheme } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { SerializeAddon } from '@xterm/addon-serialize';
 import 'xterm/css/xterm.css';
 import { ipcMainCaller } from '../../../lib/ipc';
 import { logger } from '../../../lib/logger';
@@ -59,10 +60,21 @@ const lightTerminalTheme: ITheme = {
   brightWhite: '#ffffff',
 };
 
+// Debounce save interval (ms)
+const SAVE_DEBOUNCE_MS = 2000;
+
+// Cooldown after PTY spawn before saving is allowed (ms)
+// This prevents saving the initial shell prompt that duplicates on restore
+const SAVE_COOLDOWN_MS = 3000;
+
+// Max scrollback lines to persist
+const MAX_SCROLLBACK_LINES = 1000;
+
 // Create a new xterm instance with configuration
 function createXTermInstance(isDark: boolean): {
   xterm: XTerm;
   fitAddon: FitAddon;
+  serializeAddon: SerializeAddon;
 } {
   const xterm = new XTerm({
     cursorBlink: true,
@@ -70,13 +82,16 @@ function createXTermInstance(isDark: boolean): {
     fontFamily: 'JetBrains Mono, Menlo, Monaco, "Courier New", monospace',
     fontSize: 13,
     lineHeight: 1.2,
+    scrollback: MAX_SCROLLBACK_LINES,
     theme: isDark ? darkTerminalTheme : lightTerminalTheme,
   });
 
   const fitAddon = new FitAddon();
+  const serializeAddon = new SerializeAddon();
   xterm.loadAddon(fitAddon);
+  xterm.loadAddon(serializeAddon);
 
-  return { xterm, fitAddon };
+  return { xterm, fitAddon, serializeAddon };
 }
 
 interface TerminalPaneProps {
@@ -89,6 +104,77 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
     useContentPanelContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveAllowedRef = useRef(false); // Flag to prevent saving during initial PTY output
+
+  // Save terminal state (debounced)
+  const saveTerminalState = useCallback(
+    async (instance: TerminalInstance, force = false) => {
+      if (!instance.ptyId) return;
+
+      // Skip saving during cooldown period (unless forced)
+      if (!force && !saveAllowedRef.current) {
+        logger.debug(
+          '[ContentPanel:TerminalPane] Skipping save during cooldown for tabId:',
+          tab.id,
+        );
+        return;
+      }
+
+      try {
+        // Get current cwd from PTY
+        const { cwd } = await ipcMainCaller.terminal.getCwd({
+          ptyId: instance.ptyId,
+        });
+
+        // Serialize terminal buffer
+        const serializedBuffer = instance.serializeAddon.serialize({
+          scrollback: MAX_SCROLLBACK_LINES,
+        });
+
+        logger.debug(
+          '[ContentPanel:TerminalPane] Serialized buffer length:',
+          serializedBuffer.length,
+          'first 200 chars:',
+          serializedBuffer.slice(0, 200),
+        );
+
+        // Save to disk
+        await ipcMainCaller.terminal.saveState({
+          tabId: tab.id,
+          repoPath,
+          serializedBuffer,
+          cwd: cwd || instance.cwd,
+          env: instance.env,
+          scrollbackLines: MAX_SCROLLBACK_LINES,
+        });
+
+        logger.debug(
+          '[ContentPanel:TerminalPane] State saved for tabId:',
+          tab.id,
+        );
+      } catch (error) {
+        logger.error(
+          '[ContentPanel:TerminalPane] Failed to save state:',
+          error,
+        );
+      }
+    },
+    [tab.id, repoPath],
+  );
+
+  // Debounced save trigger
+  const scheduleSave = useCallback(
+    (instance: TerminalInstance) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        saveTerminalState(instance);
+      }, SAVE_DEBOUNCE_MS);
+    },
+    [saveTerminalState],
+  );
 
   // Update XTerm theme when dark mode changes
   useEffect(() => {
@@ -150,11 +236,38 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
       );
 
       try {
-        const { xterm, fitAddon } = createXTermInstance(isDark);
+        const { xterm, fitAddon, serializeAddon } = createXTermInstance(isDark);
         logger.debug('[ContentPanel:TerminalPane] XTerm instance created');
 
         xterm.open(container);
         fitAddon.fit();
+
+        // Try to restore previous state
+        const { state: savedState } = await ipcMainCaller.terminal.loadState({
+          repoPath,
+          tabId: tab.id,
+        });
+
+        logger.debug(
+          '[ContentPanel:TerminalPane] Load state result - tabId:',
+          tab.id,
+          'hasState:',
+          !!savedState,
+          'bufferLength:',
+          savedState?.serializedBuffer?.length,
+        );
+
+        if (savedState) {
+          logger.debug(
+            '[ContentPanel:TerminalPane] Restoring saved state for tabId:',
+            tab.id,
+            'first 200 chars:',
+            savedState.serializedBuffer.slice(0, 200),
+          );
+          // Write saved buffer to terminal
+          xterm.write(savedState.serializedBuffer);
+        }
+
         xterm.focus();
 
         // Handle keyboard shortcuts (Cmd+K on Mac, Ctrl+K on Windows/Linux to clear)
@@ -168,13 +281,17 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
           return true;
         });
 
+        // Determine cwd - use saved state or repo path
+        const initialCwd = savedState?.cwd || repoPath || undefined;
+        const initialEnv = savedState?.env || {};
+
         // Create PTY
         logger.debug(
           '[ContentPanel:TerminalPane] Creating PTY with cwd:',
-          repoPath,
+          initialCwd,
         );
         const { ptyId } = await ipcMainCaller.terminal.create({
-          cwd: repoPath || undefined,
+          cwd: initialCwd,
           cols: xterm.cols || 80,
           rows: xterm.rows || 24,
         });
@@ -190,7 +307,14 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         }
 
         // Store instance
-        const instance: TerminalInstance = { xterm, fitAddon, ptyId };
+        const instance: TerminalInstance = {
+          xterm,
+          fitAddon,
+          serializeAddon,
+          ptyId,
+          cwd: initialCwd || repoPath,
+          env: initialEnv,
+        };
         terminalInstances.set(tab.id, instance);
         logger.debug(
           '[ContentPanel:TerminalPane] Instance stored in map for tabId:',
@@ -216,6 +340,8 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
           ({ ptyId: incomingPtyId, data }) => {
             if (incomingPtyId === instance.ptyId && instance.xterm) {
               instance.xterm.write(data);
+              // Schedule save on data received
+              scheduleSave(instance);
             }
           },
         );
@@ -239,15 +365,19 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         );
 
         // Store unsubscribe functions for cleanup
-        (instance as TerminalInstance & { cleanup?: () => void }).cleanup =
-          () => {
-            logger.debug(
-              '[ContentPanel:TerminalPane] Cleaning up PTY listeners for ptyId:',
-              ptyId,
-            );
-            unsubscribeData();
-            unsubscribeExit();
-          };
+        instance.cleanup = () => {
+          logger.debug(
+            '[ContentPanel:TerminalPane] Cleaning up PTY listeners for ptyId:',
+            ptyId,
+          );
+          unsubscribeData();
+          unsubscribeExit();
+          // Save state before cleanup (force save even during cooldown)
+          if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+          }
+          saveTerminalState(instance, true);
+        };
 
         // Resize PTY
         if (xterm.cols > 0 && xterm.rows > 0) {
@@ -259,6 +389,17 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         }
 
         initializedRef.current = true;
+
+        // Start cooldown timer - don't save until after initial PTY output
+        saveAllowedRef.current = false;
+        setTimeout(() => {
+          saveAllowedRef.current = true;
+          logger.debug(
+            '[ContentPanel:TerminalPane] Save cooldown ended for tabId:',
+            tab.id,
+          );
+        }, SAVE_COOLDOWN_MS);
+
         logger.debug('[ContentPanel:TerminalPane] Initialization complete');
       } catch (error) {
         logger.error(
@@ -276,7 +417,16 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
       disposed = true;
       if (mountTimeout) clearTimeout(mountTimeout);
     };
-  }, [isActive, tab.id, repoPath, isDark, terminalInstances, updateTab]);
+  }, [
+    isActive,
+    tab.id,
+    repoPath,
+    isDark,
+    terminalInstances,
+    updateTab,
+    scheduleSave,
+    saveTerminalState,
+  ]);
 
   // Handle resize
   useEffect(() => {
@@ -316,6 +466,29 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
       resizeObserver.disconnect();
     };
   }, [tab.id, terminalInstances]);
+
+  // Save state on tab switch (when becoming inactive)
+  useEffect(() => {
+    if (!isActive && initializedRef.current) {
+      const instance = terminalInstances.get(tab.id);
+      if (instance) {
+        // Immediate save when switching away
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+        saveTerminalState(instance);
+      }
+    }
+  }, [isActive, tab.id, terminalInstances, saveTerminalState]);
+
+  // Cleanup save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div

@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { SerializeAddon } from '@xterm/addon-serialize';
 import { useContentTabs, type UseContentTabsReturn } from './useContentTabs';
 import type { ContentTab } from './types';
 
@@ -14,7 +15,11 @@ import type { ContentTab } from './types';
 export interface TerminalInstance {
   xterm: XTerm;
   fitAddon: FitAddon;
+  serializeAddon: SerializeAddon;
   ptyId: string | null;
+  cwd: string;
+  env: Record<string, string>;
+  cleanup?: () => void;
 }
 
 // Runtime instance map interface
@@ -100,10 +105,16 @@ export function ContentPanelProvider({
     if (tab.type === 'terminal') {
       const instance = terminalInstances.get(tab.id);
       if (instance) {
+        // Call cleanup function (unsubscribe listeners, save state)
+        if (instance.cleanup) {
+          instance.cleanup();
+        }
         if (instance.ptyId) {
           // Import dynamically to avoid circular deps
           import('../../lib/ipc').then(({ ipcMainCaller }) => {
             ipcMainCaller.terminal.destroy({ ptyId: instance.ptyId! });
+            // Delete persisted state when tab is explicitly closed
+            ipcMainCaller.terminal.deleteState({ repoPath, tabId: tab.id });
           });
         }
         instance.xterm.dispose();
