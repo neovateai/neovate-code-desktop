@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { Agentation } from 'agentation';
 import { useStore } from './store';
 import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
@@ -258,6 +259,7 @@ function App() {
       {/* Onboarding Modal - renders on top when visible */}
       <OnboardingModal />
       <UpdaterToast />
+      {process.env.NODE_ENV !== 'production' && <Agentation />}
     </>
   );
 }
