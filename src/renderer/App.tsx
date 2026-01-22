@@ -4,7 +4,7 @@ import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
 import { WorkspacePanel } from './components/WorkspacePanel';
 // import { WorkspaceChanges } from './components/WorkspaceChanges';
-import { Terminal } from './components/Terminal';
+import { ContentPanel } from './components/ContentPanel';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
@@ -209,9 +209,9 @@ function App() {
               <AppLayoutContentPanel>
                 <div className="h-full flex flex-col">
                   {visitedRepoPathsArray.map((repoPath) => (
-                    <Terminal
+                    <ContentPanel
                       key={repoPath}
-                      cwd={repoPath}
+                      repoPath={repoPath}
                       hidden={repoPath !== selectedRepoPath}
                     />
                   ))}
