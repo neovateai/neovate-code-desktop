@@ -53,9 +53,14 @@ export type CreateTabInput =
 export const TAB_TYPE_OPTIONS: readonly {
   type: ContentTabType;
   label: string;
-  disabled?: boolean;
 }[] = [
   { type: 'terminal', label: 'Terminal' },
   { type: 'editor', label: 'Editor' },
   { type: 'review', label: 'Review' },
 ] as const;
+
+// Singleton tab types - only one instance allowed
+export const SINGLETON_TAB_TYPES: readonly ContentTabType[] = [
+  'editor',
+  'review',
+];

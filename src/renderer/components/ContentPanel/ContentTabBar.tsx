@@ -166,7 +166,7 @@ export function ContentTabBar() {
 
 // Add tab button with dropdown
 import { useState, useRef, useEffect } from 'react';
-import { TAB_TYPE_OPTIONS } from './types';
+import { TAB_TYPE_OPTIONS, SINGLETON_TAB_TYPES } from './types';
 
 function AddTabButton() {
   const { addTab, tabs } = useContentPanelContext();
@@ -194,8 +194,7 @@ function AddTabButton() {
   }, [isOpen]);
 
   const handleAddTab = (type: ContentTabType) => {
-    const count = tabs.filter((t) => t.type === type).length;
-    const name = `${type.charAt(0).toUpperCase() + type.slice(1)} ${count + 1}`;
+    const name = type.charAt(0).toUpperCase() + type.slice(1);
 
     switch (type) {
       case 'terminal':
@@ -210,6 +209,12 @@ function AddTabButton() {
     }
 
     setIsOpen(false);
+  };
+
+  // Check which singleton types already exist
+  const isTypeDisabled = (type: ContentTabType): boolean => {
+    if (!SINGLETON_TAB_TYPES.includes(type)) return false;
+    return tabs.some((t) => t.type === type);
   };
 
   return (
@@ -246,23 +251,27 @@ function AddTabButton() {
             minWidth: '120px',
           }}
         >
-          {TAB_TYPE_OPTIONS.map((option) => (
-            <button
-              key={option.type}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors hover:bg-[var(--bg-hover)]"
-              style={{
-                color: option.disabled
-                  ? 'var(--text-disabled)'
-                  : 'var(--text-primary)',
-                cursor: option.disabled ? 'not-allowed' : 'pointer',
-              }}
-              disabled={option.disabled}
-              onClick={() => !option.disabled && handleAddTab(option.type)}
-            >
-              <TabIcon type={option.type} size={14} />
-              {option.label}
-            </button>
-          ))}
+          {TAB_TYPE_OPTIONS.map((option) => {
+            const disabled = isTypeDisabled(option.type);
+            return (
+              <button
+                key={option.type}
+                className={`flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors ${
+                  disabled ? '' : 'hover:bg-[var(--bg-hover)]'
+                }`}
+                style={{
+                  color: 'var(--text-primary)',
+                  opacity: disabled ? 0.4 : 1,
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                }}
+                disabled={disabled}
+                onClick={() => !disabled && handleAddTab(option.type)}
+              >
+                <TabIcon type={option.type} size={14} />
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
