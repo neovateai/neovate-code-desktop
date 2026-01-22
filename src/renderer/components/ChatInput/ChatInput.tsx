@@ -664,6 +664,11 @@ export const ChatInput = memo(
                     variant={canSend ? 'default' : 'ghost'}
                     onClick={handleSendClick}
                     disabled={!canSend || (disabled && !isProcessing)}
+                    style={
+                      canSend
+                        ? { backgroundColor: '#fa216e', border: 'none' }
+                        : undefined
+                    }
                   >
                     <HugeiconsIcon icon={SentIcon} size={18} />
                   </Button>
