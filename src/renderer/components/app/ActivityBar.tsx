@@ -1,8 +1,13 @@
+import { memo } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { FolderIcon, ComputerTerminal01Icon } from '@hugeicons/core-free-icons';
+import {
+  FolderIcon,
+  GitBranchIcon,
+  ComputerTerminal01Icon,
+} from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import { cn } from '../../lib/utils';
-import { Button } from '../ui';
+import { Button, Separator } from '../ui';
 import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
 import type { SecondarySidebarTab } from '../../store/slices/ui';
 
@@ -30,7 +35,7 @@ export const ActivityBar = function ActivityBar() {
 
   return (
     <div className="w-12 flex flex-col items-center py-2 shrink-0 h-full">
-      {/* <ActivityBarButton
+      <ActivityBarButton
         icon={FolderIcon}
         onClick={() => handleTabClick('files')}
         active={
@@ -44,7 +49,7 @@ export const ActivityBar = function ActivityBar() {
         active={secondarySidebarTab === 'git' && !isSecondarySidebarCollapsed()}
         title="Git"
       />
-      <Separator className="w-6 my-1" /> */}
+      <Separator className="w-6 my-1" />
       <ActivityBarButton
         icon={ComputerTerminal01Icon}
         onClick={toggleContentPanel}
