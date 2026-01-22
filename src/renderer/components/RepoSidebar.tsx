@@ -132,7 +132,7 @@ export const RepoSidebar = ({
 
   const startRename = (sessionId: string, currentSummary: string) => {
     setEditingSessionId(sessionId);
-    setEditingValue(currentSummary || 'New session');
+    setEditingValue(currentSummary || 'New Chat');
   };
 
   const saveRename = async (workspaceId: string, sessionId: string) => {
@@ -282,7 +282,7 @@ export const RepoSidebar = ({
                                 strokeWidth={1.5}
                               />
                               <span className="text-xs font-medium">
-                                New session
+                                New Chat
                               </span>
                             </button>
 
@@ -294,7 +294,7 @@ export const RepoSidebar = ({
                               const displaySummary =
                                 session.summary && session.summary.length > 20
                                   ? `${session.summary.slice(0, 20)}…`
-                                  : session.summary || 'New session';
+                                  : session.summary || 'New Chat';
 
                               const processing = sessionProcessing[
                                 session.sessionId
