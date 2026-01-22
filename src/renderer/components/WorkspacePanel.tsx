@@ -442,11 +442,7 @@ export const WorkspacePanel = ({
               onCancel={handleCancel}
               onShowForkModal={handleShowForkModal}
               fetchCommands={fetchCommands}
-              placeholder={
-                selectedSessionId
-                  ? 'Ask anything, @ for context'
-                  : 'Ask anything, @ for context with a new session...'
-              }
+              placeholder={'Ask anything, @ for context'}
               modelName={workspace.context.settings?.model}
               isProcessing={isLoading}
               sessionId={selectedSessionId || undefined}
