@@ -441,9 +441,9 @@ export const ChatInput = memo(
 
         {/* Main Input Container */}
         <div
-          className="rounded-lg overflow-hidden transition-colors"
+          className="rounded-xl overflow-hidden transition-colors"
           style={{
-            border: `1px solid ${borderColor}`,
+            border: `2px solid ${borderColor}`,
             backgroundColor: 'var(--bg-surface)',
           }}
         >
