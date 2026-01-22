@@ -43,6 +43,11 @@ import {
   type OnboardingStep,
   defaultOnboardingState,
 } from './slices/onboarding';
+import {
+  createDesktopSettingsSlice,
+  type DesktopSettingsSlice,
+  type DesktopSettingsSliceState,
+} from './slices/desktopSettings';
 
 // Re-export types from slices
 export type {
@@ -144,7 +149,8 @@ type Store = CoreState &
   SessionSlice &
   ConfigSlice &
   UISlice &
-  OnboardingSlice;
+  OnboardingSlice &
+  DesktopSettingsSlice;
 
 const useStore = create<Store>()((set, get, api) => ({
   // ==================== Core State ====================
@@ -915,6 +921,7 @@ const useStore = create<Store>()((set, get, api) => ({
   ...createConfigSlice(set, get, api),
   ...createUISlice(set, get, api),
   ...createOnboardingSlice(set, get, api),
+  ...createDesktopSettingsSlice(set, get, api),
 }));
 
 export { useStore };

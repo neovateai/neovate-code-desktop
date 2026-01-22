@@ -7,6 +7,7 @@ import type {
   HandlerMethod,
   HandlerOutput,
 } from '../nodeBridge.types';
+import type { SendMessageWith } from '../store/slices/desktopSettings';
 import { useDoublePress } from './useDoublePress';
 import { useFileSuggestion } from './useFileSuggestion';
 import { useImagePasteManager } from './useImagePasteManager';
@@ -22,6 +23,7 @@ interface UseInputHandlersProps {
   onShowForkModal: () => void;
   fetchCommands: () => Promise<SlashCommand[]>;
   isProcessing?: boolean;
+  sendMessageWith: SendMessageWith;
   request: <K extends HandlerMethod>(
     method: K,
     params: HandlerInput<K>,
@@ -37,6 +39,7 @@ export function useInputHandlers({
   onShowForkModal,
   fetchCommands,
   isProcessing,
+  sendMessageWith,
   request,
   cwd,
 }: UseInputHandlersProps) {
@@ -296,23 +299,35 @@ export function useInputHandlers({
         if (e.nativeEvent.isComposing) {
           return;
         }
-        if (e.altKey) {
+
+        // Handle sendMessageWith setting
+        if (sendMessageWith === 'enter') {
+          // Enter sends, Alt+Enter/Shift+Enter inserts newline
+          if (e.altKey) {
+            e.preventDefault();
+            const before = currentValue.slice(0, currentCursorPosition);
+            const after = currentValue.slice(currentCursorPosition);
+            const newPos = currentCursorPosition + 1;
+            inputState.setValue(`${before}\n${after}`);
+            inputState.setCursorPosition(newPos);
+            requestAnimationFrame(() => {
+              textarea.setSelectionRange(newPos, newPos);
+            });
+            return;
+          }
+          if (e.metaKey || e.shiftKey) {
+            return; // Allow default behavior (newline)
+          }
           e.preventDefault();
-          const before = currentValue.slice(0, currentCursorPosition);
-          const after = currentValue.slice(currentCursorPosition);
-          const newPos = currentCursorPosition + 1;
-          inputState.setValue(`${before}\n${after}`);
-          inputState.setCursorPosition(newPos);
-          requestAnimationFrame(() => {
-            textarea.setSelectionRange(newPos, newPos);
-          });
-          return;
+          handleSubmit();
+        } else {
+          // cmdEnter mode: Cmd+Enter (Mac) or Ctrl+Enter sends, plain Enter inserts newline
+          if (e.metaKey || e.ctrlKey) {
+            e.preventDefault();
+            handleSubmit();
+          }
+          // Plain Enter: allow default behavior (newline)
         }
-        if (e.metaKey || e.shiftKey) {
-          return;
-        }
-        e.preventDefault();
-        handleSubmit();
         return;
       }
 

@@ -25,6 +25,7 @@ import type {
   HandlerMethod,
   HandlerOutput,
 } from '../../nodeBridge.types';
+import { useStore } from '../../store';
 import { Button, Textarea, Tooltip, TooltipPopup, TooltipTrigger } from '../ui';
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
@@ -95,6 +96,9 @@ export const ChatInput = memo(
     // Ref for textarea
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Get sendMessageWith from store
+    const sendMessageWith = useStore((state) => state.sendMessageWith);
+
     // Expose focus method to parent via ref
     useImperativeHandle(
       ref,
@@ -124,6 +128,7 @@ export const ChatInput = memo(
       onShowForkModal,
       fetchCommands,
       isProcessing,
+      sendMessageWith,
       request: request!,
       cwd: cwd || '',
     });

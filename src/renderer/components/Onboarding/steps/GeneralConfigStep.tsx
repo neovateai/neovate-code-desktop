@@ -7,8 +7,8 @@ import {
   SelectPopup,
   SelectItem,
 } from '../../ui/select';
+import type { ThemeValue } from '../../../store/slices/desktopSettings';
 
-type ThemeValue = 'light' | 'dark' | 'system';
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
 
 interface SettingsRowProps {
@@ -92,12 +92,15 @@ export const GeneralConfigStep = () => {
   const getGlobalConfigValue = useStore((state) => state.getGlobalConfigValue);
   const setGlobalConfig = useStore((state) => state.setGlobalConfig);
 
+  // DesktopSettings from slice
+  const theme = useStore((state) => state.theme);
+  const setTheme = useStore((state) => state.setTheme);
+
   const language = getGlobalConfigValue<string>('language', 'English');
   const approvalMode = getGlobalConfigValue<ApprovalMode>(
     'approvalMode',
     'default',
   );
-  const theme = getGlobalConfigValue<ThemeValue>('desktop.theme', 'system');
 
   const handleLanguageChange = async (newLanguage: string) => {
     if (newLanguage === language || isConfigSaving) return;
@@ -109,9 +112,9 @@ export const GeneralConfigStep = () => {
     await setGlobalConfig('approvalMode', newMode);
   };
 
-  const handleThemeChange = async (newTheme: ThemeValue) => {
-    if (newTheme === theme || isConfigSaving) return;
-    await setGlobalConfig('desktop.theme', newTheme);
+  const handleThemeChange = (newTheme: ThemeValue) => {
+    if (newTheme === theme) return;
+    setTheme(newTheme);
   };
 
   if (isConfigLoading || globalConfig === null) {

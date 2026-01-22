@@ -13,8 +13,11 @@ import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
 import { ModelSelect } from './ModelSelect';
 import { ipcMainCaller } from '../../lib/ipc';
+import type {
+  ThemeValue,
+  SendMessageWith,
+} from '../../store/slices/desktopSettings';
 
-type ThemeValue = 'light' | 'dark' | 'system';
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
 type NotificationValue = 'off' | 'default' | string;
 
@@ -102,7 +105,12 @@ export const PreferencesPanel = () => {
   const setGlobalConfig = useStore((state) => state.setGlobalConfig);
   const request = useStore((state) => state.request);
 
-  const theme = getGlobalConfigValue<ThemeValue>('desktop.theme', 'system');
+  // DesktopSettings from slice
+  const theme = useStore((state) => state.theme);
+  const setTheme = useStore((state) => state.setTheme);
+  const sendMessageWith = useStore((state) => state.sendMessageWith);
+  const setSendMessageWith = useStore((state) => state.setSendMessageWith);
+
   const model = getGlobalConfigValue<string>('model');
   const smallModel = getGlobalConfigValue<string>('smallModel');
   const language = getGlobalConfigValue<string>('language', 'English');
@@ -138,9 +146,14 @@ export const PreferencesPanel = () => {
     }
   };
 
-  const handleThemeChange = async (newTheme: ThemeValue) => {
-    if (newTheme === theme || isConfigSaving) return;
-    await setGlobalConfig('desktop.theme', newTheme);
+  const handleThemeChange = (newTheme: ThemeValue) => {
+    if (newTheme === theme) return;
+    setTheme(newTheme);
+  };
+
+  const handleSendMessageWithChange = (value: SendMessageWith) => {
+    if (value === sendMessageWith) return;
+    setSendMessageWith(value);
   };
 
   const handleModelChange = async (newModel: string) => {
@@ -317,19 +330,38 @@ export const PreferencesPanel = () => {
               label="Light"
               isActive={theme === 'light'}
               onClick={() => handleThemeChange('light')}
-              disabled={isConfigSaving}
             />
             <ThemeOption
               label="Dark"
               isActive={theme === 'dark'}
               onClick={() => handleThemeChange('dark')}
-              disabled={isConfigSaving}
             />
             <ThemeOption
               label="System"
               isActive={theme === 'system'}
               onClick={() => handleThemeChange('system')}
-              disabled={isConfigSaving}
+            />
+          </div>
+        </SettingsRow>
+
+        {/* Send Message With */}
+        <SettingsRow
+          title="Send Message"
+          description="Keyboard shortcut to send messages"
+        >
+          <div
+            className="flex gap-1 p-1 rounded-lg"
+            style={{ backgroundColor: 'var(--bg-surface)' }}
+          >
+            <ThemeOption
+              label="Enter"
+              isActive={sendMessageWith === 'enter'}
+              onClick={() => handleSendMessageWithChange('enter')}
+            />
+            <ThemeOption
+              label="⌘+Enter"
+              isActive={sendMessageWith === 'cmdEnter'}
+              onClick={() => handleSendMessageWithChange('cmdEnter')}
             />
           </div>
         </SettingsRow>

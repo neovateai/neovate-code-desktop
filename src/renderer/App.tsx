@@ -27,7 +27,6 @@ import {
   SecondarySidebar,
 } from './components/layout';
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
-import { getNestedValue } from './lib/utils';
 import { TitleBar } from './components/app/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
 
@@ -42,8 +41,8 @@ function App() {
   const selectWorkspace = useStore((s) => s.selectWorkspace);
   const showSettings = useStore((s) => s.showSettings);
   const setShowSettings = useStore((s) => s.setShowSettings);
-  const globalConfig = useStore((s) => s.globalConfig);
-  const setGlobalConfig = useStore((s) => s.setGlobalConfig);
+  const theme = useStore((s) => s.theme);
+  const setTheme = useStore((s) => s.setTheme);
   const initialized = useStore((s) => s.initialized);
 
   // Minimum display time for loading animation
@@ -62,10 +61,6 @@ function App() {
     }
   }, []);
 
-  // Get theme from config (default to 'system')
-  // Subscribe to globalConfig directly so component re-renders when config changes
-  const theme = getNestedValue<string>(globalConfig, 'desktop.theme', 'system');
-
   // Listen for menu events from main process
   useEffect(() => {
     const cleanupSettings = window.electron.onMenuOpenSettings(() => {
@@ -73,16 +68,16 @@ function App() {
     });
 
     const cleanupTheme = window.electron.onMenuToggleTheme(() => {
-      // Toggle between light and dark (Option A behavior)
+      // Toggle between light and dark
       const newTheme = theme === 'dark' ? 'light' : 'dark';
-      setGlobalConfig('desktop.theme', newTheme);
+      setTheme(newTheme);
     });
 
     return () => {
       cleanupSettings();
       cleanupTheme();
     };
-  }, [setShowSettings, setGlobalConfig, theme]);
+  }, [setShowSettings, setTheme, theme]);
 
   // Apply dark/light mode based on theme setting
   useEffect(() => {

@@ -3,6 +3,10 @@ import { toastManager } from './components/ui/toast';
 import { PERSISTENCE_DEBOUNCE_MS } from './constants';
 import { logger } from './lib/logger';
 import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
+import type {
+  ThemeValue,
+  SendMessageWith,
+} from './store/slices/desktopSettings';
 
 // Define the persistable state shape
 interface PersistedState {
@@ -20,6 +24,9 @@ interface PersistedState {
   secondarySidebarTab: SecondarySidebarTab;
   // Onboarding state
   onboardingCompleted: boolean;
+  // DesktopSettings state
+  theme: ThemeValue;
+  sendMessageWith: SendMessageWith;
 }
 
 // Debounce helper
@@ -79,6 +86,9 @@ export function setupPersistence(store: StoreApi<any>): void {
       secondarySidebarTab: state.secondarySidebarTab ?? 'files',
       // Onboarding state
       onboardingCompleted: state.onboardingCompleted ?? false,
+      // DesktopSettings state
+      theme: state.theme ?? 'system',
+      sendMessageWith: state.sendMessageWith ?? 'enter',
     };
   };
 
@@ -140,6 +150,9 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       secondarySidebarTab = 'files',
       // Onboarding state
       onboardingCompleted = false,
+      // DesktopSettings state
+      theme = 'system',
+      sendMessageWith = 'enter',
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -190,6 +203,10 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         onboardingVisible: !onboardingCompleted,
         onboardingStep: 'import',
         importedProjects: [],
+
+        // DesktopSettings state
+        theme,
+        sendMessageWith,
       },
       false,
     );
