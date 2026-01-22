@@ -18,6 +18,12 @@ import { useStore } from '../store';
 import { cn } from '../lib/utils';
 import { Spinner } from './ui/spinner';
 import { ScrollArea } from './ui/scroll-area';
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuPopup,
+  ContextMenuItem,
+} from './ui/context-menu';
 
 // Helper function to format relative time in short format (e.g., "4m", "2h")
 function formatRelativeTime(timestamp: number): string {
@@ -98,6 +104,8 @@ export const RepoSidebar = ({
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [selectedRepoForDialog, setSelectedRepoForDialog] =
     useState<RepoData | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
 
   const handleRepoInfoClick = (repo: RepoData, e: MouseEvent) => {
     e.stopPropagation();
@@ -117,6 +125,39 @@ export const RepoSidebar = ({
       setDialogOpen(false);
       setSelectedRepoForDialog(null);
     }
+  };
+
+  const updateSession = useStore((state) => state.updateSession);
+  const request = useStore((state) => state.request);
+
+  const startRename = (sessionId: string, currentSummary: string) => {
+    setEditingSessionId(sessionId);
+    setEditingValue(currentSummary || 'New session');
+  };
+
+  const saveRename = async (workspaceId: string, sessionId: string) => {
+    const trimmed = editingValue.trim();
+    if (trimmed) {
+      const workspace = workspaces[workspaceId];
+      if (workspace) {
+        const cwd = workspace.worktreePath;
+        try {
+          await request('session.config.setSummary', {
+            cwd,
+            sessionId,
+            summary: trimmed,
+          });
+          updateSession(workspaceId, sessionId, { summary: trimmed });
+        } catch (error) {
+          console.error('Failed to rename session:', error);
+        }
+      }
+    }
+    setEditingSessionId(null);
+  };
+
+  const cancelRename = () => {
+    setEditingSessionId(null);
   };
 
   return (
@@ -248,6 +289,8 @@ export const RepoSidebar = ({
                             {visibleSessions.map((session) => {
                               const isSessionSelected =
                                 selectedSessionId === session.sessionId;
+                              const isEditing =
+                                editingSessionId === session.sessionId;
                               const displaySummary =
                                 session.summary && session.summary.length > 20
                                   ? `${session.summary.slice(0, 20)}…`
@@ -266,51 +309,93 @@ export const RepoSidebar = ({
                                   : 'var(--text-tertiary)';
 
                               return (
-                                <div
-                                  key={session.sessionId}
-                                  className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors"
-                                  style={{
-                                    backgroundColor: isSessionSelected
-                                      ? 'var(--bg-base)'
-                                      : 'transparent',
-                                    color: textColor,
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!isSessionSelected) {
-                                      e.currentTarget.style.backgroundColor =
-                                        'var(--bg-base-hover)';
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!isSessionSelected) {
-                                      e.currentTarget.style.backgroundColor =
-                                        'transparent';
-                                    }
-                                  }}
-                                  onClick={() => {
-                                    selectWorkspace(workspaceId);
-                                    selectSession(session.sessionId);
-                                  }}
-                                >
-                                  {isProcessing ? (
-                                    <Spinner className="size-3.5" />
-                                  ) : (
-                                    <HugeiconsIcon
-                                      icon={Comment01Icon}
-                                      size={14}
-                                      strokeWidth={1.5}
-                                    />
-                                  )}
-                                  <span className="flex-1 text-xs truncate">
-                                    {displaySummary}
-                                  </span>
-                                  <span
-                                    className="text-xs"
-                                    style={{ color: 'var(--text-tertiary)' }}
+                                <ContextMenu key={session.sessionId}>
+                                  <ContextMenuTrigger
+                                    className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors"
+                                    style={{
+                                      backgroundColor: isSessionSelected
+                                        ? 'var(--bg-base)'
+                                        : 'transparent',
+                                      color: textColor,
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!isSessionSelected) {
+                                        e.currentTarget.style.backgroundColor =
+                                          'var(--bg-base-hover)';
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isSessionSelected) {
+                                        e.currentTarget.style.backgroundColor =
+                                          'transparent';
+                                      }
+                                    }}
+                                    onClick={() => {
+                                      selectWorkspace(workspaceId);
+                                      selectSession(session.sessionId);
+                                    }}
                                   >
-                                    {formatRelativeTime(session.modified)}
-                                  </span>
-                                </div>
+                                    {isProcessing ? (
+                                      <Spinner className="size-3.5" />
+                                    ) : (
+                                      <HugeiconsIcon
+                                        icon={Comment01Icon}
+                                        size={14}
+                                        strokeWidth={1.5}
+                                      />
+                                    )}
+                                    {isEditing ? (
+                                      <input
+                                        className="flex-1 text-xs bg-transparent border border-[var(--border-primary)] rounded px-1 py-0.5 outline-none"
+                                        value={editingValue}
+                                        onChange={(e) =>
+                                          setEditingValue(e.target.value)
+                                        }
+                                        onBlur={() =>
+                                          saveRename(
+                                            workspaceId,
+                                            session.sessionId,
+                                          )
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            saveRename(
+                                              workspaceId,
+                                              session.sessionId,
+                                            );
+                                          } else if (e.key === 'Escape') {
+                                            cancelRename();
+                                          }
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        autoFocus
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    ) : (
+                                      <span className="flex-1 text-xs truncate">
+                                        {displaySummary}
+                                      </span>
+                                    )}
+                                    <span
+                                      className="text-xs"
+                                      style={{ color: 'var(--text-tertiary)' }}
+                                    >
+                                      {formatRelativeTime(session.modified)}
+                                    </span>
+                                  </ContextMenuTrigger>
+                                  <ContextMenuPopup>
+                                    <ContextMenuItem
+                                      onClick={() =>
+                                        startRename(
+                                          session.sessionId,
+                                          session.summary || '',
+                                        )
+                                      }
+                                    >
+                                      Rename
+                                    </ContextMenuItem>
+                                  </ContextMenuPopup>
+                                </ContextMenu>
                               );
                             })}
 
