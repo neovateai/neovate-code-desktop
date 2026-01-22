@@ -675,37 +675,6 @@ export const ChatInput = memo(
             </Tooltip>
           </div>
         </div>
-
-        {/* Keyboard shortcuts hint */}
-        <div
-          className="flex items-center justify-center gap-4 mt-2 text-xs"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              @
-            </kbd>{' '}
-            files
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              /
-            </kbd>{' '}
-            commands
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              #
-            </kbd>{' '}
-            memory
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              !
-            </kbd>{' '}
-            bash
-          </span>
-        </div>
       </div>
     );
   }),
