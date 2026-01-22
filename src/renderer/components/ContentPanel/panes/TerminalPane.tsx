@@ -242,6 +242,22 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         xterm.open(container);
         fitAddon.fit();
 
+        // Select-to-copy: copy selection to clipboard on mouseup
+        const handleMouseUp = () => {
+          if (xterm.hasSelection()) {
+            const selectedText = xterm.getSelection();
+            if (selectedText) {
+              navigator.clipboard.writeText(selectedText).catch((err) => {
+                logger.error(
+                  '[ContentPanel:TerminalPane] Failed to copy to clipboard:',
+                  err,
+                );
+              });
+            }
+          }
+        };
+        container.addEventListener('mouseup', handleMouseUp);
+
         // Try to restore previous state
         const { state: savedState } = await ipcMainCaller.terminal.loadState({
           repoPath,
@@ -372,6 +388,7 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
           );
           unsubscribeData();
           unsubscribeExit();
+          container.removeEventListener('mouseup', handleMouseUp);
           // Save state before cleanup (force save even during cooldown)
           if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
