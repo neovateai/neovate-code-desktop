@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useStore } from './store';
 import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
@@ -39,6 +39,23 @@ function App() {
   const globalConfig = useStore((s) => s.globalConfig);
   const setGlobalConfig = useStore((s) => s.setGlobalConfig);
   const initialized = useStore((s) => s.initialized);
+
+  // Minimum display time for loading animation (2 seconds)
+  const MIN_LOADING_TIME = 2000;
+  const loadStartTime = useRef(Date.now());
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+  useEffect(() => {
+    const elapsed = Date.now() - loadStartTime.current;
+    const remaining = MIN_LOADING_TIME - elapsed;
+
+    if (remaining <= 0) {
+      setMinTimeElapsed(true);
+    } else {
+      const timer = setTimeout(() => setMinTimeElapsed(true), remaining);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Get theme from config (default to 'system')
   // Subscribe to globalConfig directly so component re-renders when config changes
@@ -143,11 +160,15 @@ function App() {
       />
     );
   }
-  if (
+
+  // Show loading until both: connection ready AND minimum time elapsed
+  const isLoading =
     connectionState === 'idle' ||
     connectionState === 'connecting' ||
-    (!initialized && connectionState === 'disconnected')
-  ) {
+    (!initialized && connectionState === 'disconnected') ||
+    !minTimeElapsed;
+
+  if (isLoading) {
     return <AppLoading />;
   }
 
@@ -242,26 +263,63 @@ function App() {
 }
 
 function AppLoading() {
-  const [text, setText] = useState('');
   const fullText = 'Neovate';
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const [isDark] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches,
+  );
 
   useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < fullText.length) {
-        setText(fullText.slice(0, index + 1));
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 150);
+    if (visibleCount < fullText.length) {
+      const timer = setTimeout(() => {
+        setVisibleCount((c) => c + 1);
+      }, 120);
+      return () => clearTimeout(timer);
+    } else {
+      // Trigger completion flourish after last letter
+      const timer = setTimeout(() => setIsComplete(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [visibleCount]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const glowStyle = {
+    textShadow: isDark
+      ? `0 0 ${isComplete ? 40 : 30}px rgba(255, 255, 255, ${isComplete ? 0.2 : 0.15})`
+      : `0 0 ${isComplete ? 30 : 20}px rgba(0, 0, 0, ${isComplete ? 0.15 : 0.1})`,
+    transition: 'text-shadow 300ms ease-out',
+  };
 
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center bg-white text-neutral-900">
-      <div className="text-6xl font-light">{text}</div>
+    <div
+      className={`flex h-screen w-screen flex-col items-center justify-center ${
+        isDark ? 'bg-neutral-950 text-neutral-100' : 'bg-white text-neutral-900'
+      }`}
+    >
+      <div
+        className={`text-6xl font-light ${isComplete ? 'animate-flourish' : ''}`}
+        style={glowStyle}
+      >
+        {fullText.split('').map((char, i) => (
+          <span
+            key={i}
+            className={`transition-opacity duration-200 ease-out ${
+              i < visibleCount ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {char}
+          </span>
+        ))}
+        <span
+          className={`animate-cursor-blink ml-0.5 ${
+            visibleCount > 0 ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          |
+        </span>
+      </div>
     </div>
   );
 }
