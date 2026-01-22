@@ -5,6 +5,8 @@ import {
 } from './ContentPanelProvider';
 import { ContentTabBar } from './ContentTabBar';
 import { TerminalPane } from './panes/TerminalPane';
+import { EditorPane } from './panes/EditorPane';
+import { ReviewPane } from './panes/ReviewPane';
 import type { ContentTab } from './types';
 
 // Empty state when no tabs
@@ -48,31 +50,9 @@ function ContentPane({
     case 'terminal':
       return <TerminalPane tab={tab} isActive={isActive} />;
     case 'editor':
-      // Future: return <EditorPane tab={tab} isActive={isActive} />;
-      return (
-        <div
-          className="flex-1 flex items-center justify-center"
-          style={{
-            display: isActive ? 'flex' : 'none',
-            color: 'var(--text-secondary)',
-          }}
-        >
-          Editor coming soon
-        </div>
-      );
+      return <EditorPane tab={tab} isActive={isActive} />;
     case 'review':
-      // Future: return <ReviewPane tab={tab} isActive={isActive} />;
-      return (
-        <div
-          className="flex-1 flex items-center justify-center"
-          style={{
-            display: isActive ? 'flex' : 'none',
-            color: 'var(--text-secondary)',
-          }}
-        >
-          Review coming soon
-        </div>
-      );
+      return <ReviewPane tab={tab} isActive={isActive} />;
     default:
       return null;
   }

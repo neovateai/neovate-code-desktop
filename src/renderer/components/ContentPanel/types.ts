@@ -56,6 +56,6 @@ export const TAB_TYPE_OPTIONS: readonly {
   disabled?: boolean;
 }[] = [
   { type: 'terminal', label: 'Terminal' },
-  { type: 'editor', label: 'Editor', disabled: true },
-  { type: 'review', label: 'Review', disabled: true },
+  { type: 'editor', label: 'Editor' },
+  { type: 'review', label: 'Review' },
 ] as const;
