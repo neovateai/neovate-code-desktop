@@ -7,6 +7,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UPDATER_TOAST_DISMISS_MS } from '../constants';
 import { ipcMainCaller, ipcRendererHandler } from '../lib/ipc';
 import type { UpdaterState } from '../../shared/types/updater';
 
@@ -22,12 +23,12 @@ export function UpdaterToast() {
 
       ipcRendererHandler.updater.upToDate.listen(() => {
         setState({ status: 'up-to-date' });
-        // Auto-dismiss after 3 seconds, but only if still showing up-to-date
+        // Auto-dismiss after timeout, but only if still showing up-to-date
         setTimeout(() => {
           setState((current) =>
             current.status === 'up-to-date' ? { status: 'idle' } : current,
           );
-        }, 3000);
+        }, UPDATER_TOAST_DISMISS_MS);
       }),
 
       ipcRendererHandler.updater.updateAvailable.listen((version) => {

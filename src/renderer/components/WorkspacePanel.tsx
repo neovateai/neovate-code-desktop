@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/empty';
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
+import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
 import { logger } from '../lib/logger';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
@@ -347,7 +348,7 @@ export const WorkspacePanel = ({
       // Small delay to ensure the component is rendered
       const timer = setTimeout(() => {
         chatInputRef.current?.focus();
-      }, 100);
+      }, FOCUS_DELAY_MS);
       return () => clearTimeout(timer);
     }
   }, [selectedSessionId]);
@@ -507,7 +508,7 @@ WorkspacePanel.Messages = function Messages() {
 
     const { scrollTop, scrollHeight, clientHeight } = container;
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    const isNearBottom = distanceFromBottom < 300; // 300px threshold
+    const isNearBottom = distanceFromBottom < AUTO_SCROLL_THRESHOLD_PX;
     const isFirstLoad =
       prevMessagesLengthRef.current === 0 && messages.length > 0;
     const isSessionSwitch = prevSessionIdRef.current !== selectedSessionId;

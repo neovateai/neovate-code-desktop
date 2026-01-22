@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
+import { PERSISTENCE_DEBOUNCE_MS } from './constants';
 import { logger } from './lib/logger';
 import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
 
@@ -95,7 +96,7 @@ export function setupPersistence(store: StoreApi<any>): void {
         description: (error as Error).message,
       });
     }
-  }, 500);
+  }, PERSISTENCE_DEBOUNCE_MS);
 
   // Subscribe to store changes
   store.subscribe(() => {

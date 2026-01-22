@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toastManager } from '../components/ui/toast';
 import { logger } from '../lib/logger';
+import { LARGE_PASTE_THRESHOLD, DOUBLE_PRESS_TIMEOUT_MS } from '../constants';
 import type {
   HandlerInput,
   HandlerMethod,
@@ -12,8 +13,6 @@ import { useImagePasteManager } from './useImagePasteManager';
 import { useInputState } from './useInputState';
 import { usePasteManager } from './usePasteManager';
 import { type SlashCommand, useSlashCommands } from './useSlashCommands';
-
-const LARGE_PASTE_THRESHOLD = 800;
 
 interface UseInputHandlersProps {
   sessionId: string | null;
@@ -116,7 +115,7 @@ export function useInputHandlers({
         onCancel();
       }
     },
-    1000,
+    DOUBLE_PRESS_TIMEOUT_MS,
   );
 
   const applyFileSuggestion = useCallback(() => {

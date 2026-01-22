@@ -4,6 +4,12 @@ import { MessageBus } from '../client/messaging/MessageBus';
 import { countTokens } from '../lib/tokenUtils';
 import { logger } from '../lib/logger';
 import { toastManager } from '../components/ui/toast';
+import {
+  DEFAULT_WEBSOCKET_URL,
+  WEBSOCKET_RECONNECT_INTERVAL_MS,
+  WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
+  FORK_MODAL_DELAY_MS,
+} from '../constants';
 import type { NormalizedMessage } from '../client/types/message';
 import type {
   HandlerMethod,
@@ -174,13 +180,13 @@ const useStore = create<Store>()((set, get, api) => ({
 
     set({ state: 'connecting' });
 
-    const url = serverUrl ?? 'ws://localhost:1024/ws';
+    const url = serverUrl ?? DEFAULT_WEBSOCKET_URL;
 
     try {
       const newTransport = new WebSocketTransport({
         url,
-        reconnectInterval: 1000,
-        maxReconnectInterval: 30000,
+        reconnectInterval: WEBSOCKET_RECONNECT_INTERVAL_MS,
+        maxReconnectInterval: WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
         shouldReconnect: true,
       });
 
@@ -830,7 +836,7 @@ const useStore = create<Store>()((set, get, api) => ({
     setTimeout(() => {
       logger.debug('[STORE]', 'forkModalVisible set to true (after delay)');
       set({ forkModalVisible: true });
-    }, 50);
+    }, FORK_MODAL_DELAY_MS);
   },
 
   hideForkModal: () => {

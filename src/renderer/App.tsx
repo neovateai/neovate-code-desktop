@@ -11,6 +11,11 @@ import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
 import { UpdaterToast } from './components/UpdaterToast';
 import {
+  MIN_LOADING_TIME_MS,
+  LETTER_ANIMATION_DELAY_MS,
+  FOCUS_DELAY_MS,
+} from './constants';
+import {
   AppLayout,
   AppLayoutTitleBar,
   AppLayoutPrimarySidebar,
@@ -41,14 +46,13 @@ function App() {
   const setGlobalConfig = useStore((s) => s.setGlobalConfig);
   const initialized = useStore((s) => s.initialized);
 
-  // Minimum display time for loading animation (2 seconds)
-  const MIN_LOADING_TIME = 2000;
+  // Minimum display time for loading animation
   const loadStartTime = useRef(Date.now());
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   useEffect(() => {
     const elapsed = Date.now() - loadStartTime.current;
-    const remaining = MIN_LOADING_TIME - elapsed;
+    const remaining = MIN_LOADING_TIME_MS - elapsed;
 
     if (remaining <= 0) {
       setMinTimeElapsed(true);
@@ -278,11 +282,11 @@ function AppLoading() {
     if (visibleCount < fullText.length) {
       const timer = setTimeout(() => {
         setVisibleCount((c) => c + 1);
-      }, 120);
+      }, LETTER_ANIMATION_DELAY_MS);
       return () => clearTimeout(timer);
     } else {
       // Trigger completion flourish after last letter
-      const timer = setTimeout(() => setIsComplete(true), 100);
+      const timer = setTimeout(() => setIsComplete(true), FOCUS_DELAY_MS);
       return () => clearTimeout(timer);
     }
   }, [visibleCount]);

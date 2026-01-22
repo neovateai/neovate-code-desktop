@@ -1,10 +1,11 @@
 import { useRef, useCallback } from 'react';
 import { logger } from '../lib/logger';
+import { DOUBLE_PRESS_TIMEOUT_MS } from '../constants';
 
 export function useDoublePress(
   onDouble: () => void,
   onSingle?: () => void,
-  timeout: number = 500,
+  timeout: number = DOUBLE_PRESS_TIMEOUT_MS,
 ) {
   const lastPressRef = useRef<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -6,6 +6,11 @@ import 'xterm/css/xterm.css';
 import { ipcMainCaller } from '../../../lib/ipc';
 import { logger } from '../../../lib/logger';
 import {
+  TERMINAL_SAVE_DEBOUNCE_MS,
+  TERMINAL_SAVE_COOLDOWN_MS,
+  TERMINAL_MAX_SCROLLBACK_LINES,
+} from '../../../constants';
+import {
   useContentPanelContext,
   type TerminalInstance,
 } from '../ContentPanelProvider';
@@ -60,16 +65,6 @@ const lightTerminalTheme: ITheme = {
   brightWhite: '#ffffff',
 };
 
-// Debounce save interval (ms)
-const SAVE_DEBOUNCE_MS = 2000;
-
-// Cooldown after PTY spawn before saving is allowed (ms)
-// This prevents saving the initial shell prompt that duplicates on restore
-const SAVE_COOLDOWN_MS = 3000;
-
-// Max scrollback lines to persist
-const MAX_SCROLLBACK_LINES = 1000;
-
 // Create a new xterm instance with configuration
 function createXTermInstance(isDark: boolean): {
   xterm: XTerm;
@@ -82,7 +77,7 @@ function createXTermInstance(isDark: boolean): {
     fontFamily: 'JetBrains Mono, Menlo, Monaco, "Courier New", monospace',
     fontSize: 13,
     lineHeight: 1.2,
-    scrollback: MAX_SCROLLBACK_LINES,
+    scrollback: TERMINAL_MAX_SCROLLBACK_LINES,
     theme: isDark ? darkTerminalTheme : lightTerminalTheme,
   });
 
@@ -129,7 +124,7 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
 
         // Serialize terminal buffer
         const serializedBuffer = instance.serializeAddon.serialize({
-          scrollback: MAX_SCROLLBACK_LINES,
+          scrollback: TERMINAL_MAX_SCROLLBACK_LINES,
         });
 
         logger.debug(
@@ -146,7 +141,7 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
           serializedBuffer,
           cwd: cwd || instance.cwd,
           env: instance.env,
-          scrollbackLines: MAX_SCROLLBACK_LINES,
+          scrollbackLines: TERMINAL_MAX_SCROLLBACK_LINES,
         });
 
         logger.debug(
@@ -171,7 +166,7 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
       }
       saveTimeoutRef.current = setTimeout(() => {
         saveTerminalState(instance);
-      }, SAVE_DEBOUNCE_MS);
+      }, TERMINAL_SAVE_DEBOUNCE_MS);
     },
     [saveTerminalState],
   );
@@ -415,7 +410,7 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
             '[ContentPanel:TerminalPane] Save cooldown ended for tabId:',
             tab.id,
           );
-        }, SAVE_COOLDOWN_MS);
+        }, TERMINAL_SAVE_COOLDOWN_MS);
 
         logger.debug('[ContentPanel:TerminalPane] Initialization complete');
       } catch (error) {

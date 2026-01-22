@@ -7,14 +7,19 @@ import {
   useDefaultLayout,
 } from 'react-resizable-panels';
 import {
+  STORAGE_KEY_APP_LAYOUT,
+  CHAT_PANEL_MIN_SIZE,
+  CONTENT_PANEL_MIN_SIZE,
+  PRIMARY_SIDEBAR_MIN_SIZE,
+  PRIMARY_SIDEBAR_DEFAULT_SIZE,
+  SECONDARY_SIDEBAR_MIN_SIZE,
+  SECONDARY_SIDEBAR_MAX_SIZE,
+} from '../../constants';
+import {
   AppLayoutPanelId,
   AppLayoutPanelProvider,
   useAppLayoutPanels,
 } from './AppLayoutProvider';
-
-const APP_LAYOUT_KEY_STORAGE_KEY = 'neovate-app-layout';
-const CHAT_PANEL_MIN_SIZE = 300;
-const CONTENT_PANEL_MIN_SIZE = 300;
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return <AppLayoutPanelProvider>{children}</AppLayoutPanelProvider>;
@@ -24,7 +29,7 @@ export function AppLayoutPanelGroup({ children }: { children: ReactNode }) {
   const { groupRef, setLayout } = useAppLayoutPanels();
 
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: APP_LAYOUT_KEY_STORAGE_KEY,
+    id: STORAGE_KEY_APP_LAYOUT,
     panelIds: [
       AppLayoutPanelId.PrimarySidebar,
       AppLayoutPanelId.ChatPanel,
@@ -61,8 +66,8 @@ export function AppLayoutPrimarySidebar({ children }: { children: ReactNode }) {
         id={AppLayoutPanelId.PrimarySidebar}
         collapsible
         collapsedSize={0}
-        defaultSize={300}
-        minSize={240}
+        defaultSize={PRIMARY_SIDEBAR_DEFAULT_SIZE}
+        minSize={PRIMARY_SIDEBAR_MIN_SIZE}
         panelRef={panelRefs[AppLayoutPanelId.PrimarySidebar]}
       >
         <div className="px-2 h-full">{children}</div>
@@ -125,8 +130,8 @@ export function AppLayoutSecondarySidebar({
         collapsible
         collapsedSize={0}
         defaultSize={0}
-        minSize={240}
-        maxSize={400}
+        minSize={SECONDARY_SIDEBAR_MIN_SIZE}
+        maxSize={SECONDARY_SIDEBAR_MAX_SIZE}
         panelRef={panelRefs[AppLayoutPanelId.SecondarySidebar]}
       >
         <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">

@@ -14,6 +14,10 @@ import {
   type PanelImperativeHandle,
   type GroupImperativeHandle,
 } from 'react-resizable-panels';
+import {
+  DEFAULT_PANEL_EXPAND_SIZE,
+  CONTENT_PANEL_MIN_SIZE,
+} from '../../constants';
 
 export const AppLayoutPanelId = {
   PrimarySidebar: 'primary-sidebar',
@@ -24,9 +28,6 @@ export const AppLayoutPanelId = {
 
 export type AppLayoutPanelIdType =
   (typeof AppLayoutPanelId)[keyof typeof AppLayoutPanelId];
-
-const DEFAULT_EXPAND_SIZE = 20;
-const CONTENT_PANEL_MIN_SIZE = 300;
 
 type PanelRefs = Record<
   AppLayoutPanelIdType,
@@ -95,8 +96,8 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
   );
 
   // Remember panel sizes before collapse
-  const contentPanelSizeRef = useRef(DEFAULT_EXPAND_SIZE);
-  const secondarySidebarSizeRef = useRef(DEFAULT_EXPAND_SIZE);
+  const contentPanelSizeRef = useRef(DEFAULT_PANEL_EXPAND_SIZE);
+  const secondarySidebarSizeRef = useRef(DEFAULT_PANEL_EXPAND_SIZE);
   // Remember how much SecondarySidebar borrowed from ContentPanel when expanding
   const borrowedFromContentPanelRef = useRef(0);
 

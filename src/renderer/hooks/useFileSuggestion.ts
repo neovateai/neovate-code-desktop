@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useListNavigation } from './useListNavigation';
 import { useDebounce } from './useDebounce';
 import { findAtTokenAtCursor } from '../lib/tokenUtils';
+import { INPUT_DEBOUNCE_MS, FILE_SEARCH_MAX_RESULTS } from '../constants';
 import type {
   HandlerInput,
   HandlerMethod,
@@ -105,7 +106,7 @@ export function useFileSuggestion({
 
   const activeMatch = atMatch.hasQuery ? atMatch : tabMatch;
 
-  const debouncedQuery = useDebounce(activeMatch.query, 150);
+  const debouncedQuery = useDebounce(activeMatch.query, INPUT_DEBOUNCE_MS);
 
   useEffect(() => {
     if (activeMatch.query !== lastQueryRef.current) {
@@ -126,7 +127,7 @@ export function useFileSuggestion({
     request('utils.searchPaths', {
       cwd,
       query: debouncedQuery,
-      maxResults: 100,
+      maxResults: FILE_SEARCH_MAX_RESULTS,
     })
       .then((res) => {
         if (currentRequestId !== requestIdRef.current) return;

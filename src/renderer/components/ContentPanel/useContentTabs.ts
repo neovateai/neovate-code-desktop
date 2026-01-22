@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { CONTENT_TAB_PERSIST_DELAY_MS } from '../../constants';
 import type {
   ContentTab,
   CreateTabInput,
@@ -109,7 +110,7 @@ export function useContentTabs({
     }
     persistTimeoutRef.current = setTimeout(() => {
       persistTabs(repoPath, tabs, activeTabId);
-    }, 300);
+    }, CONTENT_TAB_PERSIST_DELAY_MS);
 
     return () => {
       if (persistTimeoutRef.current) {
