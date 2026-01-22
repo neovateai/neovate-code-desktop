@@ -73,6 +73,26 @@ function ReviewIcon({ size = 14 }: { size?: number }) {
   );
 }
 
+function BrowserIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="3" width="12" height="10" rx="1" />
+      <path d="M2 6h12" />
+      <circle cx="4" cy="4.5" r="0.5" fill="currentColor" />
+      <circle cx="6" cy="4.5" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function TabIcon({
   type,
   size = 14,
@@ -87,6 +107,8 @@ export function TabIcon({
       return <EditorIcon size={size} />;
     case 'review':
       return <ReviewIcon size={size} />;
+    case 'browser':
+      return <BrowserIcon size={size} />;
     default:
       return <TerminalIcon size={size} />;
   }
@@ -265,6 +287,9 @@ function AddTabButton() {
         break;
       case 'review':
         addTab({ type: 'review', name, reviewId: '', title: '' });
+        break;
+      case 'browser':
+        addTab({ type: 'browser', name });
         break;
     }
 

@@ -7,6 +7,7 @@ import { ContentTabBar } from './ContentTabBar';
 import { TerminalPane } from './panes/TerminalPane';
 import { EditorPane } from './panes/EditorPane';
 import { ReviewPane } from './panes/ReviewPane';
+import { BrowserPane } from './panes/BrowserPane';
 import type { ContentTab } from './types';
 
 // Empty state when no tabs
@@ -53,6 +54,8 @@ function ContentPane({
       return <EditorPane tab={tab} isActive={isActive} />;
     case 'review':
       return <ReviewPane tab={tab} isActive={isActive} />;
+    case 'browser':
+      return <BrowserPane tab={tab} isActive={isActive} />;
     default:
       return null;
   }

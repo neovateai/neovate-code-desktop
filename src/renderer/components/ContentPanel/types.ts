@@ -27,8 +27,13 @@ export interface ReviewTab extends BaseTab {
   title: string;
 }
 
+// Browser tab (placeholder)
+export interface BrowserTab extends BaseTab {
+  type: 'browser';
+}
+
 // Discriminated union - extend as needed
-export type ContentTab = TerminalTab | EditorTab | ReviewTab;
+export type ContentTab = TerminalTab | EditorTab | ReviewTab | BrowserTab;
 
 // Tab type literal union for type guards
 export type ContentTabType = ContentTab['type'];
@@ -47,7 +52,8 @@ export type SerializableTab = ContentTab;
 export type CreateTabInput =
   | Omit<TerminalTab, 'id'>
   | Omit<EditorTab, 'id'>
-  | Omit<ReviewTab, 'id'>;
+  | Omit<ReviewTab, 'id'>
+  | Omit<BrowserTab, 'id'>;
 
 // Available tab types for the add menu
 export const TAB_TYPE_OPTIONS: readonly {
@@ -57,10 +63,12 @@ export const TAB_TYPE_OPTIONS: readonly {
   { type: 'terminal', label: 'Terminal' },
   { type: 'editor', label: 'Editor' },
   { type: 'review', label: 'Review' },
+  { type: 'browser', label: 'Browser' },
 ] as const;
 
 // Singleton tab types - only one instance allowed
 export const SINGLETON_TAB_TYPES: readonly ContentTabType[] = [
   'editor',
   'review',
+  'browser',
 ];
