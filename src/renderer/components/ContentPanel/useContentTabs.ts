@@ -76,6 +76,7 @@ export interface UseContentTabsReturn {
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
   updateTab: (tabId: string, updates: Partial<ContentTab>) => void;
+  reorderTabs: (fromIndex: number, toIndex: number) => void;
 
   // Queries
   getTabsByType: <T extends ContentTabType>(type: T) => TabOfType<T>[];
@@ -188,6 +189,15 @@ export function useContentTabs({
     [tabs],
   );
 
+  const reorderTabs = useCallback((fromIndex: number, toIndex: number) => {
+    setState((prev) => {
+      const newTabs = [...prev.tabs];
+      const [movedTab] = newTabs.splice(fromIndex, 1);
+      newTabs.splice(toIndex, 0, movedTab);
+      return { ...prev, tabs: newTabs };
+    });
+  }, []);
+
   return {
     tabs,
     activeTabId,
@@ -196,6 +206,7 @@ export function useContentTabs({
     closeTab,
     setActiveTab,
     updateTab,
+    reorderTabs,
     getTabsByType,
   };
 }

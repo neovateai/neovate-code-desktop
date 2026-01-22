@@ -1,5 +1,21 @@
 import type { ContentTab, ContentTabType } from './types';
 import { useContentPanelContext } from './ContentPanelProvider';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Tab type icons
 function TerminalIcon({ size = 14 }: { size?: number }) {
@@ -116,19 +132,36 @@ export function ContentTabItem({
 }: ContentTabItemProps) {
   const { setActiveTab } = useContentPanelContext();
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tab.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+    backgroundColor: isActive ? 'var(--bg-surface)' : undefined,
+    border: isActive
+      ? '1px solid var(--border-subtle)'
+      : '1px solid transparent',
+  };
+
   return (
     <div
+      ref={setNodeRef}
       className={`
         flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md cursor-pointer transition-colors
         ${isActive ? '' : 'hover:bg-[var(--bg-hover)]'}
       `}
-      style={{
-        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-        backgroundColor: isActive ? 'var(--bg-surface)' : undefined,
-        border: isActive
-          ? '1px solid var(--border-subtle)'
-          : '1px solid transparent',
-      }}
+      style={style}
+      {...attributes}
+      {...listeners}
       onClick={() => setActiveTab(tab.id)}
     >
       <TabIcon type={tab.type} size={14} />
@@ -140,7 +173,23 @@ export function ContentTabItem({
 
 // Tab bar component
 export function ContentTabBar() {
-  const { tabs, activeTabId, closeTab } = useContentPanelContext();
+  const { tabs, activeTabId, closeTab, reorderTabs } = useContentPanelContext();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = tabs.findIndex((t) => t.id === active.id);
+      const newIndex = tabs.findIndex((t) => t.id === over.id);
+      reorderTabs(oldIndex, newIndex);
+    }
+  };
 
   return (
     <div
@@ -149,14 +198,25 @@ export function ContentTabBar() {
         borderBottom: '1px solid var(--border-subtle)',
       }}
     >
-      {tabs.map((tab) => (
-        <ContentTabItem
-          key={tab.id}
-          tab={tab}
-          isActive={activeTabId === tab.id}
-          onClose={tabs.length > 1 ? () => closeTab(tab.id) : undefined}
-        />
-      ))}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={tabs.map((t) => t.id)}
+          strategy={horizontalListSortingStrategy}
+        >
+          {tabs.map((tab) => (
+            <ContentTabItem
+              key={tab.id}
+              tab={tab}
+              isActive={activeTabId === tab.id}
+              onClose={tabs.length > 1 ? () => closeTab(tab.id) : undefined}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
 
       {/* Add tab menu */}
       <AddTabButton />
