@@ -1,0 +1,173 @@
+import { execSync } from 'node:child_process';
+import {
+  CODE_SERVER_PORT,
+  getCodeServerEntryPath,
+  EXTENSIONS_DIR,
+} from './constants';
+import {
+  isCodeServerInstalled,
+  downloadCodeServer,
+  type ProgressCallback,
+} from './download';
+import { overrideCodeServerSettings } from './settings';
+
+export class CodeServerStartError extends Error {
+  constructor(
+    message: string,
+    public readonly cause?: Error,
+  ) {
+    super(`Server start failed: ${message}`);
+    this.name = 'CodeServerStartError';
+  }
+}
+
+export interface CodeServerInstance {
+  url: string;
+  stop: () => void;
+}
+
+/**
+ * Kill any process running on the specified port
+ */
+function killProcessOnPort(port: number): void {
+  try {
+    if (process.platform === 'win32') {
+      // Windows
+      const result = execSync(`netstat -ano | findstr :${port}`, {
+        encoding: 'utf-8',
+      });
+      const lines = result.trim().split('\n');
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        const pid = parts[parts.length - 1];
+        if (pid && !Number.isNaN(Number(pid))) {
+          try {
+            execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore' });
+          } catch {
+            // Process may have already exited
+          }
+        }
+      }
+    } else {
+      // macOS / Linux
+      execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`, {
+        stdio: 'ignore',
+      });
+    }
+  } catch {
+    // No process on port, or kill failed - that's fine
+  }
+}
+
+/**
+ * Singleton manager for code-server instance
+ */
+class CodeServerManager {
+  private instance: CodeServerInstance | null = null;
+  private startPromise: Promise<CodeServerInstance> | null = null;
+
+  /**
+   * Start or get existing code-server instance
+   */
+  async start(onProgress?: ProgressCallback): Promise<CodeServerInstance> {
+    // Return existing instance
+    if (this.instance) {
+      return this.instance;
+    }
+
+    // Wait for in-progress start
+    if (this.startPromise) {
+      return this.startPromise;
+    }
+
+    // Start new instance
+    this.startPromise = this.doStart(onProgress)
+      .then((instance) => {
+        this.instance = instance;
+        this.startPromise = null;
+        return instance;
+      })
+      .catch((error) => {
+        this.startPromise = null;
+        throw error;
+      });
+
+    return this.startPromise;
+  }
+
+  private async doStart(
+    onProgress?: ProgressCallback,
+  ): Promise<CodeServerInstance> {
+    // 1. Download if not installed
+    const installed = await isCodeServerInstalled();
+    if (!installed) {
+      await downloadCodeServer(onProgress);
+    }
+
+    // 2. Override settings for minimal UI
+    await overrideCodeServerSettings();
+
+    // 3. Kill any existing process on the port
+    killProcessOnPort(CODE_SERVER_PORT);
+
+    // 4. Start the server
+    const entryPath = getCodeServerEntryPath();
+
+    try {
+      // Dynamic import of code-server
+      const codeServer = await import(entryPath);
+
+      // code-server exposes a run function or similar
+      // The exact API depends on the code-server build
+      // Ami's version uses: await import(serverPath) which starts it
+      if (typeof codeServer.default === 'function') {
+        await codeServer.default({
+          port: CODE_SERVER_PORT,
+          host: '127.0.0.1',
+          auth: 'none',
+          'extensions-dir': EXTENSIONS_DIR,
+        });
+      }
+
+      const url = `http://127.0.0.1:${CODE_SERVER_PORT}`;
+
+      return {
+        url,
+        stop: () => {
+          killProcessOnPort(CODE_SERVER_PORT);
+        },
+      };
+    } catch (error) {
+      throw new CodeServerStartError((error as Error).message, error as Error);
+    }
+  }
+
+  /**
+   * Get current status
+   */
+  getStatus(): { isRunning: boolean; url: string | null } {
+    return {
+      isRunning: this.instance !== null,
+      url: this.instance?.url ?? null,
+    };
+  }
+
+  /**
+   * Stop the server
+   */
+  stop(): void {
+    if (this.instance) {
+      this.instance.stop();
+      this.instance = null;
+    }
+    this.startPromise = null;
+  }
+}
+
+/**
+ * Singleton instance
+ */
+export const codeServerManager = new CodeServerManager();
+
+// Re-export types
+export type { ProgressCallback, DownloadProgress } from './download';
