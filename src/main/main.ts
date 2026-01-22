@@ -5,6 +5,7 @@ import {
   ipcMain,
   Menu,
   nativeImage,
+  nativeTheme,
   shell,
   Tray,
 } from 'electron';
@@ -104,17 +105,36 @@ function createMenu() {
 }
 
 function createTray() {
-  const iconPath = is.dev
-    ? path.join(process.cwd(), 'build/icons/icon-dev.png')
-    : path.join(__dirname, '../../build/icons/icon.png');
+  const trayIconDir = is.dev
+    ? path.join(process.cwd(), 'build/icons/tray')
+    : path.join(__dirname, '../../build/icons/tray');
 
-  // Create 16x16 icon for tray (macOS standard size)
+  const updateTrayIcon = () => {
+    if (!tray) return;
+    const iconFile = nativeTheme.shouldUseDarkColors
+      ? 'tray.png'
+      : 'tray-dark.png';
+    const iconPath = path.join(trayIconDir, iconFile);
+    const icon = nativeImage
+      .createFromPath(iconPath)
+      .resize({ width: 16, height: 16 });
+    tray.setImage(icon);
+  };
+
+  // Create initial tray with appropriate icon
+  const initialIconFile = nativeTheme.shouldUseDarkColors
+    ? 'tray.png'
+    : 'tray-dark.png';
+  const initialIconPath = path.join(trayIconDir, initialIconFile);
   const icon = nativeImage
-    .createFromPath(iconPath)
+    .createFromPath(initialIconPath)
     .resize({ width: 16, height: 16 });
 
   tray = new Tray(icon);
   tray.setToolTip(app.name);
+
+  // Listen for theme changes and update tray icon
+  nativeTheme.on('updated', updateTrayIcon);
 
   const contextMenu = Menu.buildFromTemplate([
     {
