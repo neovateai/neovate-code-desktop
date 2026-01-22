@@ -6,9 +6,11 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler', {}]],
-      },
+      // disable it since it will cause problems
+      // e.g. plan mode toggle don't work
+      // babel: {
+      //   plugins: [['babel-plugin-react-compiler', {}]],
+      // },
     }),
     tailwindcss(),
   ],
