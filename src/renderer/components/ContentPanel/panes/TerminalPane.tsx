@@ -89,6 +89,81 @@ function createXTermInstance(isDark: boolean): {
   return { xterm, fitAddon, serializeAddon };
 }
 
+/**
+ * Strip trailing empty prompts from serialized terminal buffer.
+ * Detects prompt lines (starting with ❯, $, %, >) that have no command after them
+ * and removes them along with any preceding prompt context lines.
+ */
+function stripTrailingEmptyPrompt(buffer: string): string {
+  const lines = buffer.split('\r\n');
+  if (lines.length === 0) return buffer;
+
+  // Common prompt indicators (after stripping ANSI codes)
+  const promptIndicators = ['❯', '$', '%', '>'];
+
+  // Regex to strip ANSI escape sequences for detection
+  const stripAnsi = (str: string) => str.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '');
+
+  // Find the last line that has actual command content (not just a prompt)
+  let lastContentLineIndex = -1;
+
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i];
+    const cleanLine = stripAnsi(line).trim();
+
+    // Skip empty lines
+    if (cleanLine === '') continue;
+
+    // Check if this line starts with a prompt indicator
+    const startsWithPrompt = promptIndicators.some((p) =>
+      cleanLine.startsWith(p),
+    );
+
+    if (startsWithPrompt) {
+      // Extract text after prompt indicator
+      const promptChar = promptIndicators.find((p) => cleanLine.startsWith(p));
+      const afterPrompt = cleanLine.slice(promptChar?.length || 1).trim();
+
+      // If there's actual command text after the prompt, this is a command line
+      // Ignore common zsh markers like '%' which indicate end of partial line
+      if (afterPrompt && afterPrompt !== '%' && !/^%\s*$/.test(afterPrompt)) {
+        lastContentLineIndex = i;
+        break;
+      }
+      // Otherwise it's an empty prompt, continue searching backwards
+    } else {
+      // Not a prompt line - could be output or multi-line prompt context
+      // Check if it looks like prompt context (path info, git status, etc.)
+      // These typically contain path separators or special prompt chars
+      const looksLikePromptContext =
+        cleanLine.includes('via ') || // starship/powerlevel10k
+        cleanLine.includes(' on ') || // git branch indicators
+        /^[~\/]/.test(cleanLine) || // starts with path
+        /^\[.*\]$/.test(cleanLine); // bracketed info like [master]
+
+      if (!looksLikePromptContext) {
+        // This is actual command output
+        lastContentLineIndex = i;
+        break;
+      }
+      // Otherwise continue searching backwards past prompt context
+    }
+  }
+
+  // If we found content, include one more line (empty line after output) if present
+  if (lastContentLineIndex >= 0) {
+    let endIndex = lastContentLineIndex + 1;
+    // Include trailing empty line if present (for cleaner formatting)
+    if (endIndex < lines.length && lines[endIndex].trim() === '') {
+      endIndex++;
+    }
+    return lines.slice(0, endIndex).join('\r\n');
+  }
+
+  // No content found - return empty or minimal buffer
+  return '';
+}
+
 interface TerminalPaneProps {
   tab: TerminalTab;
   isActive: boolean;
@@ -123,14 +198,27 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         });
 
         // Serialize terminal buffer
-        const serializedBuffer = instance.serializeAddon.serialize({
+        const rawBuffer = instance.serializeAddon.serialize({
           scrollback: TERMINAL_MAX_SCROLLBACK_LINES,
         });
+
+        // Strip trailing empty prompts to avoid duplicate prompts on restore
+        const serializedBuffer = stripTrailingEmptyPrompt(rawBuffer);
+
+        // Skip saving if buffer is empty (only had empty prompts)
+        if (!serializedBuffer) {
+          logger.debug(
+            '[ContentPanel:TerminalPane] Skipping save - buffer empty after stripping prompts',
+          );
+          return;
+        }
 
         logger.debug(
           '[ContentPanel:TerminalPane] Serialized buffer length:',
           serializedBuffer.length,
-          'first 200 chars:',
+          '(raw:',
+          rawBuffer.length,
+          ') first 200 chars:',
           serializedBuffer.slice(0, 200),
         );
 
