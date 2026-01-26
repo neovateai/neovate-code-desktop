@@ -451,7 +451,7 @@ export const RepoSidebar = ({
             <DialogDescription>{selectedRepoForDialog?.name}</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 text-sm">
+          <div className="px-6 space-y-3 text-sm">
             <InfoRow
               icon={FolderIcon}
               label="Path"
