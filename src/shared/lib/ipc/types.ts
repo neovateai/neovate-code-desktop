@@ -42,24 +42,17 @@ export type CreateMainHandlerFn = <TInput = void, TOutput = unknown>(
 ) => { handler: MainHandler<TInput, TOutput> };
 
 // Type inference utilities
-type InferMainHandlerInput<T> = T extends MainHandler<infer TInput, any>
-  ? TInput
-  : never;
+type InferMainHandlerInput<T> =
+  T extends MainHandler<infer TInput, any> ? TInput : never;
 
-type InferMainHandlerOutput<T> = T extends MainHandler<any, infer TOutput>
-  ? TOutput
-  : never;
+type InferMainHandlerOutput<T> =
+  T extends MainHandler<any, infer TOutput> ? TOutput : never;
 
-type InferRendererHandlerInput<T> = T extends RendererHandler<infer TInput, any>
-  ? TInput
-  : never;
+type InferRendererHandlerInput<T> =
+  T extends RendererHandler<infer TInput, any> ? TInput : never;
 
-type InferRendererHandlerOutput<T> = T extends RendererHandler<
-  any[],
-  infer TOutput
->
-  ? TOutput
-  : never;
+type InferRendererHandlerOutput<T> =
+  T extends RendererHandler<any[], infer TOutput> ? TOutput : never;
 
 // Caller types for main process
 export type CreateMainCaller<TMainHandlers extends MainHandlers> = {

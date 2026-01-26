@@ -1,7 +1,7 @@
 import { electronAPI } from '@electron-toolkit/preload';
 import { contextBridge, ipcRenderer } from 'electron';
 
-const compatibleElectronAPI = {
+const api = {
   // Legacy APIs (keep for backward compatibility with non-migrated code)
   platform: process.platform,
   versions: {
@@ -75,9 +75,11 @@ const compatibleElectronAPI = {
     ipcRenderer.on('menu:toggle-theme', handler);
     return () => ipcRenderer.removeListener('menu:toggle-theme', handler);
   },
+};
 
-  // Expose @electron-toolkit/preload API for typesafe IPC
+const legacyElectronAPI = {
   ...electronAPI,
+  ...api,
 };
 
 /**
@@ -87,7 +89,7 @@ const compatibleElectronAPI = {
 export function exposeElectronAPI(): void {
   if (process.contextIsolated) {
     try {
-      contextBridge.exposeInMainWorld('electron', compatibleElectronAPI);
+      contextBridge.exposeInMainWorld('electron', legacyElectronAPI);
     } catch (error) {
       console.error(error);
     }

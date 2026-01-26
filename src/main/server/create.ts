@@ -23,17 +23,15 @@ export async function createNeovateServer(): Promise<ServerInstance> {
   const { parseArgs, runNeovate } = await import(neovateCodePath);
 
   const argv = await parseArgs([
-    '--quiet',
     'server',
-    '-p',
+    '--port',
     String(port),
-    '-h',
+    '--host',
     hostname,
   ]);
-  const args = [`server`, `--hostname=${hostname}`, `--port=${port}`];
 
   const { shutdown } = await runNeovate({
-    productName: 'neovate-desktop',
+    productName: 'neovate', // should be neovate to use same config with neovate cli
     version: app.getVersion(),
     plugins: [],
     argv,
