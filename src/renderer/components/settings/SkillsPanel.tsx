@@ -35,6 +35,8 @@ type AddFlowState =
       source: string;
       skills: PreviewSkill[];
       selected: Set<string>;
+      installGlobally: boolean;
+      useClaude: boolean;
     }
   | { phase: 'installing' }
   | { phase: 'error'; message: string };
@@ -51,6 +53,16 @@ export const SkillsPanel = () => {
   const [sourceInput, setSourceInput] = useState('');
   const [removingSkill, setRemovingSkill] = useState<string | null>(null);
 
+  // Derived state for skills grouping
+  const hasProject = !!selectedRepo?.path;
+  const folderName = hasProject ? selectedRepo.path.split('/').pop() || '' : '';
+  const globalSkills = skills.filter(
+    (s) => s.source === 'global' || s.source === 'global-claude',
+  );
+  const projectSkills = skills.filter(
+    (s) => s.source === 'project' || s.source === 'project-claude',
+  );
+
   // Fetch skills on mount
   const fetchSkills = async () => {
     if (!messageBus) return;
@@ -61,11 +73,7 @@ export const SkillsPanel = () => {
         cwd,
       })) as HandlerOutput<'skills.list'>;
       if (result.success) {
-        // Filter to global skills only
-        const globalSkills = result.data.skills.filter(
-          (s) => s.source === 'global',
-        );
-        setSkills(globalSkills);
+        setSkills(result.data.skills);
       } else {
         setError('Failed to load skills');
       }
@@ -100,14 +108,17 @@ export const SkillsPanel = () => {
           });
           return;
         }
-        // Pre-select all skills
+        // Pre-select all skills, set smart defaults for install options
         const selected = new Set(previewSkills.map((s) => s.name));
+        const hasProject = !!selectedRepo?.path;
         setAddFlow({
           phase: 'selecting',
           previewId,
           source,
           skills: previewSkills,
           selected,
+          installGlobally: !hasProject,
+          useClaude: false,
         });
       } else {
         setAddFlow({
@@ -126,7 +137,7 @@ export const SkillsPanel = () => {
   // Handle install
   const handleInstall = async () => {
     if (addFlow.phase !== 'selecting' || !messageBus) return;
-    const { previewId, source, selected } = addFlow;
+    const { previewId, source, selected, installGlobally, useClaude } = addFlow;
     if (selected.size === 0) return;
 
     setAddFlow({ phase: 'installing' });
@@ -137,7 +148,8 @@ export const SkillsPanel = () => {
         previewId,
         selectedSkills: Array.from(selected),
         source,
-        global: true,
+        global: installGlobally,
+        claude: useClaude,
       })) as HandlerOutput<'skills.install'>;
       if (result.success) {
         setAddFlow({ phase: 'idle' });
@@ -194,6 +206,18 @@ export const SkillsPanel = () => {
       newSelected.add(name);
     }
     setAddFlow({ ...addFlow, selected: newSelected });
+  };
+
+  // Toggle install globally option
+  const toggleInstallGlobally = () => {
+    if (addFlow.phase !== 'selecting') return;
+    setAddFlow({ ...addFlow, installGlobally: !addFlow.installGlobally });
+  };
+
+  // Toggle use claude directory option
+  const toggleUseClaude = () => {
+    if (addFlow.phase !== 'selecting') return;
+    setAddFlow({ ...addFlow, useClaude: !addFlow.useClaude });
   };
 
   // Cancel add flow
@@ -358,6 +382,35 @@ export const SkillsPanel = () => {
                   );
                 })}
               </div>
+              {/* Install options */}
+              <div
+                className="space-y-2 mb-4 pt-3 border-t"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
+                <label
+                  className={`flex items-center gap-2 text-sm cursor-pointer ${!hasProject ? 'opacity-50' : ''}`}
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={addFlow.installGlobally}
+                    onChange={toggleInstallGlobally}
+                    disabled={!hasProject}
+                  />
+                  Install globally
+                </label>
+                <label
+                  className="flex items-center gap-2 text-sm cursor-pointer"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={addFlow.useClaude}
+                    onChange={toggleUseClaude}
+                  />
+                  Use .claude directory
+                </label>
+              </div>
               <div className="flex items-center justify-between">
                 <span
                   className="text-xs"
@@ -412,13 +465,6 @@ export const SkillsPanel = () => {
 
       {/* Skills List */}
       <div>
-        <h2
-          className="text-sm font-medium mb-3"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          Installed Skills
-        </h2>
-
         {loading ? (
           <div
             className="flex items-center gap-2"
@@ -445,63 +491,156 @@ export const SkillsPanel = () => {
               Retry
             </button>
           </div>
-        ) : skills.length === 0 ? (
-          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-            No global skills installed yet.
-          </p>
         ) : (
-          <div className="space-y-1">
-            {skills.map((skill) => (
-              <div
-                key={`${skill.source}-${skill.name}`}
-                className="flex items-center justify-between p-3 rounded-md"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                }}
+          <>
+            {/* Global Skills Section */}
+            <div className="mb-6">
+              <h2
+                className="text-sm font-medium mb-3"
+                style={{ color: 'var(--text-secondary)' }}
               >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    {skill.name}
-                  </span>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded"
-                    style={{
-                      backgroundColor: 'var(--bg-base-hover)',
-                      color: 'var(--text-tertiary)',
-                    }}
-                  >
-                    {skill.source}
-                  </span>
-                </div>
-                <button
-                  className="p-1.5 rounded-md transition-colors disabled:opacity-50"
-                  style={{ color: 'var(--text-secondary)' }}
-                  onClick={() => handleRemove(skill)}
-                  disabled={removingSkill === skill.name}
-                  title="Remove skill"
+                Global Skills
+              </h2>
+              {globalSkills.length === 0 ? (
+                <p
+                  className="text-sm"
+                  style={{ color: 'var(--text-tertiary)' }}
                 >
-                  {removingSkill === skill.name ? (
-                    <HugeiconsIcon
-                      icon={Loading02Icon}
-                      size={16}
-                      strokeWidth={1.5}
-                      className="animate-spin"
-                    />
-                  ) : (
-                    <HugeiconsIcon
-                      icon={Delete02Icon}
-                      size={16}
-                      strokeWidth={1.5}
-                    />
-                  )}
-                </button>
+                  No global skills installed.
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {globalSkills.map((skill) => (
+                    <div
+                      key={`${skill.source}-${skill.name}`}
+                      className="flex items-center justify-between p-3 rounded-md"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        border: '1px solid var(--border-subtle)',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          {skill.name}
+                        </span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded"
+                          style={{
+                            backgroundColor: 'var(--bg-base-hover)',
+                            color: 'var(--text-tertiary)',
+                          }}
+                        >
+                          {skill.source}
+                        </span>
+                      </div>
+                      <button
+                        className="p-1.5 rounded-md transition-colors disabled:opacity-50"
+                        style={{ color: 'var(--text-secondary)' }}
+                        onClick={() => handleRemove(skill)}
+                        disabled={removingSkill === skill.name}
+                        title="Remove skill"
+                      >
+                        {removingSkill === skill.name ? (
+                          <HugeiconsIcon
+                            icon={Loading02Icon}
+                            size={16}
+                            strokeWidth={1.5}
+                            className="animate-spin"
+                          />
+                        ) : (
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            size={16}
+                            strokeWidth={1.5}
+                          />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Project Skills Section */}
+            {hasProject ? (
+              <div>
+                <h2
+                  className="text-sm font-medium mb-3"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Project Skills ({folderName})
+                </h2>
+                {projectSkills.length === 0 ? (
+                  <p
+                    className="text-sm"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    No project skills installed.
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    {projectSkills.map((skill) => (
+                      <div
+                        key={`${skill.source}-${skill.name}`}
+                        className="flex items-center justify-between p-3 rounded-md"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: 'var(--text-primary)' }}
+                          >
+                            {skill.name}
+                          </span>
+                          <span
+                            className="text-xs px-2 py-0.5 rounded"
+                            style={{
+                              backgroundColor: 'var(--bg-base-hover)',
+                              color: 'var(--text-tertiary)',
+                            }}
+                          >
+                            {skill.source}
+                          </span>
+                        </div>
+                        <button
+                          className="p-1.5 rounded-md transition-colors disabled:opacity-50"
+                          style={{ color: 'var(--text-secondary)' }}
+                          onClick={() => handleRemove(skill)}
+                          disabled={removingSkill === skill.name}
+                          title="Remove skill"
+                        >
+                          {removingSkill === skill.name ? (
+                            <HugeiconsIcon
+                              icon={Loading02Icon}
+                              size={16}
+                              strokeWidth={1.5}
+                              className="animate-spin"
+                            />
+                          ) : (
+                            <HugeiconsIcon
+                              icon={Delete02Icon}
+                              size={16}
+                              strokeWidth={1.5}
+                            />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            ) : (
+              <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                Select a project to view project-level skills.
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>
