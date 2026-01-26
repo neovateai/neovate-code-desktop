@@ -41,10 +41,18 @@ export const SettingsPage = () => {
 
       {/* Right Content */}
       <div
-        className="flex-1 overflow-y-auto p-8"
+        className="flex-1 overflow-y-auto"
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
-        <div className="max-w-2xl">
+        {/* Draggable header area */}
+        <div
+          className="h-12"
+          style={{
+            // @ts-expect-error - Electron specific CSS property
+            WebkitAppRegion: 'drag',
+          }}
+        />
+        <div className="max-w-2xl px-8 pb-8">
           {activeMenu === 'preferences' && <PreferencesPanel />}
           {activeMenu === 'chat' && <ChatPanel />}
           {activeMenu === 'appearance' && <AppearancePanel />}

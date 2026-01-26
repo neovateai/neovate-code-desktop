@@ -38,6 +38,8 @@ export const SettingsMenu = ({
       style={{
         backgroundColor: 'var(--bg-surface)',
         borderRight: '1px solid var(--border-subtle)',
+        // @ts-expect-error - Electron specific CSS property
+        WebkitAppRegion: 'drag',
       }}
     >
       {/* Back to app button */}
@@ -46,6 +48,8 @@ export const SettingsMenu = ({
         style={{
           color: 'var(--text-secondary)',
           borderBottom: '1px solid var(--border-subtle)',
+          // @ts-expect-error - Electron specific CSS property
+          WebkitAppRegion: 'no-drag',
         }}
         onClick={() => setShowSettings(false)}
         onMouseEnter={(e) => {
@@ -76,6 +80,8 @@ export const SettingsMenu = ({
                 borderRadius: '6px',
                 margin: '0 8px',
                 width: 'calc(100% - 16px)',
+                // @ts-expect-error - Electron specific CSS property
+                WebkitAppRegion: 'no-drag',
               }}
               onClick={() => onMenuSelect(item.id)}
               onMouseEnter={(e) => {
