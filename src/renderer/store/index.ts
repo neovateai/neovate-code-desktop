@@ -82,7 +82,7 @@ interface UISelectionState {
   selectedWorkspaceId: string | null;
   selectedSessionId: string | null;
   showSettings: boolean;
-  settingsActiveTab: 'preferences' | 'providers' | 'mcp';
+  settingsActiveTab: 'preferences' | 'appearance' | 'providers' | 'mcp';
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
@@ -124,7 +124,9 @@ interface CoreActions {
   selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
-  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => void;
+  setSettingsActiveTab: (
+    tab: 'preferences' | 'appearance' | 'providers' | 'mcp',
+  ) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
   setTestComponentVisible: (visible: boolean) => void;
@@ -747,7 +749,9 @@ const useStore = create<Store>()((set, get, api) => ({
     }));
   },
 
-  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => {
+  setSettingsActiveTab: (
+    tab: 'preferences' | 'appearance' | 'providers' | 'mcp',
+  ) => {
     set(() => ({
       settingsActiveTab: tab,
     }));
