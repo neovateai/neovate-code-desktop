@@ -519,7 +519,7 @@ function TerminalBase({ cwd, hidden }: { cwd: string; hidden?: boolean }) {
 
   // Create initial tab with stable ID
   const [{ tabs, activeTabId }, setTerminalState] = useState(() => {
-    const initialTab = createTerminalTab('Terminal 1');
+    const initialTab = createTerminalTab('Terminal');
     return {
       tabs: [initialTab],
       activeTabId: initialTab.id,
