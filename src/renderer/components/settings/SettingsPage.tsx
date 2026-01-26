@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SettingsMenu } from './SettingsMenu';
 import { PreferencesPanel } from './PreferencesPanel';
 import { ProvidersPanel } from './ProvidersPanel';
@@ -10,6 +10,19 @@ export type SettingsMenuId = 'preferences' | 'providers' | 'mcp';
 export const SettingsPage = () => {
   const activeMenu = useStore((state) => state.settingsActiveTab);
   const setActiveMenu = useStore((state) => state.setSettingsActiveTab);
+  const setShowSettings = useStore((state) => state.setShowSettings);
+
+  // Cmd+Esc to close settings and go back to app
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'Escape') {
+        e.preventDefault();
+        setShowSettings(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setShowSettings]);
 
   return (
     <div
