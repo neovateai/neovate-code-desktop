@@ -41,14 +41,14 @@ interface CustomProvider {
   name: string;
   baseUrl: string;
   apiKey: string;
-  apiFormat: 'chat-completions' | 'responses' | 'anthropic';
+  apiFormat: 'anthropic' | 'openai' | 'responses';
   models: { id: string; name: string }[]; // key/value pairs for models
   createModelType?: 'anthropic';
 }
 
 // API format options
 const API_FORMAT_OPTIONS = [
-  { value: 'chat-completions', label: 'Chat Completions (/chat/completions)' },
+  { value: 'openai', label: 'Chat Completions (/chat/completions)' },
   { value: 'responses', label: 'Responses (/responses)' },
   { value: 'anthropic', label: 'Anthropic Messages (/v1/messages)' },
 ] as const;
@@ -112,7 +112,7 @@ export const ProvidersPanel = () => {
     name: '',
     baseUrl: '',
     apiKey: '',
-    apiFormat: 'chat-completions',
+    apiFormat: 'openai',
     models: [],
   });
   const [newModelId, setNewModelId] = useState('');
@@ -268,7 +268,7 @@ export const ProvidersPanel = () => {
           name: '',
           baseUrl: '',
           apiKey: '',
-          apiFormat: 'chat-completions',
+          apiFormat: 'openai',
           models: [],
         });
         setNewModelId('');
@@ -1638,7 +1638,7 @@ export const ProvidersPanel = () => {
                     name: '',
                     baseUrl: '',
                     apiKey: '',
-                    apiFormat: 'chat-completions',
+                    apiFormat: 'openai',
                     models: [],
                   });
                   setNewModelId('');
