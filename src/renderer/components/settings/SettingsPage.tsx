@@ -4,9 +4,15 @@ import { PreferencesPanel } from './PreferencesPanel';
 import { ProvidersPanel } from './ProvidersPanel';
 import { MCPPanel } from './MCPPanel';
 import { AppearancePanel } from './AppearancePanel';
+import { ChatPanel } from './ChatPanel';
 import { useStore } from '../../store';
 
-export type SettingsMenuId = 'preferences' | 'appearance' | 'providers' | 'mcp';
+export type SettingsMenuId =
+  | 'preferences'
+  | 'chat'
+  | 'appearance'
+  | 'providers'
+  | 'mcp';
 
 export const SettingsPage = () => {
   const activeMenu = useStore((state) => state.settingsActiveTab);
@@ -40,6 +46,7 @@ export const SettingsPage = () => {
       >
         <div className="max-w-2xl">
           {activeMenu === 'preferences' && <PreferencesPanel />}
+          {activeMenu === 'chat' && <ChatPanel />}
           {activeMenu === 'appearance' && <AppearancePanel />}
           {activeMenu === 'providers' && <ProvidersPanel />}
           {activeMenu === 'mcp' && <MCPPanel />}
