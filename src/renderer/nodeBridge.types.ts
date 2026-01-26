@@ -57,7 +57,7 @@ type ConfigSetInput = {
   cwd: string;
   isGlobal: boolean;
   key: string;
-  value: string;
+  value: any;
 };
 
 type ConfigRemoveInput = {
@@ -535,6 +535,8 @@ type ProvidersListOutput = {
       env?: string[];
       apiEnv?: string[];
       api?: string;
+      apiFormat?: 'anthropic' | 'openai' | 'responses';
+      source?: 'built-in' | string;
       options?: {
         baseURL?: string;
         apiKey?: string;
