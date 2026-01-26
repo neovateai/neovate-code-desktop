@@ -164,7 +164,7 @@ export const RepoSidebar = ({
     <div className="h-full flex flex-col">
       {/* <RepoSidebar.Header /> */}
 
-      <ScrollArea className="flex-1 p-2 pt-0" orientation="vertical">
+      <ScrollArea className="flex-1 p-2 pt-0">
         {repos.length === 0 ? (
           <Empty>
             <EmptyMedia variant="icon">
