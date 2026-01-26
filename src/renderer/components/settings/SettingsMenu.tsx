@@ -6,6 +6,7 @@ import {
   CloudIcon,
   PaintBrushIcon,
   MessageIcon,
+  MagicWandIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import type { SettingsMenuId } from './SettingsPage';
@@ -21,6 +22,7 @@ const menuItems: MenuItem[] = [
   { id: 'chat', label: 'Chat', icon: MessageIcon },
   { id: 'appearance', label: 'Appearance', icon: PaintBrushIcon },
   { id: 'providers', label: 'Providers', icon: CloudIcon },
+  { id: 'skills', label: 'Skills', icon: MagicWandIcon },
 ];
 
 export const SettingsMenu = ({

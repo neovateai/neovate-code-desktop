@@ -87,7 +87,8 @@ interface UISelectionState {
     | 'chat'
     | 'appearance'
     | 'providers'
-    | 'mcp';
+    | 'mcp'
+    | 'skills';
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
@@ -130,7 +131,7 @@ interface CoreActions {
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
   setSettingsActiveTab: (
-    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp',
+    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
   ) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
@@ -755,7 +756,7 @@ const useStore = create<Store>()((set, get, api) => ({
   },
 
   setSettingsActiveTab: (
-    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp',
+    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
   ) => {
     set(() => ({
       settingsActiveTab: tab,

@@ -5,6 +5,7 @@ import { ProvidersPanel } from './ProvidersPanel';
 import { MCPPanel } from './MCPPanel';
 import { AppearancePanel } from './AppearancePanel';
 import { ChatPanel } from './ChatPanel';
+import { SkillsPanel } from './SkillsPanel';
 import { useStore } from '../../store';
 
 export type SettingsMenuId =
@@ -12,7 +13,8 @@ export type SettingsMenuId =
   | 'chat'
   | 'appearance'
   | 'providers'
-  | 'mcp';
+  | 'mcp'
+  | 'skills';
 
 export const SettingsPage = () => {
   const activeMenu = useStore((state) => state.settingsActiveTab);
@@ -58,6 +60,7 @@ export const SettingsPage = () => {
           {activeMenu === 'appearance' && <AppearancePanel />}
           {activeMenu === 'providers' && <ProvidersPanel />}
           {activeMenu === 'mcp' && <MCPPanel />}
+          {activeMenu === 'skills' && <SkillsPanel />}
         </div>
       </div>
     </div>
