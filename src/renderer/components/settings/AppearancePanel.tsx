@@ -80,6 +80,10 @@ const ThemeOption = ({
 export const AppearancePanel = () => {
   const theme = useStore((state) => state.theme);
   const setTheme = useStore((state) => state.setTheme);
+  const terminalFontSize = useStore((state) => state.terminalFontSize);
+  const setTerminalFontSize = useStore((state) => state.setTerminalFontSize);
+  const terminalFont = useStore((state) => state.terminalFont);
+  const setTerminalFont = useStore((state) => state.setTerminalFont);
 
   const handleThemeChange = (newTheme: ThemeValue) => {
     if (newTheme === theme) return;
@@ -122,6 +126,45 @@ export const AppearancePanel = () => {
               onClick={() => handleThemeChange('system')}
             />
           </div>
+        </SettingsRow>
+
+        {/* Terminal Font Size */}
+        <SettingsRow
+          title="Terminal Font Size"
+          description="Font size for the integrated terminal"
+        >
+          <input
+            type="number"
+            min={8}
+            max={32}
+            value={terminalFontSize}
+            onChange={(e) => setTerminalFontSize(Number(e.target.value))}
+            className="w-20 px-2 py-1.5 text-sm rounded-md"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-subtle)',
+            }}
+          />
+        </SettingsRow>
+
+        {/* Terminal Font */}
+        <SettingsRow
+          title="Terminal Font"
+          description="Font family for the terminal (leave empty for default)"
+        >
+          <input
+            type="text"
+            value={terminalFont}
+            onChange={(e) => setTerminalFont(e.target.value)}
+            placeholder="Default"
+            className="w-40 px-2 py-1.5 text-sm rounded-md"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-subtle)',
+            }}
+          />
         </SettingsRow>
       </div>
     </div>

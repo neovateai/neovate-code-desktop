@@ -7,11 +7,15 @@ export type SendMessageWith = 'enter' | 'cmdEnter';
 export interface DesktopSettingsSliceState {
   theme: ThemeValue;
   sendMessageWith: SendMessageWith;
+  terminalFontSize: number;
+  terminalFont: string;
 }
 
 export interface DesktopSettingsSliceActions {
   setTheme: (theme: ThemeValue) => void;
   setSendMessageWith: (value: SendMessageWith) => void;
+  setTerminalFontSize: (size: number) => void;
+  setTerminalFont: (font: string) => void;
 }
 
 export type DesktopSettingsSlice = DesktopSettingsSliceState &
@@ -21,6 +25,8 @@ export type DesktopSettingsSlice = DesktopSettingsSliceState &
 export const defaultDesktopSettings: DesktopSettingsSliceState = {
   theme: 'system',
   sendMessageWith: 'enter',
+  terminalFontSize: 12,
+  terminalFont: '',
 };
 
 export const createDesktopSettingsSlice: StateCreator<
@@ -39,5 +45,13 @@ export const createDesktopSettingsSlice: StateCreator<
 
   setSendMessageWith: (sendMessageWith: SendMessageWith) => {
     set({ sendMessageWith });
+  },
+
+  setTerminalFontSize: (terminalFontSize: number) => {
+    set({ terminalFontSize });
+  },
+
+  setTerminalFont: (terminalFont: string) => {
+    set({ terminalFont });
   },
 });

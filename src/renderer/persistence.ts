@@ -27,6 +27,8 @@ interface PersistedState {
   // DesktopSettings state
   theme: ThemeValue;
   sendMessageWith: SendMessageWith;
+  terminalFontSize: number;
+  terminalFont: string;
 }
 
 // Debounce helper
@@ -89,6 +91,8 @@ export function setupPersistence(store: StoreApi<any>): void {
       // DesktopSettings state
       theme: state.theme ?? 'system',
       sendMessageWith: state.sendMessageWith ?? 'enter',
+      terminalFontSize: state.terminalFontSize ?? 12,
+      terminalFont: state.terminalFont ?? '',
     };
   };
 
@@ -153,6 +157,8 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       // DesktopSettings state
       theme = 'system',
       sendMessageWith = 'enter',
+      terminalFontSize = 12,
+      terminalFont = '',
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -207,6 +213,8 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         // DesktopSettings state
         theme,
         sendMessageWith,
+        terminalFontSize,
+        terminalFont,
       },
       false,
     );
