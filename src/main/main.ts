@@ -1,6 +1,15 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeImage,
+  nativeTheme,
+  shell,
+  Tray,
+} from 'electron';
 import { is, platform } from '@electron-toolkit/utils';
-import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,10 +17,12 @@ import { registerMainHandlers } from '../shared/lib/ipc/main';
 import { ipcMainHandlers } from './ipc';
 import { ptyManager } from './pty';
 import { neovateServerManager } from './server';
+import { updaterService } from './updater';
 
 // declare const _dirname: string;
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 
 function createMenu() {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -25,6 +36,13 @@ function createMenu() {
           accelerator: 'Cmd+,',
           click: () => {
             mainWindow?.webContents.send('menu:open-settings');
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Check for Updates...',
+          click: () => {
+            updaterService.manualCheck();
           },
         },
         { type: 'separator' },
@@ -86,6 +104,66 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+function createTray() {
+  const trayIconDir = is.dev
+    ? path.join(process.cwd(), 'build/icons/tray')
+    : path.join(__dirname, '../../build/icons/tray');
+
+  const updateTrayIcon = () => {
+    if (!tray) return;
+    const iconFile = nativeTheme.shouldUseDarkColors
+      ? 'tray.png'
+      : 'tray-dark.png';
+    const iconPath = path.join(trayIconDir, iconFile);
+    const icon = nativeImage
+      .createFromPath(iconPath)
+      .resize({ width: 16, height: 16 });
+    tray.setImage(icon);
+  };
+
+  // Create initial tray with appropriate icon
+  const initialIconFile = nativeTheme.shouldUseDarkColors
+    ? 'tray.png'
+    : 'tray-dark.png';
+  const initialIconPath = path.join(trayIconDir, initialIconFile);
+  const icon = nativeImage
+    .createFromPath(initialIconPath)
+    .resize({ width: 16, height: 16 });
+
+  tray = new Tray(icon);
+  tray.setToolTip(app.name);
+
+  // Listen for theme changes and update tray icon
+  nativeTheme.on('updated', updateTrayIcon);
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Settings',
+      accelerator: 'Cmd+,',
+      click: () => {
+        mainWindow?.show();
+        mainWindow?.webContents.send('menu:open-settings');
+      },
+    },
+    {
+      label: 'Check for Updates...',
+      click: () => {
+        updaterService.manualCheck();
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      accelerator: 'Cmd+Q',
+      click: () => {
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -100,6 +178,11 @@ function createWindow() {
     },
   });
 
+  // Initialize updater service after window is created
+  if (mainWindow) {
+    updaterService.init(mainWindow);
+  }
+
   // Load renderer
   if (is.dev) {
     mainWindow.loadURL('http://localhost:5173');
@@ -108,10 +191,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../../renderer/index.html'));
   }
 
-  // Check for updates in production
-  if (!is.dev) {
-    autoUpdater.checkForUpdatesAndNotify();
-  }
+  // Updates are checked when renderer calls updater.check
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -235,10 +315,6 @@ process.on('unhandledRejection', (reason) => {
 });
 
 app.whenReady().then(() => {
-  autoUpdater.on('error', (error) => {
-    console.error('Auto updater error', error);
-  });
-
   // Set dev icon in dock when running in development mode (macOS)
   if (is.dev && platform.isMacOS && app.dock) {
     const devIconPath = path.join(process.cwd(), 'build/icons/icon-dev.png');
@@ -246,6 +322,7 @@ app.whenReady().then(() => {
   }
 
   createMenu();
+  createTray();
   createWindow();
 });
 
@@ -261,8 +338,13 @@ app.on('activate', () => {
   }
 });
 
-// Register shutdown handler to clean up server and PTYs on app quit
+// Register shutdown handler to clean up server, PTYs, tray, and updater on app quit
 app.on('before-quit', () => {
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
+  updaterService.destroy();
   ptyManager.destroyAll();
   neovateServerManager.stop();
 });

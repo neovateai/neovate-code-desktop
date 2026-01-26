@@ -173,4 +173,35 @@
   [data-app-layout]:has([data-separator="active"]) [data-panel] {
     transition: none;
   }
+
+  /* Startup animation keyframes */
+  @keyframes cursor-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes flourish {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .animate-cursor-blink {
+    animation: cursor-blink 1.06s ease-in-out infinite;
+  }
+
+  .animate-flourish {
+    animation: flourish 300ms ease-out;
+  }
 }

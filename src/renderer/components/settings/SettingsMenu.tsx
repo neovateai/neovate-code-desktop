@@ -3,8 +3,9 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ArrowLeftIcon,
   SettingsIcon,
-  CodeIcon,
   CloudIcon,
+  PaintBrushIcon,
+  MessageIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import type { SettingsMenuId } from './SettingsPage';
@@ -17,8 +18,9 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
+  { id: 'chat', label: 'Chat', icon: MessageIcon },
+  { id: 'appearance', label: 'Appearance', icon: PaintBrushIcon },
   { id: 'providers', label: 'Providers', icon: CloudIcon },
-  { id: 'mcp', label: 'MCP', icon: CodeIcon },
 ];
 
 export const SettingsMenu = ({

@@ -1,6 +1,12 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
+import { PERSISTENCE_DEBOUNCE_MS } from './constants';
+import { logger } from './lib/logger';
 import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
+import type {
+  ThemeValue,
+  SendMessageWith,
+} from './store/slices/desktopSettings';
 
 // Define the persistable state shape
 interface PersistedState {
@@ -18,6 +24,11 @@ interface PersistedState {
   secondarySidebarTab: SecondarySidebarTab;
   // Onboarding state
   onboardingCompleted: boolean;
+  // DesktopSettings state
+  theme: ThemeValue;
+  sendMessageWith: SendMessageWith;
+  terminalFontSize: number;
+  terminalFont: string;
 }
 
 // Debounce helper
@@ -77,6 +88,11 @@ export function setupPersistence(store: StoreApi<any>): void {
       secondarySidebarTab: state.secondarySidebarTab ?? 'files',
       // Onboarding state
       onboardingCompleted: state.onboardingCompleted ?? false,
+      // DesktopSettings state
+      theme: state.theme ?? 'system',
+      sendMessageWith: state.sendMessageWith ?? 'enter',
+      terminalFontSize: state.terminalFontSize ?? 12,
+      terminalFont: state.terminalFont ?? '',
     };
   };
 
@@ -94,7 +110,7 @@ export function setupPersistence(store: StoreApi<any>): void {
         description: (error as Error).message,
       });
     }
-  }, 500);
+  }, PERSISTENCE_DEBOUNCE_MS);
 
   // Subscribe to store changes
   store.subscribe(() => {
@@ -138,6 +154,11 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       secondarySidebarTab = 'files',
       // Onboarding state
       onboardingCompleted = false,
+      // DesktopSettings state
+      theme = 'system',
+      sendMessageWith = 'enter',
+      terminalFontSize = 12,
+      terminalFont = '',
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -188,14 +209,23 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         onboardingVisible: !onboardingCompleted,
         onboardingStep: 'import',
         importedProjects: [],
+
+        // DesktopSettings state
+        theme,
+        sendMessageWith,
+        terminalFontSize,
+        terminalFont,
       },
       false,
     );
 
-    console.log('Store hydrated successfully from persisted state');
+    logger.info(
+      '[PERSIST]',
+      'Store hydrated successfully from persisted state',
+    );
     return true;
   } catch (error) {
-    console.error('Failed to hydrate store:', error);
+    logger.error('[PERSIST]', 'Failed to hydrate store:', error);
     return false;
   }
 }

@@ -1,13 +1,20 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { Agentation } from 'agentation';
 import { useStore } from './store';
 import { useStoreConnection } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
 import { WorkspacePanel } from './components/WorkspacePanel';
 // import { WorkspaceChanges } from './components/WorkspaceChanges';
-import { Terminal } from './components/Terminal';
+import { ContentPanel } from './components/ContentPanel';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
+import { UpdaterToast } from './components/UpdaterToast';
+import {
+  MIN_LOADING_TIME_MS,
+  LETTER_ANIMATION_DELAY_MS,
+  FOCUS_DELAY_MS,
+} from './constants';
 import {
   AppLayout,
   AppLayoutTitleBar,
@@ -20,7 +27,6 @@ import {
   SecondarySidebar,
 } from './components/layout';
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
-import { getNestedValue } from './lib/utils';
 import { TitleBar } from './components/app/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
 
@@ -35,13 +41,25 @@ function App() {
   const selectWorkspace = useStore((s) => s.selectWorkspace);
   const showSettings = useStore((s) => s.showSettings);
   const setShowSettings = useStore((s) => s.setShowSettings);
-  const globalConfig = useStore((s) => s.globalConfig);
-  const setGlobalConfig = useStore((s) => s.setGlobalConfig);
+  const theme = useStore((s) => s.theme);
+  const setTheme = useStore((s) => s.setTheme);
   const initialized = useStore((s) => s.initialized);
 
-  // Get theme from config (default to 'system')
-  // Subscribe to globalConfig directly so component re-renders when config changes
-  const theme = getNestedValue<string>(globalConfig, 'desktop.theme', 'system');
+  // Minimum display time for loading animation
+  const loadStartTime = useRef(Date.now());
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+  useEffect(() => {
+    const elapsed = Date.now() - loadStartTime.current;
+    const remaining = MIN_LOADING_TIME_MS - elapsed;
+
+    if (remaining <= 0) {
+      setMinTimeElapsed(true);
+    } else {
+      const timer = setTimeout(() => setMinTimeElapsed(true), remaining);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Listen for menu events from main process
   useEffect(() => {
@@ -50,16 +68,16 @@ function App() {
     });
 
     const cleanupTheme = window.electron.onMenuToggleTheme(() => {
-      // Toggle between light and dark (Option A behavior)
+      // Toggle between light and dark
       const newTheme = theme === 'dark' ? 'light' : 'dark';
-      setGlobalConfig('desktop.theme', newTheme);
+      setTheme(newTheme);
     });
 
     return () => {
       cleanupSettings();
       cleanupTheme();
     };
-  }, [setShowSettings, setGlobalConfig, theme]);
+  }, [setShowSettings, setTheme, theme]);
 
   // Apply dark/light mode based on theme setting
   useEffect(() => {
@@ -142,11 +160,15 @@ function App() {
       />
     );
   }
-  if (
+
+  // Show loading until both: connection ready AND minimum time elapsed
+  const isLoading =
     connectionState === 'idle' ||
     connectionState === 'connecting' ||
-    (!initialized && connectionState === 'disconnected')
-  ) {
+    (!initialized && connectionState === 'disconnected') ||
+    !minTimeElapsed;
+
+  if (isLoading) {
     return <AppLoading />;
   }
 
@@ -208,9 +230,9 @@ function App() {
               <AppLayoutContentPanel>
                 <div className="h-full flex flex-col">
                   {visitedRepoPathsArray.map((repoPath) => (
-                    <Terminal
+                    <ContentPanel
                       key={repoPath}
-                      cwd={repoPath}
+                      repoPath={repoPath}
                       hidden={repoPath !== selectedRepoPath}
                     />
                   ))}
@@ -235,31 +257,70 @@ function App() {
 
       {/* Onboarding Modal - renders on top when visible */}
       <OnboardingModal />
+      <UpdaterToast />
+      {process.env.NODE_ENV !== 'production' && <Agentation />}
     </>
   );
 }
 
 function AppLoading() {
-  const [text, setText] = useState('');
   const fullText = 'Neovate';
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const [isDark] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches,
+  );
 
   useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < fullText.length) {
-        setText(fullText.slice(0, index + 1));
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 150);
+    if (visibleCount < fullText.length) {
+      const timer = setTimeout(() => {
+        setVisibleCount((c) => c + 1);
+      }, LETTER_ANIMATION_DELAY_MS);
+      return () => clearTimeout(timer);
+    } else {
+      // Trigger completion flourish after last letter
+      const timer = setTimeout(() => setIsComplete(true), FOCUS_DELAY_MS);
+      return () => clearTimeout(timer);
+    }
+  }, [visibleCount]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const glowStyle = {
+    textShadow: isDark
+      ? `0 0 ${isComplete ? 40 : 30}px rgba(255, 255, 255, ${isComplete ? 0.2 : 0.15})`
+      : `0 0 ${isComplete ? 30 : 20}px rgba(0, 0, 0, ${isComplete ? 0.15 : 0.1})`,
+    transition: 'text-shadow 300ms ease-out',
+  };
 
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center bg-white text-neutral-900">
-      <div className="text-6xl font-light">{text}</div>
+    <div
+      className={`flex h-screen w-screen flex-col items-center justify-center ${
+        isDark ? 'bg-neutral-950 text-neutral-100' : 'bg-white text-neutral-900'
+      }`}
+    >
+      <div
+        className={`text-6xl font-light ${isComplete ? 'animate-flourish' : ''}`}
+        style={glowStyle}
+      >
+        {fullText.split('').map((char, i) => (
+          <span
+            key={i}
+            className={`transition-opacity duration-200 ease-out ${
+              i < visibleCount ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {char}
+          </span>
+        ))}
+        <span
+          className={`animate-cursor-blink ml-0.5 ${
+            visibleCount > 0 ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          |
+        </span>
+      </div>
     </div>
   );
 }

@@ -57,7 +57,7 @@ type ConfigSetInput = {
   cwd: string;
   isGlobal: boolean;
   key: string;
-  value: string;
+  value: any;
 };
 
 type ConfigRemoveInput = {
@@ -535,6 +535,8 @@ type ProvidersListOutput = {
       env?: string[];
       apiEnv?: string[];
       api?: string;
+      apiFormat?: 'anthropic' | 'openai' | 'responses';
+      source?: 'built-in' | string;
       options?: {
         baseURL?: string;
         apiKey?: string;
@@ -950,6 +952,13 @@ type UtilsDetectAppsOutput = {
   };
 };
 
+type UtilsPlaySoundInput = {
+  sound: string; // Sound name (e.g., 'Glass', 'Hero') or preset ('success', 'error', 'warning', 'info', 'done')
+  volume?: number; // Volume level 0.0 to 1.0, defaults to 1.0
+};
+
+type UtilsPlaySoundOutput = SuccessResponse | ErrorResponse;
+
 // ============================================================================
 // UI Bridge Handlers (from uiBridge.ts)
 // ============================================================================
@@ -1204,6 +1213,10 @@ export type HandlerMap = {
   'utils.detectApps': {
     input: UtilsDetectAppsInput;
     output: UtilsDetectAppsOutput;
+  };
+  'utils.playSound': {
+    input: UtilsPlaySoundInput;
+    output: UtilsPlaySoundOutput;
   };
 
   // UI Bridge handlers

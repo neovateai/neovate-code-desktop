@@ -2,7 +2,14 @@ import { create } from 'zustand';
 import { WebSocketTransport } from '../client/transport/WebSocketTransport';
 import { MessageBus } from '../client/messaging/MessageBus';
 import { countTokens } from '../lib/tokenUtils';
+import { logger } from '../lib/logger';
 import { toastManager } from '../components/ui/toast';
+import {
+  DEFAULT_WEBSOCKET_URL,
+  WEBSOCKET_RECONNECT_INTERVAL_MS,
+  WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
+  FORK_MODAL_DELAY_MS,
+} from '../constants';
 import type { NormalizedMessage } from '../client/types/message';
 import type {
   HandlerMethod,
@@ -36,6 +43,11 @@ import {
   type OnboardingStep,
   defaultOnboardingState,
 } from './slices/onboarding';
+import {
+  createDesktopSettingsSlice,
+  type DesktopSettingsSlice,
+  type DesktopSettingsSliceState,
+} from './slices/desktopSettings';
 
 // Re-export types from slices
 export type {
@@ -70,7 +82,12 @@ interface UISelectionState {
   selectedWorkspaceId: string | null;
   selectedSessionId: string | null;
   showSettings: boolean;
-  settingsActiveTab: 'preferences' | 'providers' | 'mcp';
+  settingsActiveTab:
+    | 'preferences'
+    | 'chat'
+    | 'appearance'
+    | 'providers'
+    | 'mcp';
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
@@ -112,7 +129,9 @@ interface CoreActions {
   selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
-  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => void;
+  setSettingsActiveTab: (
+    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp',
+  ) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
   setTestComponentVisible: (visible: boolean) => void;
@@ -137,7 +156,8 @@ type Store = CoreState &
   SessionSlice &
   ConfigSlice &
   UISlice &
-  OnboardingSlice;
+  OnboardingSlice &
+  DesktopSettingsSlice;
 
 const useStore = create<Store>()((set, get, api) => ({
   // ==================== Core State ====================
@@ -173,13 +193,13 @@ const useStore = create<Store>()((set, get, api) => ({
 
     set({ state: 'connecting' });
 
-    const url = serverUrl ?? 'ws://localhost:1024/ws';
+    const url = serverUrl ?? DEFAULT_WEBSOCKET_URL;
 
     try {
       const newTransport = new WebSocketTransport({
         url,
-        reconnectInterval: 1000,
-        maxReconnectInterval: 30000,
+        reconnectInterval: WEBSOCKET_RECONNECT_INTERVAL_MS,
+        maxReconnectInterval: WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
         shouldReconnect: true,
       });
 
@@ -237,12 +257,14 @@ const useStore = create<Store>()((set, get, api) => ({
       );
     }
 
-    console.log('[REQUEST]', method, params);
+    logger.debug(
+      `[STORE] REQUEST ${method} --data "${JSON.stringify(params).replace(/"/g, '\\"')}"`,
+    );
     const response = await messageBus.request<
       HandlerInput<K>,
       HandlerOutput<K>
     >(method, params);
-    console.log('[RESPONSE]', method, response);
+    logger.debug('[STORE]', 'RESPONSE', method, response);
     return response;
   },
 
@@ -263,7 +285,7 @@ const useStore = create<Store>()((set, get, api) => ({
 
     // Only initialize once
     if (initialized) {
-      console.log('Already initialized, skipping');
+      logger.debug('[STORE]', 'Already initialized, skipping');
       return;
     }
 
@@ -298,7 +320,7 @@ const useStore = create<Store>()((set, get, api) => ({
     });
 
     onEvent('streamResult', (data: any) => {
-      console.log('streamResult', data);
+      logger.debug('[STORE]', 'streamResult', data);
       // Update retry info if present
       if (data.sessionId && data.retryInfo) {
         const { setSessionProcessing } = get();
@@ -732,7 +754,9 @@ const useStore = create<Store>()((set, get, api) => ({
     }));
   },
 
-  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => {
+  setSettingsActiveTab: (
+    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp',
+  ) => {
     set(() => ({
       settingsActiveTab: tab,
     }));
@@ -821,17 +845,17 @@ const useStore = create<Store>()((set, get, api) => ({
 
   // Fork modal actions
   showForkModal: () => {
-    console.log('[FORK] showForkModal store action called');
+    logger.debug('[STORE]', 'showForkModal action called');
     // Small delay to let the Escape key event pass before opening the modal
     // This prevents the Dialog's built-in Escape handling from immediately closing it
     setTimeout(() => {
-      console.log('[FORK] forkModalVisible set to true (after delay)');
+      logger.debug('[STORE]', 'forkModalVisible set to true (after delay)');
       set({ forkModalVisible: true });
-    }, 50);
+    }, FORK_MODAL_DELAY_MS);
   },
 
   hideForkModal: () => {
-    console.log('[FORK] hideForkModal store action called');
+    logger.debug('[STORE]', 'hideForkModal action called');
     set({ forkModalVisible: false });
   },
 
@@ -906,6 +930,7 @@ const useStore = create<Store>()((set, get, api) => ({
   ...createConfigSlice(set, get, api),
   ...createUISlice(set, get, api),
   ...createOnboardingSlice(set, get, api),
+  ...createDesktopSettingsSlice(set, get, api),
 }));
 
 export { useStore };

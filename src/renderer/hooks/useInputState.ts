@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { logger } from '../lib/logger';
+import { INPUT_DEBOUNCE_MS } from '../constants';
 import {
   defaultSessionInputState,
   getInputMode,
@@ -13,8 +15,6 @@ export interface InputState {
   cursorPosition: number;
   mode: InputMode;
 }
-
-const DEBOUNCE_MS = 150;
 
 export function useInputState(
   sessionId: string | null,
@@ -59,8 +59,9 @@ export function useInputState(
   // Sync from store when forceUpdateKey changes (external update like fork)
   useEffect(() => {
     if (prevForceUpdateKeyRef.current !== sessionInput.forceUpdateKey) {
-      console.log(
-        '[FORK] forceUpdateKey changed, syncing input value from store',
+      logger.debug(
+        '[HOOK]',
+        'forceUpdateKey changed, syncing input value from store',
       );
       setLocalValue(sessionInput.value);
       setLocalCursorPosition(sessionInput.cursorPosition);
@@ -95,7 +96,7 @@ export function useInputState(
         }
         debounceRef.current = setTimeout(() => {
           setSessionInput(sessionId, { value: newValue });
-        }, DEBOUNCE_MS);
+        }, INPUT_DEBOUNCE_MS);
       }
     },
     [sessionId, setSessionInput],
@@ -110,7 +111,7 @@ export function useInputState(
         }
         debounceRef.current = setTimeout(() => {
           setSessionInput(sessionId, { cursorPosition: pos });
-        }, DEBOUNCE_MS);
+        }, INPUT_DEBOUNCE_MS);
       }
     },
     [sessionId, setSessionInput],

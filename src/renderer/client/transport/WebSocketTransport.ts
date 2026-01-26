@@ -6,6 +6,10 @@ import type {
   TransportMessage,
   TransportState,
 } from './types';
+import {
+  WEBSOCKET_RECONNECT_INTERVAL_MS,
+  WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
+} from '../../constants';
 
 export class WebSocketTransport {
   private url: string;
@@ -21,8 +25,10 @@ export class WebSocketTransport {
 
   constructor(config: TransportConfig) {
     this.url = config.url;
-    this.reconnectInterval = config.reconnectInterval || 1000;
-    this.maxReconnectInterval = config.maxReconnectInterval || 30000;
+    this.reconnectInterval =
+      config.reconnectInterval || WEBSOCKET_RECONNECT_INTERVAL_MS;
+    this.maxReconnectInterval =
+      config.maxReconnectInterval || WEBSOCKET_MAX_RECONNECT_INTERVAL_MS;
     this.shouldReconnect = config.shouldReconnect ?? true;
   }
 
@@ -34,7 +40,7 @@ export class WebSocketTransport {
 
         this.ws.onopen = () => {
           this.state = 'connected';
-          this.reconnectInterval = 1000;
+          this.reconnectInterval = WEBSOCKET_RECONNECT_INTERVAL_MS;
           this.flushBuffer();
           resolve();
         };

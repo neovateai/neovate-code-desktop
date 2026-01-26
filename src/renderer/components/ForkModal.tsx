@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { NormalizedMessage } from '../client/types/message';
+import { logger } from '../lib/logger';
 import {
   Dialog,
   DialogPopup,
@@ -77,7 +78,7 @@ export function ForkModal({
   messages,
   onSelect,
 }: ForkModalProps) {
-  console.log('[FORK] ForkModal render', {
+  logger.debug('[UI]', 'ForkModal render', {
     open,
     messagesCount: messages.length,
   });
@@ -116,13 +117,13 @@ export function ForkModal({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      console.log('[FORK] ForkModal handleKeyDown', {
+      logger.debug('[UI]', 'ForkModal handleKeyDown', {
         key: e.key,
         type: e.type,
       });
 
       if (e.key === 'Escape') {
-        console.log('[FORK] ForkModal Escape pressed, calling onClose');
+        logger.debug('[UI]', 'ForkModal Escape pressed, calling onClose');
         e.preventDefault();
         onClose();
         return;

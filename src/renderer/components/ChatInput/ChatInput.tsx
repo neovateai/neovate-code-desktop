@@ -25,6 +25,7 @@ import type {
   HandlerMethod,
   HandlerOutput,
 } from '../../nodeBridge.types';
+import { useStore } from '../../store';
 import { Button, Textarea, Tooltip, TooltipPopup, TooltipTrigger } from '../ui';
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
@@ -95,6 +96,9 @@ export const ChatInput = memo(
     // Ref for textarea
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Get sendMessageWith from store
+    const sendMessageWith = useStore((state) => state.sendMessageWith);
+
     // Expose focus method to parent via ref
     useImperativeHandle(
       ref,
@@ -124,6 +128,7 @@ export const ChatInput = memo(
       onShowForkModal,
       fetchCommands,
       isProcessing,
+      sendMessageWith,
       request: request!,
       cwd: cwd || '',
     });
@@ -441,9 +446,9 @@ export const ChatInput = memo(
 
         {/* Main Input Container */}
         <div
-          className="rounded-lg overflow-hidden transition-colors"
+          className="rounded-xl overflow-hidden transition-colors"
           style={{
-            border: `1px solid ${borderColor}`,
+            border: `2px solid ${borderColor}`,
             backgroundColor: 'var(--bg-surface)',
           }}
         >
@@ -664,6 +669,11 @@ export const ChatInput = memo(
                     variant={canSend ? 'default' : 'ghost'}
                     onClick={handleSendClick}
                     disabled={!canSend || (disabled && !isProcessing)}
+                    style={
+                      canSend
+                        ? { backgroundColor: '#fa216e', border: 'none' }
+                        : undefined
+                    }
                   >
                     <HugeiconsIcon icon={SentIcon} size={18} />
                   </Button>
@@ -674,37 +684,6 @@ export const ChatInput = memo(
               </TooltipPopup>
             </Tooltip>
           </div>
-        </div>
-
-        {/* Keyboard shortcuts hint */}
-        <div
-          className="flex items-center justify-center gap-4 mt-2 text-xs"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              @
-            </kbd>{' '}
-            files
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              /
-            </kbd>{' '}
-            commands
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              #
-            </kbd>{' '}
-            memory
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
-              !
-            </kbd>{' '}
-            bash
-          </span>
         </div>
       </div>
     );

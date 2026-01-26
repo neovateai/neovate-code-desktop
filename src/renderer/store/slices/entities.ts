@@ -279,7 +279,7 @@ export const createEntitiesSlice: StateCreator<
         modified: Date.now(),
         created: Date.now(),
         messageCount: 0,
-        summary: 'New session',
+        summary: 'New Chat',
       },
       ...(sessions[selectedWorkspaceId] || []),
     ]);
