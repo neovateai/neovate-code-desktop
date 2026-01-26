@@ -69,7 +69,7 @@ const openExternalUrl = (url: string) => {
 };
 
 interface ProviderModel {
-  name: string;
+  name?: string;
   modelId: string;
   value: string; // format: "providerId/modelId"
 }
@@ -967,7 +967,7 @@ export const ProvidersPanel = () => {
                                   'transparent';
                               }}
                             >
-                              {model.name}
+                              {model.name || model.modelId}
                             </button>
                           ))}
                         </div>
@@ -1244,9 +1244,9 @@ export const ProvidersPanel = () => {
                               <span
                                 className="truncate"
                                 style={{ color: 'var(--text-primary)' }}
-                                title={model.name}
+                                title={model.name || model.modelId}
                               >
-                                {model.name}
+                                {model.name || model.modelId}
                               </span>
                               {isCurrentModel && (
                                 <span
