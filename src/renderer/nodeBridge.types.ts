@@ -779,6 +779,147 @@ type SessionsResumeOutput = {
 };
 
 // ============================================================================
+// Skills Handlers
+// ============================================================================
+
+/** Skill source types */
+type SkillSourceType =
+  | 'plugin'
+  | 'config'
+  | 'global-claude'
+  | 'global'
+  | 'project-claude'
+  | 'project';
+
+type SkillsListInput = {
+  cwd: string;
+};
+type SkillsListOutput = {
+  success: boolean;
+  data: {
+    skills: Array<{
+      name: string;
+      description: string;
+      path: string;
+      source: SkillSourceType;
+    }>;
+    errors: Array<{ path: string; message: string }>;
+  };
+};
+
+type SkillsGetInput = {
+  cwd: string;
+  name: string;
+};
+type SkillsGetOutput =
+  | {
+      success: true;
+      data: {
+        skill: {
+          name: string;
+          description: string;
+          path: string;
+          source: SkillSourceType;
+          body: string;
+        };
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+type SkillsAddInput = {
+  cwd: string;
+  source: string;
+  global?: boolean;
+  claude?: boolean;
+  overwrite?: boolean;
+  name?: string;
+  targetDir?: string;
+};
+type SkillsAddOutput =
+  | {
+      success: true;
+      data: {
+        installed: Array<{
+          name: string;
+          description: string;
+          path: string;
+          source: SkillSourceType;
+        }>;
+        skipped: Array<{ name: string; reason: string }>;
+        errors: Array<{ path: string; message: string }>;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+type SkillsRemoveInput = {
+  cwd: string;
+  name: string;
+  targetDir?: string;
+};
+type SkillsRemoveOutput = {
+  success: boolean;
+  error?: string;
+};
+
+type SkillsPreviewInput = {
+  cwd: string;
+  source: string;
+};
+type SkillsPreviewOutput =
+  | {
+      success: true;
+      data: {
+        previewId: string;
+        skills: Array<{
+          name: string;
+          description: string;
+          skillPath: string;
+        }>;
+        errors: Array<{ path: string; message: string }>;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+type SkillsInstallInput = {
+  cwd: string;
+  previewId: string;
+  selectedSkills: string[];
+  source: string;
+  global?: boolean;
+  claude?: boolean;
+  overwrite?: boolean;
+  name?: string;
+  targetDir?: string;
+};
+type SkillsInstallOutput =
+  | {
+      success: true;
+      data: {
+        installed: Array<{
+          name: string;
+          description: string;
+          path: string;
+          source: SkillSourceType;
+        }>;
+        skipped: Array<{ name: string; reason: string }>;
+        errors: Array<{ path: string; message: string }>;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+// ============================================================================
 // Slash Command Handlers
 // ============================================================================
 
@@ -1167,6 +1308,14 @@ export type HandlerMap = {
     input: SessionsResumeInput;
     output: SessionsResumeOutput;
   };
+
+  // Skills handlers
+  'skills.list': { input: SkillsListInput; output: SkillsListOutput };
+  'skills.get': { input: SkillsGetInput; output: SkillsGetOutput };
+  'skills.add': { input: SkillsAddInput; output: SkillsAddOutput };
+  'skills.remove': { input: SkillsRemoveInput; output: SkillsRemoveOutput };
+  'skills.preview': { input: SkillsPreviewInput; output: SkillsPreviewOutput };
+  'skills.install': { input: SkillsInstallInput; output: SkillsInstallOutput };
 
   // Slash command handlers
   'slashCommand.list': {
