@@ -1,10 +1,44 @@
 import fs from 'node:fs/promises';
+import net from 'node:net';
 import path from 'node:path';
 import portfinder from 'portfinder';
 import { app } from 'electron';
 import { isDev } from '../env';
-import { PORT_RANGE_END, PORT_RANGE_START } from './constants';
+import {
+  POLL_INTERVAL_MS,
+  PORT_RANGE_END,
+  PORT_RANGE_START,
+  STARTUP_TIMEOUT_MS,
+} from './constants';
 import type { ServerInstance } from './types';
+
+async function waitForTcpReady(
+  hostname: string,
+  port: number,
+  timeout: number = STARTUP_TIMEOUT_MS,
+): Promise<void> {
+  const startTime = Date.now();
+
+  const tryConnect = () =>
+    new Promise<boolean>((resolve) => {
+      const socket = net.connect({ host: hostname, port });
+      const finish = (result: boolean) => {
+        socket.destroy();
+        resolve(result);
+      };
+      socket.once('connect', () => finish(true));
+      socket.once('error', () => finish(false));
+    });
+
+  while (Date.now() - startTime <= timeout) {
+    if (await tryConnect()) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  }
+
+  throw new Error(`Server not accepting connections after ${timeout}ms`);
+}
 
 export async function createNeovateServer(): Promise<ServerInstance> {
   if (process.env.NEOVATE_FAKE_ERROR) {
@@ -39,6 +73,13 @@ export async function createNeovateServer(): Promise<ServerInstance> {
 
   if (!shutdown) {
     throw new Error('Server did not return shutdown function');
+  }
+
+  try {
+    await waitForTcpReady(hostname, port);
+  } catch (error) {
+    shutdown();
+    throw error;
   }
 
   const url = `ws://${hostname}:${port}/ws`;
