@@ -1,15 +1,12 @@
 import { execSync } from 'node:child_process';
-import {
-  CODE_SERVER_PORT,
-  getCodeServerEntryPath,
-  EXTENSIONS_DIR,
-} from './constants';
+import { CODE_SERVER_PORT, EXTENSIONS_DIR, DATA_DIR } from './constants';
 import {
   isCodeServerInstalled,
   downloadCodeServer,
   type ProgressCallback,
 } from './download';
 import { overrideCodeServerSettings } from './settings';
+import { codeServerStarter } from './starter';
 
 export class CodeServerStartError extends Error {
   constructor(
@@ -110,24 +107,12 @@ class CodeServerManager {
     // 3. Kill any existing process on the port
     killProcessOnPort(CODE_SERVER_PORT);
 
-    // 4. Start the server
-    const entryPath = getCodeServerEntryPath();
-
     try {
-      // Dynamic import of code-server
-      const codeServer = await import(entryPath);
-
-      // code-server exposes a run function or similar
-      // The exact API depends on the code-server build
-      // Ami's version uses: await import(serverPath) which starts it
-      if (typeof codeServer.default === 'function') {
-        await codeServer.default({
-          port: CODE_SERVER_PORT,
-          host: '127.0.0.1',
-          auth: 'none',
-          'extensions-dir': EXTENSIONS_DIR,
-        });
-      }
+      await codeServerStarter({
+        port: CODE_SERVER_PORT,
+        extDir: EXTENSIONS_DIR,
+        dataDir: DATA_DIR,
+      });
 
       const url = `http://127.0.0.1:${CODE_SERVER_PORT}`;
 

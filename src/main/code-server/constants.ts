@@ -21,6 +21,15 @@ export const EXTENSIONS_DIR = path.join(
   'extensions',
 );
 
+/** {data_dir}/user/setting.json */
+export const DATA_DIR = path.join(
+  os.homedir(),
+  '.local',
+  'share',
+  'neovate-code',
+  'code-user',
+);
+
 // Platform mapping for download URL
 function getPlatformString(): string {
   const platform = process.platform;

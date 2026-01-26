@@ -90,7 +90,10 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
       logger.debug('[EditorPane] Server ready at:', editorUrl);
 
       setServerUrl(editorUrl);
-      setStatus('ready');
+      // FIXME: 不延迟的话有概率初始化失败
+      setTimeout(() => {
+        setStatus('ready');
+      }, 100);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to start editor';
