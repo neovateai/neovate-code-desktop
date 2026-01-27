@@ -26,6 +26,7 @@ jobs:
         run: npm run typecheck
 
   build-mac-dev:
+    needs: typecheck
     strategy:
       matrix:
         include:
