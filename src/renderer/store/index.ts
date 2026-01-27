@@ -138,6 +138,7 @@ interface CoreActions {
   setTestComponentVisible: (visible: boolean) => void;
 
   // Session control actions
+  updateSessions: (workspaceId: string) => Promise<void>;
   cancelSession: (sessionId: string) => Promise<void>;
   clearSession: (sessionId: string) => void;
 
@@ -780,6 +781,33 @@ const useStore = create<Store>()((set, get, api) => ({
 
   setTestComponentVisible: (visible: boolean) => {
     set({ isTestComponentVisible: visible });
+  },
+
+  updateSessions: async (workspaceId: string) => {
+    const { request, workspaces, setSessions } = get();
+
+    const workspace = workspaces[workspaceId];
+    if (!workspace) {
+      return;
+    }
+
+    try {
+      const response = await request('sessions.list', {
+        cwd: workspace.worktreePath,
+      });
+
+      if (response.success) {
+        const sessions = response.data.sessions.map((s: any) => ({
+          ...s,
+          modified: new Date(s.modified).getTime(),
+          created: new Date(s.created).getTime(),
+        }));
+        setSessions(workspaceId, sessions);
+      }
+    } catch (error) {
+      console.error('Failed to fetch sessions:', error);
+      setSessions(workspaceId, []);
+    }
   },
 
   cancelSession: async (sessionId: string) => {

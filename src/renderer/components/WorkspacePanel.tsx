@@ -71,7 +71,6 @@ export const WorkspacePanel = ({
 
   // Get store actions and state
   const request = useStore((state) => state.request);
-  const setSessions = useStore((state) => state.setSessions);
   const setMessages = useStore((state) => state.setMessages);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
@@ -111,6 +110,8 @@ export const WorkspacePanel = ({
     ? slashCommandJSXBySession[selectedSessionId]
     : null;
 
+  const updateSessions = useStore((state) => state.updateSessions);
+
   // Get sessions and messages for the current workspace from store - memoized to avoid infinite loop
   const allSessions = useMemo(
     () => (selectedWorkspaceId ? sessionsMap[selectedWorkspaceId] || [] : []),
@@ -130,67 +131,10 @@ export const WorkspacePanel = ({
   // Fetch sessions when selectedWorkspaceId changes
   useEffect(() => {
     if (connectionState !== 'connected') return;
+    if (!selectedWorkspaceId) return;
 
-    if (!selectedWorkspaceId) {
-      selectSession(null);
-      return;
-    }
-
-    const workspace = workspaces[selectedWorkspaceId];
-    if (!workspace) {
-      selectSession(null);
-      return;
-    }
-
-    const fetchSessions = async () => {
-      try {
-        const response = await request('sessions.list', {
-          cwd: workspace.worktreePath,
-        });
-
-        if (response.success) {
-          const sessions: SessionData[] = response.data.sessions.map(
-            (s: any) => ({
-              ...s,
-              modified: new Date(s.modified).getTime(),
-              created: new Date(s.created).getTime(),
-            }),
-          );
-          setSessions(selectedWorkspaceId, sessions);
-        }
-      } catch (error) {
-        console.error('Failed to fetch sessions:', error);
-        setSessions(selectedWorkspaceId, []);
-      }
-    };
-
-    fetchSessions();
-  }, [
-    connectionState,
-    selectedWorkspaceId,
-    workspaces,
-    request,
-    setSessions,
-    selectSession,
-  ]);
-
-  // Validate selectedSessionId when sessions load
-  useEffect(() => {
-    if (allSessions.length > 0) {
-      // If no selected session or it doesn't exist in the list, set to first session
-      if (
-        !selectedSessionId ||
-        !allSessions.find((s) => s.sessionId === selectedSessionId)
-      ) {
-        selectSession(allSessions[0].sessionId);
-      }
-    } else {
-      // No sessions, reset selectedSessionId
-      if (selectedSessionId !== null) {
-        selectSession(null);
-      }
-    }
-  }, [allSessions, selectedSessionId, selectSession]);
+    updateSessions(selectedWorkspaceId);
+  }, [connectionState, selectedWorkspaceId, updateSessions]);
 
   // Fetch messages when selectedSessionId changes
   useEffect(() => {
