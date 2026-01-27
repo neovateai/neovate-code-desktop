@@ -26,6 +26,7 @@ import type {
   HandlerOutput,
 } from '../../nodeBridge.types';
 import { useStore } from '../../store';
+import type { SessionProcessingState } from '../../store';
 import { Button, Textarea, Tooltip, TooltipPopup, TooltipTrigger } from '../ui';
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
@@ -96,8 +97,14 @@ export const ChatInput = memo(
     // Ref for textarea
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Get sendMessageWith from store
+    // Get store methods
     const sendMessageWith = useStore((state) => state.sendMessageWith);
+    const getSessionProcessing = useStore(
+      (state) => state.getSessionProcessing,
+    );
+
+    // Get processing state for current session (for debug info)
+    const processingState = sessionId ? getSessionProcessing(sessionId) : null;
 
     // Expose focus method to parent via ref
     useImperativeHandle(
@@ -432,6 +439,20 @@ export const ChatInput = memo(
 
     return (
       <div className="relative">
+        {/* Debug Info */}
+        <div
+          className="mb-2 px-3 py-2 rounded-md text-xs font-mono"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
+            color: 'var(--text-tertiary)',
+          }}
+        >
+          <div>Session ID: {sessionId || 'null'}</div>
+          <div>CWD: {cwd || 'null'}</div>
+          <div>Processing: {processingState?.status || 'null'}</div>
+        </div>
+
         {/* Suggestion Dropdown */}
         {suggestions.type && (
           <SuggestionDropdown
