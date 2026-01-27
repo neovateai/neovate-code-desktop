@@ -37,6 +37,7 @@ export interface EntitiesSliceActions {
     sessionId: string,
     updates: Partial<SessionData>,
   ) => void;
+  removeSession: (workspaceId: string, sessionId: string) => void;
   createSession: () => string;
 
   // Messages
@@ -263,6 +264,20 @@ export const createEntitiesSlice: StateCreator<
         ),
       },
     }));
+  },
+
+  removeSession: (workspaceId: string, sessionId: string) => {
+    set((state) => {
+      const workspaceSessions = state.sessions[workspaceId] || [];
+      return {
+        sessions: {
+          ...state.sessions,
+          [workspaceId]: workspaceSessions.filter(
+            (s) => s.sessionId !== sessionId,
+          ),
+        },
+      };
+    });
   },
 
   createSession: () => {

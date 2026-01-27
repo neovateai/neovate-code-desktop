@@ -106,6 +106,12 @@ export const RepoSidebar = ({
     useState<RepoData | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<{
+    sessionId: string;
+    workspaceId: string;
+    summary: string;
+  } | null>(null);
 
   const handleRepoInfoClick = (repo: RepoData, e: MouseEvent) => {
     e.stopPropagation();
@@ -128,6 +134,7 @@ export const RepoSidebar = ({
   };
 
   const updateSession = useStore((state) => state.updateSession);
+  const removeSession = useStore((state) => state.removeSession);
   const request = useStore((state) => state.request);
 
   const startRename = (sessionId: string, currentSummary: string) => {
@@ -158,6 +165,70 @@ export const RepoSidebar = ({
 
   const cancelRename = () => {
     setEditingSessionId(null);
+  };
+
+  const handleDeleteSessionClick = (
+    session: { sessionId: string; summary: string; messageCount: number },
+    workspaceId: string,
+  ) => {
+    setSessionToDelete({
+      sessionId: session.sessionId,
+      workspaceId,
+      summary: session.summary || 'New Chat',
+    });
+    setSessionAlertOpen(true);
+  };
+
+  const handleConfirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+
+    const { sessionId, workspaceId } = sessionToDelete;
+    const workspace = workspaces[workspaceId];
+    if (!workspace) return;
+
+    // Find the session to check if it has messages
+    const session = (sessions[workspaceId] || []).find(
+      (s) => s.sessionId === sessionId,
+    );
+    const isLocalOnly = !session || session.messageCount === 0;
+
+    try {
+      // Only call API if session has messages (persisted to backend)
+      if (!isLocalOnly) {
+        const result = await request('sessions.remove', {
+          cwd: workspace.worktreePath,
+          sessionId,
+        });
+
+        if (!result.success) {
+          console.error('Failed to delete session:', result.error);
+          setSessionAlertOpen(false);
+          setSessionToDelete(null);
+          return;
+        }
+      }
+
+      // Remove from local store
+      removeSession(workspaceId, sessionId);
+
+      // Auto-select next session if this was selected
+      if (selectedSessionId === sessionId) {
+        const remaining = (sessions[workspaceId] || [])
+          .filter((s) => s.sessionId !== sessionId)
+          .sort((a, b) => b.modified - a.modified);
+
+        if (remaining.length > 0) {
+          selectSession(remaining[0].sessionId);
+        } else {
+          selectSession(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+    }
+
+    setSessionAlertOpen(false);
+    setSessionToDelete(null);
   };
 
   return (
@@ -390,6 +461,17 @@ export const RepoSidebar = ({
                                     >
                                       Rename
                                     </ContextMenuItem>
+                                    <ContextMenuItem
+                                      onClick={() =>
+                                        handleDeleteSessionClick(
+                                          session,
+                                          workspaceId,
+                                        )
+                                      }
+                                      className="text-red-500"
+                                    >
+                                      Delete
+                                    </ContextMenuItem>
                                   </ContextMenuPopup>
                                 </ContextMenu>
                               );
@@ -510,6 +592,31 @@ export const RepoSidebar = ({
             <Button
               variant="destructive"
               onClick={handleConfirmDelete}
+              className="gap-2"
+            >
+              <HugeiconsIcon icon={DeleteIcon} size={16} strokeWidth={1.5} />
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
+
+      <AlertDialog open={sessionAlertOpen} onOpenChange={setSessionAlertOpen}>
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{sessionToDelete?.summary}". This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose>
+              <Button variant="outline">Cancel</Button>
+            </AlertDialogClose>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteSession}
               className="gap-2"
             >
               <HugeiconsIcon icon={DeleteIcon} size={16} strokeWidth={1.5} />
