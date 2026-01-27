@@ -11,6 +11,7 @@ import {
   DatabaseIcon,
   CloudIcon,
   Comment01Icon,
+  HelpCircleIcon,
 } from '@hugeicons/core-free-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import type { RepoData } from '../client/types/entities';
@@ -357,6 +358,8 @@ export const RepoSidebar = ({
                               ] || { status: 'idle' };
                               const isProcessing =
                                 processing.status === 'processing';
+                              const isAwaitingApproval =
+                                processing.status === 'awaiting_approval';
                               const isFailed = processing.status === 'failed';
                               const textColor = isFailed
                                 ? '#ef4444'
@@ -393,6 +396,13 @@ export const RepoSidebar = ({
                                   >
                                     {isProcessing ? (
                                       <Spinner className="size-3.5" />
+                                    ) : isAwaitingApproval ? (
+                                      <HugeiconsIcon
+                                        icon={HelpCircleIcon}
+                                        size={14}
+                                        strokeWidth={1.5}
+                                        style={{ color: '#f59e0b' }}
+                                      />
                                     ) : (
                                       <HugeiconsIcon
                                         icon={Comment01Icon}
