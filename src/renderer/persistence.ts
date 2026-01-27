@@ -8,6 +8,15 @@ import type {
   SendMessageWith,
 } from './store/slices/desktopSettings';
 
+// Settings active tab type
+type SettingsActiveTab =
+  | 'preferences'
+  | 'chat'
+  | 'appearance'
+  | 'providers'
+  | 'mcp'
+  | 'skills';
+
 // Define the persistable state shape
 interface PersistedState {
   repos: Record<string, any>;
@@ -18,6 +27,9 @@ interface PersistedState {
   sessions: Record<string, any>;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
+  // Settings state
+  showSettings: boolean;
+  settingsActiveTab: SettingsActiveTab;
   // UISlice state
   contentPanelTabs: ContentPanelTab[];
   contentPanelActiveTab: ContentPanelTab | null;
@@ -27,6 +39,8 @@ interface PersistedState {
   // DesktopSettings state
   theme: ThemeValue;
   sendMessageWith: SendMessageWith;
+  terminalFontSize: number;
+  terminalFont: string;
 }
 
 // Debounce helper
@@ -80,6 +94,9 @@ export function setupPersistence(store: StoreApi<any>): void {
       sessions: state.sessions || {},
       openRepoAccordions: state.openRepoAccordions || [],
       expandedSessionGroups: state.expandedSessionGroups || {},
+      // Settings state
+      showSettings: state.showSettings ?? false,
+      settingsActiveTab: state.settingsActiveTab ?? 'preferences',
       // UISlice state
       contentPanelTabs: state.contentPanelTabs ?? ['terminal'],
       contentPanelActiveTab: state.contentPanelActiveTab ?? 'terminal',
@@ -89,6 +106,8 @@ export function setupPersistence(store: StoreApi<any>): void {
       // DesktopSettings state
       theme: state.theme ?? 'system',
       sendMessageWith: state.sendMessageWith ?? 'enter',
+      terminalFontSize: state.terminalFontSize ?? 12,
+      terminalFont: state.terminalFont ?? '',
     };
   };
 
@@ -144,6 +163,9 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       sessions = {},
       openRepoAccordions = [],
       expandedSessionGroups = {},
+      // Settings state
+      showSettings = false,
+      settingsActiveTab = 'preferences',
       // UISlice state
       contentPanelTabs = ['terminal'],
       contentPanelActiveTab = 'terminal',
@@ -153,6 +175,8 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       // DesktopSettings state
       theme = 'system',
       sendMessageWith = 'enter',
+      terminalFontSize = 12,
+      terminalFont = '',
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -185,6 +209,9 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         sessions,
         openRepoAccordions,
         expandedSessionGroups,
+        // Settings state
+        showSettings,
+        settingsActiveTab,
         // UISlice state
         contentPanelTabs,
         contentPanelActiveTab,
@@ -207,6 +234,8 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         // DesktopSettings state
         theme,
         sendMessageWith,
+        terminalFontSize,
+        terminalFont,
       },
       false,
     );

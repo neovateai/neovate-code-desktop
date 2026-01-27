@@ -164,7 +164,7 @@ export const RepoSidebar = ({
     <div className="h-full flex flex-col">
       {/* <RepoSidebar.Header /> */}
 
-      <ScrollArea className="flex-1 p-2 pt-0" orientation="vertical">
+      <ScrollArea className="flex-1 p-2 pt-0">
         {repos.length === 0 ? (
           <Empty>
             <EmptyMedia variant="icon">
@@ -255,22 +255,18 @@ export const RepoSidebar = ({
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const workspaceSessions =
-                                  sessions[workspaceId] || [];
-                                const currentSession = workspaceSessions.find(
-                                  (s) => s.sessionId === selectedSessionId,
-                                );
-                                const currentSessionMessages = selectedSessionId
-                                  ? messages[selectedSessionId] || []
-                                  : [];
-                                const isCurrentSessionEmpty =
-                                  selectedWorkspaceId === workspaceId &&
-                                  currentSession &&
-                                  currentSessionMessages.length === 0;
+                                const workspaceSessions = (
+                                  sessions[workspaceId] || []
+                                )
+                                  .slice()
+                                  .sort((a, b) => b.modified - a.modified);
+                                const topSession = workspaceSessions[0];
+                                const isTopSessionEmpty =
+                                  topSession && topSession.messageCount === 0;
 
                                 selectWorkspace(workspaceId);
-                                if (isCurrentSessionEmpty) {
-                                  selectSession(selectedSessionId!);
+                                if (isTopSessionEmpty) {
+                                  selectSession(topSession.sessionId);
                                 } else {
                                   createSession();
                                 }
@@ -451,7 +447,7 @@ export const RepoSidebar = ({
             <DialogDescription>{selectedRepoForDialog?.name}</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 text-sm">
+          <div className="px-6 space-y-3 text-sm">
             <InfoRow
               icon={FolderIcon}
               label="Path"

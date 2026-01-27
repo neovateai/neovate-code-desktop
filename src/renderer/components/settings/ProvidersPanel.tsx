@@ -33,6 +33,7 @@ interface Provider {
   };
   validEnvs: string[];
   hasApiKey: boolean;
+  source?: string; // 'built-in' for built-in providers, undefined or other for custom
 }
 
 // Custom provider interface
@@ -41,20 +42,30 @@ interface CustomProvider {
   name: string;
   baseUrl: string;
   apiKey: string;
-  apiFormat: 'chat-completions' | 'responses' | 'anthropic';
-  models: { id: string; name: string }[]; // key/value pairs for models
+  apiFormat: 'anthropic' | 'openai' | 'responses';
+  models: Record<string, {}>; // model IDs as keys, empty objects as values
   createModelType?: 'anthropic';
 }
 
 // API format options
 const API_FORMAT_OPTIONS = [
-  { value: 'chat-completions', label: 'Chat Completions (/chat/completions)' },
+  { value: 'openai', label: 'Chat Completions (/chat/completions)' },
   { value: 'responses', label: 'Responses (/responses)' },
   { value: 'anthropic', label: 'Anthropic Messages (/v1/messages)' },
 ] as const;
 
 // OAuth providers that need special handling
 const OAUTH_PROVIDERS = ['github-copilot', 'antigravity'];
+
+// Slugify a string to create a valid provider ID
+const slugify = (str: string): string => {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/[\s_-]+/g, '-') // Replace spaces/underscores with hyphens
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+};
 
 // Check if a provider is active (has API key configured or has valid env vars)
 const isProviderActive = (provider: Provider): boolean => {
@@ -69,7 +80,7 @@ const openExternalUrl = (url: string) => {
 };
 
 interface ProviderModel {
-  name: string;
+  name?: string;
   modelId: string;
   value: string; // format: "providerId/modelId"
 }
@@ -105,18 +116,16 @@ export const ProvidersPanel = () => {
     null,
   );
 
-  // Custom provider state
-  const [customProviders, setCustomProviders] = useState<CustomProvider[]>([]);
+  // Custom provider state (modal only, no longer stored separately)
   const [showAddProviderModal, setShowAddProviderModal] = useState(false);
   const [newProvider, setNewProvider] = useState<Omit<CustomProvider, 'id'>>({
     name: '',
     baseUrl: '',
     apiKey: '',
-    apiFormat: 'chat-completions',
-    models: [],
+    apiFormat: 'openai',
+    models: {},
   });
   const [newModelId, setNewModelId] = useState('');
-  const [newModelName, setNewModelName] = useState('');
 
   // Model test state
   const [showTestDropdown, setShowTestDropdown] = useState(false);
@@ -205,29 +214,6 @@ export const ProvidersPanel = () => {
     loadModels();
   }, [request]);
 
-  // Load custom providers from config
-  useEffect(() => {
-    const loadCustomProviders = async () => {
-      try {
-        const result = await request('config.get', {
-          cwd: '/tmp',
-          isGlobal: true,
-          key: 'customProviders',
-        });
-        if (result.success && result.data.value) {
-          const parsed =
-            typeof result.data.value === 'string'
-              ? JSON.parse(result.data.value)
-              : result.data.value;
-          setCustomProviders(parsed);
-        }
-      } catch (error) {
-        console.error('Failed to load custom providers:', error);
-      }
-    };
-    loadCustomProviders();
-  }, [request]);
-
   // Save custom provider
   const handleSaveCustomProvider = useCallback(async () => {
     if (!newProvider.name.trim() || !newProvider.baseUrl.trim()) {
@@ -239,44 +225,66 @@ export const ProvidersPanel = () => {
       return;
     }
 
-    const customProvider: CustomProvider = {
-      id: `custom-${Date.now()}`,
+    const providerId = slugify(newProvider.name.trim());
+
+    if (!providerId) {
+      toastManager.add({
+        type: 'error',
+        title: 'Validation Error',
+        description: 'Name must contain valid characters.',
+      });
+      return;
+    }
+
+    // Build the provider config object
+    const providerConfig = {
       name: newProvider.name.trim(),
-      baseUrl: newProvider.baseUrl.trim(),
-      apiKey: newProvider.apiKey.trim(),
-      apiFormat: newProvider.apiFormat,
+      options: {
+        baseURL: newProvider.baseUrl.trim(),
+        ...(newProvider.apiKey.trim()
+          ? { apiKey: newProvider.apiKey.trim() }
+          : {}),
+      },
       models: newProvider.models,
+      apiFormat: newProvider.apiFormat,
       ...(newProvider.apiFormat === 'anthropic'
         ? { createModelType: 'anthropic' as const }
         : {}),
     };
 
-    const updatedProviders = [...customProviders, customProvider];
-
     try {
       const result = await request('config.set', {
         cwd: '/tmp',
         isGlobal: true,
-        key: 'customProviders',
-        value: JSON.stringify(updatedProviders),
+        key: `provider.${providerId}`,
+        value: providerConfig,
       });
 
       if (result.success) {
-        setCustomProviders(updatedProviders);
         setShowAddProviderModal(false);
         setNewProvider({
           name: '',
           baseUrl: '',
           apiKey: '',
-          apiFormat: 'chat-completions',
-          models: [],
+          apiFormat: 'openai',
+          models: {},
         });
         setNewModelId('');
-        setNewModelName('');
+
+        // Refresh providers list from backend
+        const providersResult = await request('providers.list', {
+          cwd: '/tmp',
+        });
+        if (providersResult.success) {
+          setProviders(providersResult.data.providers as Provider[]);
+          // Auto-select the newly created provider
+          setSelectedProviderId(providerId);
+        }
+
         toastManager.add({
           type: 'success',
           title: 'Custom provider added',
-          description: `${customProvider.name} has been added.`,
+          description: `${newProvider.name.trim()} has been added.`,
         });
       }
     } catch (error) {
@@ -286,25 +294,27 @@ export const ProvidersPanel = () => {
         description: String(error),
       });
     }
-  }, [newProvider, customProviders, request]);
+  }, [newProvider, request]);
 
-  // Delete custom provider
+  // Delete custom provider (removes provider.{{id}} config key)
   const handleDeleteCustomProvider = useCallback(
     async (providerId: string) => {
-      const updatedProviders = customProviders.filter(
-        (p) => p.id !== providerId,
-      );
-
       try {
-        const result = await request('config.set', {
+        const result = await request('config.remove', {
           cwd: '/tmp',
           isGlobal: true,
-          key: 'customProviders',
-          value: JSON.stringify(updatedProviders),
+          key: `provider.${providerId}`,
         });
 
         if (result.success) {
-          setCustomProviders(updatedProviders);
+          // Refresh providers list from backend
+          const providersResult = await request('providers.list', {
+            cwd: '/tmp',
+          });
+          if (providersResult.success) {
+            setProviders(providersResult.data.providers as Provider[]);
+          }
+
           if (selectedProviderId === providerId) {
             setSelectedProviderId(providers[0]?.id || null);
           }
@@ -321,27 +331,25 @@ export const ProvidersPanel = () => {
         });
       }
     },
-    [customProviders, selectedProviderId, providers, request],
+    [selectedProviderId, providers, request],
   );
 
   // Add model to new provider
   const handleAddModel = useCallback(() => {
     if (!newModelId.trim()) return;
-    const modelName = newModelName.trim() || newModelId.trim();
     setNewProvider((prev) => ({
       ...prev,
-      models: [...prev.models, { id: newModelId.trim(), name: modelName }],
+      models: { ...prev.models, [newModelId.trim()]: {} },
     }));
     setNewModelId('');
-    setNewModelName('');
-  }, [newModelId, newModelName]);
+  }, [newModelId]);
 
   // Remove model from new provider
-  const handleRemoveModel = useCallback((index: number) => {
-    setNewProvider((prev) => ({
-      ...prev,
-      models: prev.models.filter((_, i) => i !== index),
-    }));
+  const handleRemoveModel = useCallback((modelId: string) => {
+    setNewProvider((prev) => {
+      const { [modelId]: _, ...rest } = prev.models;
+      return { ...prev, models: rest };
+    });
   }, []);
 
   // Load selected provider's config
@@ -694,7 +702,7 @@ export const ProvidersPanel = () => {
             {filteredProviders.map((provider) => (
               <button
                 key={provider.id}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group"
                 style={{
                   backgroundColor:
                     selectedProviderId === provider.id
@@ -719,85 +727,45 @@ export const ProvidersPanel = () => {
                 }}
               >
                 <span className="flex-1 truncate">{provider.name}</span>
-                {isProviderActive(provider) && (
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: '#22c55e' }}
-                    title="Active"
-                  />
-                )}
-              </button>
-            ))}
-
-            {/* Custom Providers */}
-            {customProviders
-              .filter(
-                (p) =>
-                  p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  p.id.toLowerCase().includes(searchQuery.toLowerCase()),
-              )
-              .map((customProvider) => (
-                <div
-                  key={customProvider.id}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group"
-                  style={{
-                    backgroundColor:
-                      selectedProviderId === customProvider.id
-                        ? 'var(--accent)'
-                        : 'transparent',
-                    color:
-                      selectedProviderId === customProvider.id
-                        ? 'var(--text-primary)'
-                        : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => setSelectedProviderId(customProvider.id)}
-                  onMouseEnter={(e) => {
-                    if (selectedProviderId !== customProvider.id) {
-                      e.currentTarget.style.backgroundColor =
-                        'var(--bg-base-hover)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (selectedProviderId !== customProvider.id) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }
-                  }}
-                >
-                  <span className="flex-1 truncate">{customProvider.name}</span>
-                  <span
-                    className="px-1 py-0.5 text-xs rounded"
-                    style={{
-                      backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                      color: '#8b5cf6',
-                    }}
-                  >
-                    Custom
-                  </span>
-                  {customProvider.apiKey && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {provider.source !== 'built-in' && (
+                    <button
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity"
+                      style={{ color: 'var(--text-secondary)' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCustomProvider(provider.id);
+                      }}
+                      title="Delete custom provider"
+                    >
+                      <HugeiconsIcon
+                        icon={Delete01Icon}
+                        size={14}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+                  )}
+                  {provider.source !== 'built-in' && (
                     <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{
+                        color: '#8b5cf6',
+                        fontSize: '12px',
+                      }}
+                      title="Custom provider"
+                    >
+                      ★
+                    </span>
+                  )}
+                  {isProviderActive(provider) && (
+                    <span
+                      className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: '#22c55e' }}
                       title="Active"
                     />
                   )}
-                  <button
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity"
-                    style={{ color: 'var(--text-secondary)' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteCustomProvider(customProvider.id);
-                    }}
-                    title="Delete custom provider"
-                  >
-                    <HugeiconsIcon
-                      icon={Delete01Icon}
-                      size={14}
-                      strokeWidth={1.5}
-                    />
-                  </button>
                 </div>
-              ))}
+              </button>
+            ))}
           </div>
 
           {/* Add custom provider button */}
@@ -967,7 +935,7 @@ export const ProvidersPanel = () => {
                                   'transparent';
                               }}
                             >
-                              {model.name}
+                              {model.name || model.modelId}
                             </button>
                           ))}
                         </div>
@@ -1244,9 +1212,9 @@ export const ProvidersPanel = () => {
                               <span
                                 className="truncate"
                                 style={{ color: 'var(--text-primary)' }}
-                                title={model.name}
+                                title={model.name || model.modelId}
                               >
-                                {model.name}
+                                {model.name || model.modelId}
                               </span>
                               {isCurrentModel && (
                                 <span
@@ -1540,33 +1508,6 @@ export const ProvidersPanel = () => {
                         }
                       }}
                     />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newModelName}
-                      onChange={(e) => setNewModelName(e.target.value)}
-                      placeholder="Display Name (optional, defaults to ID)"
-                      className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-base)',
-                        border: '1px solid var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--accent)';
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor =
-                          'var(--border-subtle)';
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddModel();
-                        }
-                      }}
-                    />
                     <Button
                       variant="outline"
                       size="sm"
@@ -1577,30 +1518,21 @@ export const ProvidersPanel = () => {
                     </Button>
                   </div>
                 </div>
-                {newProvider.models.length > 0 && (
+                {Object.keys(newProvider.models).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {newProvider.models.map((model, index) => (
+                    {Object.keys(newProvider.models).map((modelId) => (
                       <span
-                        key={index}
+                        key={modelId}
                         className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md"
                         style={{
                           backgroundColor: 'var(--bg-base)',
                           border: '1px solid var(--border-subtle)',
                           color: 'var(--text-primary)',
                         }}
-                        title={`ID: ${model.id}`}
                       >
-                        {model.name}
-                        <span
-                          style={{
-                            color: 'var(--text-secondary)',
-                            fontSize: '10px',
-                          }}
-                        >
-                          ({model.id})
-                        </span>
+                        {modelId}
                         <button
-                          onClick={() => handleRemoveModel(index)}
+                          onClick={() => handleRemoveModel(modelId)}
                           className="p-0.5 rounded hover:bg-opacity-20 transition-colors"
                           style={{ color: 'var(--text-secondary)' }}
                         >
@@ -1618,8 +1550,7 @@ export const ProvidersPanel = () => {
                   className="text-xs"
                   style={{ color: 'var(--text-secondary)' }}
                 >
-                  Enter model ID and optional display name. Press Enter or click
-                  Add.
+                  Enter model ID. Press Enter or click Add.
                 </p>
               </div>
             </div>
@@ -1638,11 +1569,10 @@ export const ProvidersPanel = () => {
                     name: '',
                     baseUrl: '',
                     apiKey: '',
-                    apiFormat: 'chat-completions',
-                    models: [],
+                    apiFormat: 'openai',
+                    models: {},
                   });
                   setNewModelId('');
-                  setNewModelName('');
                 }}
               >
                 Cancel

@@ -70,7 +70,8 @@ export function OpenAppButton({ cwd, request }: OpenAppButtonProps) {
 
   const handleOpenChange = async (open: boolean) => {
     if (open) {
-      setIsLoading(true);
+      // it's too fast, don't add loading since it will be shown for a split second
+      // setIsLoading(true);
       try {
         const response = await request('utils.detectApps', { cwd });
         if (response.success) {

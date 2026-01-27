@@ -1,3 +1,4 @@
+import { is, platform } from '@electron-toolkit/utils';
 import {
   app,
   BrowserWindow,
@@ -9,7 +10,6 @@ import {
   shell,
   Tray,
 } from 'electron';
-import { is, platform } from '@electron-toolkit/utils';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -172,7 +172,7 @@ function createWindow() {
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 12, y: 14 },
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -187,11 +187,11 @@ function createWindow() {
   }
 
   // Load renderer
-  if (is.dev) {
-    mainWindow.loadURL('http://localhost:5173');
+  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
   // Updates are checked when renderer calls updater.check

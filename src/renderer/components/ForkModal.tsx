@@ -174,7 +174,7 @@ export function ForkModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-lg border border-border">
+        <div className="mx-6 mt-4 max-h-[60vh] overflow-y-auto rounded-lg border border-border">
           {userMessages.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">
               No previous messages to fork from
@@ -228,7 +228,7 @@ export function ForkModal({
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="mx-6 mt-4 mb-6 flex items-center justify-between text-xs text-muted-foreground">
           <span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
               ↑

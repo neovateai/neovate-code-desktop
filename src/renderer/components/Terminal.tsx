@@ -11,6 +11,7 @@ import React, {
   memo,
 } from 'react';
 import { ipcMainCaller } from '../lib/ipc';
+import { useStore } from '../store';
 
 // XTerm theme configurations
 const darkTerminalTheme: ITheme = {
@@ -92,7 +93,7 @@ interface TerminalTab {
   fitAddon: FitAddon | null;
 }
 
-// Define the context type
+// Terminal context type
 interface TerminalContextType {
   activeTabId: string;
   tabs: TerminalTab[];
@@ -101,6 +102,8 @@ interface TerminalContextType {
   closeTab: (tabId: string) => void;
   cwd: string;
   isDark: boolean;
+  terminalFontSize: number;
+  terminalFont: string;
 }
 
 // Create the context
@@ -118,15 +121,21 @@ export function useTerminalContext() {
 }
 
 // Create a new xterm instance with configuration
-function createXTermInstance(isDark: boolean): {
+function createXTermInstance(
+  isDark: boolean,
+  fontSize: number,
+  fontFamily: string,
+): {
   xterm: XTerm;
   fitAddon: FitAddon;
 } {
+  const defaultFontFamily =
+    'JetBrains Mono, Menlo, Monaco, "Courier New", monospace';
   const xterm = new XTerm({
     cursorBlink: true,
     cursorStyle: 'bar',
-    fontFamily: 'JetBrains Mono, Menlo, Monaco, "Courier New", monospace',
-    fontSize: 13,
+    fontFamily: fontFamily || defaultFontFamily,
+    fontSize,
     lineHeight: 1.2,
     theme: isDark ? darkTerminalTheme : lightTerminalTheme,
   });
@@ -287,6 +296,7 @@ function TerminalPane({
   cwd: string;
   isDark: boolean;
 }) {
+  const { terminalFontSize, terminalFont } = useTerminalContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
@@ -296,6 +306,17 @@ function TerminalPane({
       tab.xterm.options.theme = isDark ? darkTerminalTheme : lightTerminalTheme;
     }
   }, [isDark, tab.xterm]);
+
+  // Update XTerm font settings when they change
+  useEffect(() => {
+    if (tab.xterm && initializedRef.current) {
+      const defaultFontFamily =
+        'JetBrains Mono, Menlo, Monaco, "Courier New", monospace';
+      tab.xterm.options.fontSize = terminalFontSize;
+      tab.xterm.options.fontFamily = terminalFont || defaultFontFamily;
+      tab.fitAddon?.fit();
+    }
+  }, [terminalFontSize, terminalFont, tab.xterm, tab.fitAddon]);
 
   useEffect(() => {
     if (!isActive || !containerRef.current) {
@@ -321,7 +342,11 @@ function TerminalPane({
       }
 
       try {
-        const { xterm, fitAddon } = createXTermInstance(isDark);
+        const { xterm, fitAddon } = createXTermInstance(
+          isDark,
+          terminalFontSize,
+          terminalFont,
+        );
         tab.xterm = xterm;
         tab.fitAddon = fitAddon;
 
@@ -489,10 +514,12 @@ function TerminalXTermView() {
 // Main component (internal)
 function TerminalBase({ cwd, hidden }: { cwd: string; hidden?: boolean }) {
   const isDark = useIsDarkMode();
+  const terminalFontSize = useStore((state) => state.terminalFontSize);
+  const terminalFont = useStore((state) => state.terminalFont);
 
   // Create initial tab with stable ID
   const [{ tabs, activeTabId }, setTerminalState] = useState(() => {
-    const initialTab = createTerminalTab('Terminal 1');
+    const initialTab = createTerminalTab('Terminal');
     return {
       tabs: [initialTab],
       activeTabId: initialTab.id,
@@ -563,6 +590,8 @@ function TerminalBase({ cwd, hidden }: { cwd: string; hidden?: boolean }) {
     closeTab,
     cwd,
     isDark,
+    terminalFontSize,
+    terminalFont,
   };
 
   return (

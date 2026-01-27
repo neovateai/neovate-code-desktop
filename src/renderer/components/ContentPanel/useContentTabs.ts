@@ -56,7 +56,7 @@ function createDefaultTerminalTab(): ContentTab {
   return {
     id: generateTabId(),
     type: 'terminal',
-    name: 'Terminal 1',
+    name: 'Terminal',
     ptyId: null,
   };
 }

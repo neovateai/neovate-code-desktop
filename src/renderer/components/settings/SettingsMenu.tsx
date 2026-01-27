@@ -4,6 +4,9 @@ import {
   ArrowLeftIcon,
   SettingsIcon,
   CloudIcon,
+  PaintBrushIcon,
+  MessageIcon,
+  MagicWandIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
 import type { SettingsMenuId } from './SettingsPage';
@@ -16,7 +19,10 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
+  { id: 'chat', label: 'Chat', icon: MessageIcon },
+  { id: 'appearance', label: 'Appearance', icon: PaintBrushIcon },
   { id: 'providers', label: 'Providers', icon: CloudIcon },
+  { id: 'skills', label: 'Skills', icon: MagicWandIcon },
 ];
 
 export const SettingsMenu = ({
@@ -34,6 +40,8 @@ export const SettingsMenu = ({
       style={{
         backgroundColor: 'var(--bg-surface)',
         borderRight: '1px solid var(--border-subtle)',
+        // @ts-expect-error - Electron specific CSS property
+        WebkitAppRegion: 'drag',
       }}
     >
       {/* Back to app button */}
@@ -42,6 +50,8 @@ export const SettingsMenu = ({
         style={{
           color: 'var(--text-secondary)',
           borderBottom: '1px solid var(--border-subtle)',
+          // @ts-expect-error - Electron specific CSS property
+          WebkitAppRegion: 'no-drag',
         }}
         onClick={() => setShowSettings(false)}
         onMouseEnter={(e) => {
@@ -72,6 +82,8 @@ export const SettingsMenu = ({
                 borderRadius: '6px',
                 margin: '0 8px',
                 width: 'calc(100% - 16px)',
+                // @ts-expect-error - Electron specific CSS property
+                WebkitAppRegion: 'no-drag',
               }}
               onClick={() => onMenuSelect(item.id)}
               onMouseEnter={(e) => {

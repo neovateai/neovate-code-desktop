@@ -82,7 +82,13 @@ interface UISelectionState {
   selectedWorkspaceId: string | null;
   selectedSessionId: string | null;
   showSettings: boolean;
-  settingsActiveTab: 'preferences' | 'providers' | 'mcp';
+  settingsActiveTab:
+    | 'preferences'
+    | 'chat'
+    | 'appearance'
+    | 'providers'
+    | 'mcp'
+    | 'skills';
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
@@ -124,12 +130,15 @@ interface CoreActions {
   selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
-  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => void;
+  setSettingsActiveTab: (
+    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
+  ) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
   setTestComponentVisible: (visible: boolean) => void;
 
   // Session control actions
+  updateSessions: (workspaceId: string) => Promise<void>;
   cancelSession: (sessionId: string) => Promise<void>;
   clearSession: (sessionId: string) => void;
 
@@ -747,7 +756,9 @@ const useStore = create<Store>()((set, get, api) => ({
     }));
   },
 
-  setSettingsActiveTab: (tab: 'preferences' | 'providers' | 'mcp') => {
+  setSettingsActiveTab: (
+    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
+  ) => {
     set(() => ({
       settingsActiveTab: tab,
     }));
@@ -770,6 +781,43 @@ const useStore = create<Store>()((set, get, api) => ({
 
   setTestComponentVisible: (visible: boolean) => {
     set({ isTestComponentVisible: visible });
+  },
+
+  updateSessions: async (workspaceId: string) => {
+    const { request, workspaces, sessions, setSessions } = get();
+
+    const workspace = workspaces[workspaceId];
+    if (!workspace) {
+      return;
+    }
+
+    try {
+      const response = await request('sessions.list', {
+        cwd: workspace.worktreePath,
+      });
+
+      if (response.success) {
+        const backendSessions = response.data.sessions.map((s: any) => ({
+          ...s,
+          modified: new Date(s.modified).getTime(),
+          created: new Date(s.created).getTime(),
+        }));
+
+        // Preserve local-only sessions (messageCount === 0 and not in backend)
+        const currentSessions = sessions[workspaceId] || [];
+        const backendSessionIds = new Set(
+          backendSessions.map((s: { sessionId: string }) => s.sessionId),
+        );
+        const localOnlySessions = currentSessions.filter(
+          (s) => s.messageCount === 0 && !backendSessionIds.has(s.sessionId),
+        );
+
+        setSessions(workspaceId, [...localOnlySessions, ...backendSessions]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch sessions:', error);
+      setSessions(workspaceId, []);
+    }
   },
 
   cancelSession: async (sessionId: string) => {
