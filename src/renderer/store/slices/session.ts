@@ -69,7 +69,7 @@ export function getInputMode(value: string): InputMode {
 
 // Session-scoped processing state
 export interface SessionProcessingState {
-  status: 'idle' | 'processing' | 'failed';
+  status: 'idle' | 'processing' | 'awaiting_approval' | 'failed';
   processingStartTime: number | null;
   processingToken: number;
   error: string | null;
@@ -347,6 +347,14 @@ export const createSessionSlice: StateCreator<
 
     return new Promise((resolve) => {
       set((state) => ({
+        sessionProcessing: {
+          ...state.sessionProcessing,
+          [sessionId]: {
+            ...(state.sessionProcessing[sessionId] ||
+              defaultSessionProcessingState),
+            status: 'awaiting_approval',
+          },
+        },
         approvalBySession: {
           ...state.approvalBySession,
           [sessionId]: {
@@ -356,8 +364,16 @@ export const createSessionSlice: StateCreator<
               result: ApprovalResult,
               resultParams?: Record<string, unknown>,
             ) => {
-              // Clear approval state
+              // Clear approval state and restore processing status
               set((s) => ({
+                sessionProcessing: {
+                  ...s.sessionProcessing,
+                  [sessionId]: {
+                    ...(s.sessionProcessing[sessionId] ||
+                      defaultSessionProcessingState),
+                    status: 'processing',
+                  },
+                },
                 approvalBySession: {
                   ...s.approvalBySession,
                   [sessionId]: null,
