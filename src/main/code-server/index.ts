@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { CODE_SERVER_PORT, EXTENSIONS_DIR, DATA_DIR } from './constants';
+import { CODE_SERVER_PORT, DATA_DIR, EXTENSIONS_DIR } from './constants';
 import {
   isCodeServerInstalled,
   downloadCodeServer,
@@ -100,7 +100,6 @@ class CodeServerManager {
     if (!installed) {
       await downloadCodeServer(onProgress);
     }
-
     // 2. Override settings for minimal UI
     await overrideCodeServerSettings();
 

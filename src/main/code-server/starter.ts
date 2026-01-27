@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { getCodeServerBinaryPath } from './constants';
-import { overrideSettings } from './overrides';
+
 /**
  * 基于code server 产物进行调用启动
  */
@@ -24,7 +24,6 @@ export async function codeServerStarter(opts: {
       'user-data-dir': dataDir,
     };
     const mergedArgs = await setDefaults(functionArgs);
-    overrideSettings();
     return wrapper.start(mergedArgs);
   } catch (e) {
     console.error(`Code Server Starter Failed: ${e}`);
