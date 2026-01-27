@@ -1,7 +1,5 @@
-import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
 import { DATA_DIR } from './constants';
 
 /**
@@ -13,13 +11,13 @@ const OVERRIDE_SETTINGS = {
   /** 编辑器菜单 */
   'window.menuBarVisibility': 'toggle',
   /** 隐藏底部状态栏 */
-  'workbench.statusBar.visible': true,
+  'workbench.statusBar.visible': false,
   /** 侧边栏放在右侧 */
   'workbench.sideBar.location': 'right',
   /** 隐藏辅助侧边栏 */
   'workbench.secondarySideBar.defaultVisibility': 'hidden',
   /** 侧边栏菜单: 放在top的话会导致title 无法隐藏 */
-  'workbench.activityBar.location': 'default',
+  'workbench.activityBar.location': 'hidden',
   /** 隐藏顶部操作能力 */
   'window.commandCenter': false,
   /** 隐藏顶部标题路径文本 */
@@ -30,22 +28,26 @@ const OVERRIDE_SETTINGS = {
   'security.workspace.trust.enabled': false,
   /** 禁用空入口时的欢迎特性 */
   'workbench.startupEditor': 'none',
+  /** 行号前面的空间，用于小灯泡 */
+  'editor.glyphMargin': false,
+  /** 代码折叠功能 */
+  // 'editor.folding': false,
+  /** 隐藏编辑器小地图 */
+  'editor.minimap.enabled': false,
   // 'workbench.editor.showTabs': 'multiple',
   // 'workbench.editor.editorActionsLocation': 'hidden',
   // 'breadcrumbs.enabled': false,
-  // 'editor.glyphMargin': false,
-  // 'editor.folding': false,
-  // 'editor.minimap.enabled': false,
   // 'editor.stickyScroll.enabled': false,
   // 'editor.fontFamily':
   //   "JetBrains Mono, Menlo, Monaco, 'Courier New', monospace",
   // 'editor.fontSize': 13,
   // 'editor.lineHeight': 1.4,
+  // 'telemetry.telemetryLevel': 'off',
+  /** 不生效的属性 */
   // 'window.customTitleBarVisibility': 'hidden',
   // 'workbench.sideBar.visible': false,
   // 'workbench.activityBar.visible': false,
   // 'window.titleBarStyle': 'native',
-  // 'telemetry.telemetryLevel': 'off',
 };
 
 /**

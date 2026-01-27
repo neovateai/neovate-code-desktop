@@ -67,8 +67,8 @@
     "date-fns": "^4.1.0",
     "diff": "^8.0.3",
     "electron": "^40.0.0",
-    "electron-vite": "^5.0.0",
     "electron-builder": "^26.4.0",
+    "electron-vite": "^5.0.0",
     "gpt-tokenizer": "^3.4.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
@@ -91,6 +91,7 @@
   "dependencies": {
     "@neovate/code": "^0.25.0",
     "electron-updater": "^6.7.3",
+    "minimatch": "^9.0.5",
     "node-pty": "^1.1.0"
   },
   "lint-staged": {
