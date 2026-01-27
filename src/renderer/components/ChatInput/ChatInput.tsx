@@ -102,6 +102,7 @@ export const ChatInput = memo(
     const getSessionProcessing = useStore(
       (state) => state.getSessionProcessing,
     );
+    const developerMode = useStore((state) => state.developerMode);
 
     // Get processing state for current session (for debug info)
     const processingState = sessionId ? getSessionProcessing(sessionId) : null;
@@ -440,18 +441,20 @@ export const ChatInput = memo(
     return (
       <div className="relative">
         {/* Debug Info */}
-        <div
-          className="mb-2 px-3 py-2 rounded-md text-xs font-mono"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            color: 'var(--text-tertiary)',
-          }}
-        >
-          <div>Session ID: {sessionId || 'null'}</div>
-          <div>CWD: {cwd || 'null'}</div>
-          <div>Processing: {processingState?.status || 'null'}</div>
-        </div>
+        {developerMode && (
+          <div
+            className="mb-2 px-3 py-2 rounded-md text-xs font-mono"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-tertiary)',
+            }}
+          >
+            <div>Session ID: {sessionId || 'null'}</div>
+            <div>CWD: {cwd || 'null'}</div>
+            <div>Processing: {processingState?.status || 'null'}</div>
+          </div>
+        )}
 
         {/* Suggestion Dropdown */}
         {suggestions.type && (

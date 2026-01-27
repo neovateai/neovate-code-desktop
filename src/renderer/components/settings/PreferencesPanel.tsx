@@ -42,6 +42,8 @@ export const PreferencesPanel = () => {
 
   const globalConfig = useStore((state) => state.globalConfig);
   const isConfigLoading = useStore((state) => state.isConfigLoading);
+  const developerMode = useStore((state) => state.developerMode);
+  const setDeveloperMode = useStore((state) => state.setDeveloperMode);
 
   const handleSendFeedback = () => {
     window.electron?.openExternal(
@@ -107,6 +109,36 @@ export const PreferencesPanel = () => {
             )}
             Check for Updates
           </Button>
+        </SettingsRow>
+
+        {/* Developer Mode */}
+        <SettingsRow
+          title="Developer Mode"
+          description="Show debug info in chat input and other places"
+        >
+          <button
+            type="button"
+            onClick={() => setDeveloperMode(!developerMode)}
+            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+            style={{
+              backgroundColor: developerMode
+                ? 'var(--brand-primary, #3b82f6)'
+                : 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
+            <span
+              className="inline-block h-4 w-4 transform rounded-full transition-transform"
+              style={{
+                backgroundColor: developerMode
+                  ? 'white'
+                  : 'var(--text-secondary)',
+                transform: developerMode
+                  ? 'translateX(22px)'
+                  : 'translateX(4px)',
+              }}
+            />
+          </button>
         </SettingsRow>
       </div>
     </div>
