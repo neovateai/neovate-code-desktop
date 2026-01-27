@@ -255,22 +255,18 @@ export const RepoSidebar = ({
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const workspaceSessions =
-                                  sessions[workspaceId] || [];
-                                const currentSession = workspaceSessions.find(
-                                  (s) => s.sessionId === selectedSessionId,
-                                );
-                                const currentSessionMessages = selectedSessionId
-                                  ? messages[selectedSessionId] || []
-                                  : [];
-                                const isCurrentSessionEmpty =
-                                  selectedWorkspaceId === workspaceId &&
-                                  currentSession &&
-                                  currentSessionMessages.length === 0;
+                                const workspaceSessions = (
+                                  sessions[workspaceId] || []
+                                )
+                                  .slice()
+                                  .sort((a, b) => b.modified - a.modified);
+                                const topSession = workspaceSessions[0];
+                                const isTopSessionEmpty =
+                                  topSession && topSession.messageCount === 0;
 
                                 selectWorkspace(workspaceId);
-                                if (isCurrentSessionEmpty) {
-                                  selectSession(selectedSessionId!);
+                                if (isTopSessionEmpty) {
+                                  selectSession(topSession.sessionId);
                                 } else {
                                   createSession();
                                 }
