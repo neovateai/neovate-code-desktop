@@ -1117,6 +1117,7 @@ type UtilsPlaySoundOutput = SuccessResponse | ErrorResponse;
 type ToolApprovalInput = {
   toolUse: ToolUse;
   category?: ApprovalCategory;
+  sessionId: string;
 };
 
 type ToolApprovalOutput = {

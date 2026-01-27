@@ -361,8 +361,9 @@ const useStore = create<Store>()((set, get, api) => ({
     const { messageBus } = get();
     if (messageBus) {
       messageBus.registerHandler('toolApproval', async (data: any) => {
-        const { toolUse, category } = data;
-        const sessionId = get().selectedSessionId;
+        const { sessionId: dataSessionId, toolUse, category } = data;
+        // Use sessionId from data if available, otherwise fall back to selected session
+        const sessionId = dataSessionId ?? get().selectedSessionId;
         if (!sessionId) {
           return { approved: false, denyReason: 'No active session' };
         }
