@@ -5,6 +5,7 @@ import { Button } from './components/ui/button';
 import { TestMessages } from './TestMessages';
 import { TestUIComponents } from './components/TestUIComponents';
 import { TestHugeIcons } from './components/test/TestHugeIcons';
+import { ExamplePluginDemo } from './components/ExamplePluginDemo';
 
 const TestComponent = () => {
   const isVisible = useStore((state) => state.isTestComponentVisible);
@@ -262,6 +263,12 @@ const TestComponent = () => {
       </div>
       <div style={{ marginTop: '16px' }}>
         <TestUIComponents />
+      </div>
+      <div style={{ marginTop: '16px' }}>
+        <div style={{ fontWeight: 600, marginBottom: '8px' }}>
+          Example Plugin Demo:
+        </div>
+        <ExamplePluginDemo />
       </div>
     </div>
   );

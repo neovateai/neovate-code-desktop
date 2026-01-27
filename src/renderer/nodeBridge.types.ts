@@ -1221,6 +1221,12 @@ export type HandlerMap = {
 
   // UI Bridge handlers
   toolApproval: { input: ToolApprovalInput; output: ToolApprovalOutput };
+
+  // Example plugin handlers
+  'example.hello': {
+    input: { cwd: string; name?: string };
+    output: { success: true; data: { message: string } };
+  };
 };
 
 // ============================================================================
