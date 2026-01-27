@@ -40,6 +40,8 @@ export interface EntitiesSliceActions {
   removeSession: (workspaceId: string, sessionId: string) => void;
   createSession: () => string;
   createOrSelectEmptySession: (workspaceId?: string) => string | null;
+  selectPrevSession: () => void;
+  selectNextSession: () => void;
 
   // Messages
   addMessage: (
@@ -57,7 +59,9 @@ interface StoreWithSelections {
   selectedWorkspaceId: string | null;
   selectedSessionId: string | null;
   openRepoAccordions: string[];
+  expandedSessionGroups: Record<string, boolean>;
   selectSession: (id: string | null) => void;
+  setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => void;
 }
 
 type EntitiesStore = EntitiesSlice & StoreWithSelections;
@@ -355,5 +359,84 @@ export const createEntitiesSlice: StateCreator<
         [sessionId]: messages,
       },
     }));
+  },
+
+  selectPrevSession: () => {
+    const {
+      selectedWorkspaceId,
+      selectedSessionId,
+      sessions,
+      selectSession,
+      expandedSessionGroups,
+      setSessionGroupExpanded,
+    } = get();
+
+    if (!selectedWorkspaceId) return;
+
+    const workspaceSessions = (sessions[selectedWorkspaceId] || [])
+      .slice()
+      .sort((a, b) => b.modified - a.modified);
+
+    if (workspaceSessions.length === 0) return;
+
+    const currentIndex = workspaceSessions.findIndex(
+      (s) => s.sessionId === selectedSessionId,
+    );
+
+    // At first session or no session selected, do nothing
+    if (currentIndex <= 0) return;
+
+    const prevIndex = currentIndex - 1;
+
+    // Auto-expand session list if target is beyond visible limit (5)
+    const SESSION_LIMIT = 5;
+    if (
+      prevIndex >= SESSION_LIMIT &&
+      !expandedSessionGroups[selectedWorkspaceId]
+    ) {
+      setSessionGroupExpanded(selectedWorkspaceId, true);
+    }
+
+    selectSession(workspaceSessions[prevIndex].sessionId);
+  },
+
+  selectNextSession: () => {
+    const {
+      selectedWorkspaceId,
+      selectedSessionId,
+      sessions,
+      selectSession,
+      expandedSessionGroups,
+      setSessionGroupExpanded,
+    } = get();
+
+    if (!selectedWorkspaceId) return;
+
+    const workspaceSessions = (sessions[selectedWorkspaceId] || [])
+      .slice()
+      .sort((a, b) => b.modified - a.modified);
+
+    if (workspaceSessions.length === 0) return;
+
+    const currentIndex = workspaceSessions.findIndex(
+      (s) => s.sessionId === selectedSessionId,
+    );
+
+    // At last session, do nothing
+    if (currentIndex >= workspaceSessions.length - 1) return;
+
+    // No session selected, select first
+    const nextIndex = currentIndex < 0 ? 0 : currentIndex + 1;
+
+    // Auto-expand session list if target is beyond visible limit (5)
+    const SESSION_LIMIT = 5;
+    if (
+      nextIndex >= SESSION_LIMIT &&
+      !expandedSessionGroups[selectedWorkspaceId]
+    ) {
+      setSessionGroupExpanded(selectedWorkspaceId, true);
+    }
+
+    selectSession(workspaceSessions[nextIndex].sessionId);
   },
 });

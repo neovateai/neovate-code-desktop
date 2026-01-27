@@ -15,6 +15,8 @@ import {
 const KEYBINDING_ACTIONS: KeybindingAction[] = [
   'openSettings',
   'newChat',
+  'prevSession',
+  'nextSession',
   'closeSettings',
   'toggleTheme',
   'clearTerminal',

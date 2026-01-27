@@ -118,7 +118,9 @@ export type KeybindingAction =
   | 'newChat'
   | 'closeSettings'
   | 'toggleTheme'
-  | 'clearTerminal';
+  | 'clearTerminal'
+  | 'prevSession'
+  | 'nextSession';
 
 /**
  * Actions that are read-only (not customizable by user)
@@ -139,6 +141,8 @@ export const KEYBINDING_LABELS: Record<KeybindingAction, string> = {
   closeSettings: 'Close Settings',
   toggleTheme: 'Toggle Theme',
   clearTerminal: 'Clear Terminal',
+  prevSession: 'Previous Session',
+  nextSession: 'Next Session',
 };
 
 /**
@@ -150,4 +154,6 @@ export const DEFAULT_KEYBINDINGS: Record<KeybindingAction, string> = {
   closeSettings: 'Cmd+Esc',
   toggleTheme: 'Cmd+Option+T',
   clearTerminal: 'Cmd+K',
+  prevSession: 'Cmd+Option+ArrowUp',
+  nextSession: 'Cmd+Option+ArrowDown',
 };

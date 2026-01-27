@@ -86,14 +86,16 @@ function App() {
         showSettings,
         onboardingVisible,
         createOrSelectEmptySession,
+        selectPrevSession,
+        selectNextSession,
       } = useStore.getState();
 
-      // Check if matches newChat keybinding
+      // Don't handle shortcuts when in settings or onboarding
+      if (showSettings || onboardingVisible) return;
+
+      // New Chat
       if (matchesBinding(e, keybindings.newChat)) {
         e.preventDefault();
-
-        // Don't create chat when in settings or onboarding
-        if (showSettings || onboardingVisible) return;
 
         if (selectedWorkspaceId) {
           createOrSelectEmptySession();
@@ -101,6 +103,21 @@ function App() {
           // Dispatch focus event for ChatInput to pick up
           window.dispatchEvent(new CustomEvent('chat-input:focus'));
         }
+        return;
+      }
+
+      // Previous Session
+      if (matchesBinding(e, keybindings.prevSession)) {
+        e.preventDefault();
+        selectPrevSession();
+        return;
+      }
+
+      // Next Session
+      if (matchesBinding(e, keybindings.nextSession)) {
+        e.preventDefault();
+        selectNextSession();
+        return;
       }
     };
 

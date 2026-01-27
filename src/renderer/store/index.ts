@@ -143,6 +143,7 @@ interface CoreActions {
   ) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
+  setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => void;
   setTestComponentVisible: (visible: boolean) => void;
 
   // Session control actions
@@ -790,6 +791,15 @@ const useStore = create<Store>()((set, get, api) => ({
       expandedSessionGroups: {
         ...state.expandedSessionGroups,
         [workspaceId]: !state.expandedSessionGroups[workspaceId],
+      },
+    }));
+  },
+
+  setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => {
+    set((state) => ({
+      expandedSessionGroups: {
+        ...state.expandedSessionGroups,
+        [workspaceId]: expanded,
       },
     }));
   },
