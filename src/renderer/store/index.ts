@@ -86,6 +86,7 @@ interface UISelectionState {
     | 'preferences'
     | 'chat'
     | 'appearance'
+    | 'keybindings'
     | 'providers'
     | 'mcp'
     | 'skills';
@@ -131,7 +132,14 @@ interface CoreActions {
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
   setSettingsActiveTab: (
-    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
+    tab:
+      | 'preferences'
+      | 'chat'
+      | 'appearance'
+      | 'keybindings'
+      | 'providers'
+      | 'mcp'
+      | 'skills',
   ) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
@@ -757,7 +765,14 @@ const useStore = create<Store>()((set, get, api) => ({
   },
 
   setSettingsActiveTab: (
-    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
+    tab:
+      | 'preferences'
+      | 'chat'
+      | 'appearance'
+      | 'keybindings'
+      | 'providers'
+      | 'mcp'
+      | 'skills',
   ) => {
     set(() => ({
       settingsActiveTab: tab,

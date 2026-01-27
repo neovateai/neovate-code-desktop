@@ -29,6 +29,7 @@ import {
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { TitleBar } from './components/app/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
+import { matchesBinding } from './lib/keybindings';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -82,16 +83,17 @@ function App() {
   // Listen for Cmd+N to create new chat
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+N (Mac) or Ctrl+N (Windows/Linux)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault();
+      const {
+        keybindings,
+        selectedWorkspaceId,
+        showSettings,
+        onboardingVisible,
+        createOrSelectEmptySession,
+      } = useStore.getState();
 
-        const {
-          selectedWorkspaceId,
-          showSettings,
-          onboardingVisible,
-          createOrSelectEmptySession,
-        } = useStore.getState();
+      // Check if matches newChat keybinding
+      if (matchesBinding(e, keybindings.newChat)) {
+        e.preventDefault();
 
         // Don't create chat when in settings or onboarding
         if (showSettings || onboardingVisible) return;
