@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback, type ReactNode } from 'react';
 import Markdown from 'marked-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { BrainIcon } from '@hugeicons/core-free-icons';
@@ -171,6 +171,26 @@ function MarkdownContent({
     }
   }, [content]);
 
+  // Custom link renderer to open links in default browser
+  const handleLinkClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+      e.preventDefault();
+      window.electron?.openExternal?.(href);
+    },
+    [],
+  );
+
+  const renderer = useMemo(
+    () => ({
+      link: (href: string, text: ReactNode) => (
+        <a href={href} onClick={(e) => handleLinkClick(e, href)}>
+          {text}
+        </a>
+      ),
+    }),
+    [handleLinkClick],
+  );
+
   return (
     <div
       style={{
@@ -181,7 +201,7 @@ function MarkdownContent({
       }}
       className="markdown-content"
     >
-      <Markdown value={rendered} />
+      <Markdown value={rendered} renderer={renderer} />
     </div>
   );
 }
