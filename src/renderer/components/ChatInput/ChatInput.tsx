@@ -110,6 +110,17 @@ export const ChatInput = memo(
       [],
     );
 
+    // Listen for focus requests (e.g., from Cmd+N new chat)
+    useEffect(() => {
+      const handleFocusRequest = () => {
+        textareaRef.current?.focus();
+      };
+
+      window.addEventListener('chat-input:focus', handleFocusRequest);
+      return () =>
+        window.removeEventListener('chat-input:focus', handleFocusRequest);
+    }, []);
+
     const {
       inputState,
       mode,

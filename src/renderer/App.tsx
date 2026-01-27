@@ -79,6 +79,51 @@ function App() {
     };
   }, [setShowSettings, setTheme, theme]);
 
+  // Listen for Cmd+N to create new chat
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+N (Mac) or Ctrl+N (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+
+        const {
+          selectedWorkspaceId,
+          sessions,
+          selectSession,
+          createSession,
+          showSettings,
+          onboardingVisible,
+        } = useStore.getState();
+
+        // Don't create chat when in settings or onboarding
+        if (showSettings || onboardingVisible) return;
+
+        if (selectedWorkspaceId) {
+          // Follow same logic as "New Chat" button in RepoSidebar
+          const workspaceSessions = (sessions[selectedWorkspaceId] || [])
+            .slice()
+            .sort((a, b) => b.modified - a.modified);
+          const topSession = workspaceSessions[0];
+          const isTopSessionEmpty = topSession && topSession.messageCount === 0;
+
+          if (isTopSessionEmpty) {
+            // Reuse existing empty session
+            selectSession(topSession.sessionId);
+          } else {
+            // Create new session
+            createSession();
+          }
+
+          // Dispatch focus event for ChatInput to pick up
+          window.dispatchEvent(new CustomEvent('chat-input:focus'));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Apply dark/light mode based on theme setting
   useEffect(() => {
     const root = document.documentElement;
