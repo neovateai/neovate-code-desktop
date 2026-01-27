@@ -6,7 +6,9 @@ import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
 import type {
   ThemeValue,
   SendMessageWith,
+  KeybindingsConfig,
 } from './store/slices/desktopSettings';
+import { DEFAULT_KEYBINDINGS } from './lib/keybindings';
 
 // Settings active tab type
 type SettingsActiveTab =
@@ -42,6 +44,7 @@ interface PersistedState {
   terminalFontSize: number;
   terminalFont: string;
   developerMode: boolean;
+  keybindings: KeybindingsConfig;
 }
 
 // Debounce helper
@@ -110,6 +113,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       terminalFontSize: state.terminalFontSize ?? 12,
       terminalFont: state.terminalFont ?? '',
       developerMode: state.developerMode ?? false,
+      keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
     };
   };
 
@@ -180,6 +184,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       terminalFontSize = 12,
       terminalFont = '',
       developerMode = false,
+      keybindings = { ...DEFAULT_KEYBINDINGS },
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -240,6 +245,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         terminalFontSize,
         terminalFont,
         developerMode,
+        keybindings,
       },
       false,
     );
