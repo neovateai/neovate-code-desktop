@@ -41,6 +41,7 @@ interface PersistedState {
   sendMessageWith: SendMessageWith;
   terminalFontSize: number;
   terminalFont: string;
+  developerMode: boolean;
 }
 
 // Debounce helper
@@ -108,6 +109,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       sendMessageWith: state.sendMessageWith ?? 'enter',
       terminalFontSize: state.terminalFontSize ?? 12,
       terminalFont: state.terminalFont ?? '',
+      developerMode: state.developerMode ?? false,
     };
   };
 
@@ -177,6 +179,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       sendMessageWith = 'enter',
       terminalFontSize = 12,
       terminalFont = '',
+      developerMode = false,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -236,6 +239,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         sendMessageWith,
         terminalFontSize,
         terminalFont,
+        developerMode,
       },
       false,
     );
