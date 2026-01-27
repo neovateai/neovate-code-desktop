@@ -784,7 +784,7 @@ const useStore = create<Store>()((set, get, api) => ({
   },
 
   updateSessions: async (workspaceId: string) => {
-    const { request, workspaces, setSessions } = get();
+    const { request, workspaces, sessions, setSessions } = get();
 
     const workspace = workspaces[workspaceId];
     if (!workspace) {
@@ -797,12 +797,22 @@ const useStore = create<Store>()((set, get, api) => ({
       });
 
       if (response.success) {
-        const sessions = response.data.sessions.map((s: any) => ({
+        const backendSessions = response.data.sessions.map((s: any) => ({
           ...s,
           modified: new Date(s.modified).getTime(),
           created: new Date(s.created).getTime(),
         }));
-        setSessions(workspaceId, sessions);
+
+        // Preserve local-only sessions (messageCount === 0 and not in backend)
+        const currentSessions = sessions[workspaceId] || [];
+        const backendSessionIds = new Set(
+          backendSessions.map((s: { sessionId: string }) => s.sessionId),
+        );
+        const localOnlySessions = currentSessions.filter(
+          (s) => s.messageCount === 0 && !backendSessionIds.has(s.sessionId),
+        );
+
+        setSessions(workspaceId, [...localOnlySessions, ...backendSessions]);
       }
     } catch (error) {
       console.error('Failed to fetch sessions:', error);
