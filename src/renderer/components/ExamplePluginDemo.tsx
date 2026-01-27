@@ -21,7 +21,10 @@ export function ExamplePluginDemo() {
       setMessage('No workspace selected');
       return;
     }
-    const response = await request('example.hello', {
+
+    // FIXME: find a better way for custom node handler type define
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await (request as any)('example.hello', {
       cwd,
       name: name || undefined,
     });
