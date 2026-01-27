@@ -42,6 +42,7 @@ function App() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const initialized = useStore((s) => s.initialized);
+  const developerMode = useStore((s) => s.developerMode);
 
   // Minimum display time for loading animation
   const loadStartTime = useRef(Date.now());
@@ -304,7 +305,7 @@ function App() {
       {/* Onboarding Modal - renders on top when visible */}
       <OnboardingModal />
       <UpdaterToast />
-      {process.env.NODE_ENV !== 'production' && <Agentation />}
+      {process.env.NODE_ENV !== 'production' && developerMode && <Agentation />}
     </>
   );
 }
