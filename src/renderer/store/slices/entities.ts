@@ -39,6 +39,7 @@ export interface EntitiesSliceActions {
   ) => void;
   removeSession: (workspaceId: string, sessionId: string) => void;
   createSession: () => string;
+  createOrSelectEmptySession: (workspaceId?: string) => string | null;
 
   // Messages
   addMessage: (
@@ -300,6 +301,37 @@ export const createEntitiesSlice: StateCreator<
     ]);
     selectSession(newSessionId);
     return newSessionId;
+  },
+
+  createOrSelectEmptySession: (workspaceId?: string) => {
+    const {
+      selectedWorkspaceId,
+      sessions,
+      messages,
+      selectSession,
+      createSession,
+    } = get();
+
+    const targetWorkspaceId = workspaceId ?? selectedWorkspaceId;
+    if (!targetWorkspaceId) {
+      return null;
+    }
+
+    const workspaceSessions = (sessions[targetWorkspaceId] || [])
+      .slice()
+      .sort((a, b) => b.modified - a.modified);
+    const topSession = workspaceSessions[0];
+    const topSessionMessages = topSession
+      ? messages[topSession.sessionId] || []
+      : [];
+    const isTopSessionEmpty = topSession && topSessionMessages.length === 0;
+
+    if (isTopSessionEmpty) {
+      selectSession(topSession.sessionId);
+      return topSession.sessionId;
+    } else {
+      return createSession();
+    }
   },
 
   // Messages

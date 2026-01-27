@@ -96,7 +96,9 @@ export const RepoSidebar = ({
   const deleteRepo = useStore((state) => state.deleteRepo);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
-  const createSession = useStore((state) => state.createSession);
+  const createOrSelectEmptySession = useStore(
+    (state) => state.createOrSelectEmptySession,
+  );
   const sessionProcessing = useStore((state) => state.sessionProcessing);
   const messages = useStore((state) => state.messages);
 
@@ -326,21 +328,8 @@ export const RepoSidebar = ({
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const workspaceSessions = (
-                                  sessions[workspaceId] || []
-                                )
-                                  .slice()
-                                  .sort((a, b) => b.modified - a.modified);
-                                const topSession = workspaceSessions[0];
-                                const isTopSessionEmpty =
-                                  topSession && topSession.messageCount === 0;
-
                                 selectWorkspace(workspaceId);
-                                if (isTopSessionEmpty) {
-                                  selectSession(topSession.sessionId);
-                                } else {
-                                  createSession();
-                                }
+                                createOrSelectEmptySession(workspaceId);
                               }}
                             >
                               <HugeiconsIcon

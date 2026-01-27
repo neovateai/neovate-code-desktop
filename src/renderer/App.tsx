@@ -88,31 +88,16 @@ function App() {
 
         const {
           selectedWorkspaceId,
-          sessions,
-          selectSession,
-          createSession,
           showSettings,
           onboardingVisible,
+          createOrSelectEmptySession,
         } = useStore.getState();
 
         // Don't create chat when in settings or onboarding
         if (showSettings || onboardingVisible) return;
 
         if (selectedWorkspaceId) {
-          // Follow same logic as "New Chat" button in RepoSidebar
-          const workspaceSessions = (sessions[selectedWorkspaceId] || [])
-            .slice()
-            .sort((a, b) => b.modified - a.modified);
-          const topSession = workspaceSessions[0];
-          const isTopSessionEmpty = topSession && topSession.messageCount === 0;
-
-          if (isTopSessionEmpty) {
-            // Reuse existing empty session
-            selectSession(topSession.sessionId);
-          } else {
-            // Create new session
-            createSession();
-          }
+          createOrSelectEmptySession();
 
           // Dispatch focus event for ChatInput to pick up
           window.dispatchEvent(new CustomEvent('chat-input:focus'));
