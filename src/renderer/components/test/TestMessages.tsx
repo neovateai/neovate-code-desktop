@@ -1,6 +1,5 @@
-// @ts-nocheck
-import { Message } from './components/messages/Message';
-import type { NormalizedMessage } from './client/types/message';
+import { Message } from '../../components/messages/Message';
+import type { NormalizedMessage } from '../../client/types/message';
 
 // Helper to generate UUIDs
 let uuidCounter = 0;
