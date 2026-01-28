@@ -119,10 +119,6 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
     }
   }, [isActive, status]);
 
-  if (!isActive) {
-    return null;
-  }
-
   if (status === 'error' && error) {
     return <ErrorState message={error} onRetry={startEditor} />;
   }
@@ -138,6 +134,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
       title="Code Editor"
       className="flex-1 w-full h-full border-0"
       style={{
+        display: isActive ? 'block' : 'none',
         backgroundColor: 'var(--bg-base)',
         minHeight: 0,
       }}
