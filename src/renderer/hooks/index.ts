@@ -16,3 +16,4 @@ export {
   type ImagePasteResult,
 } from './useImagePasteManager';
 export { useDebounce } from './useDebounce';
+export { useGlobalKeybindings } from './useGlobalKeybindings';
