@@ -6,12 +6,15 @@ import { MCPPanel } from './MCPPanel';
 import { AppearancePanel } from './AppearancePanel';
 import { ChatPanel } from './ChatPanel';
 import { SkillsPanel } from './SkillsPanel';
+import { KeybindingsPanel } from './KeybindingsPanel';
 import { useStore } from '../../store';
+import { matchesBinding } from '../../lib/keybindings';
 
 export type SettingsMenuId =
   | 'preferences'
   | 'chat'
   | 'appearance'
+  | 'keybindings'
   | 'providers'
   | 'mcp'
   | 'skills';
@@ -24,7 +27,8 @@ export const SettingsPage = () => {
   // Cmd+Esc to close settings and go back to app
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && e.key === 'Escape') {
+      const { keybindings } = useStore.getState();
+      if (matchesBinding(e, keybindings.closeSettings)) {
         e.preventDefault();
         setShowSettings(false);
       }
@@ -58,6 +62,7 @@ export const SettingsPage = () => {
           {activeMenu === 'preferences' && <PreferencesPanel />}
           {activeMenu === 'chat' && <ChatPanel />}
           {activeMenu === 'appearance' && <AppearancePanel />}
+          {activeMenu === 'keybindings' && <KeybindingsPanel />}
           {activeMenu === 'providers' && <ProvidersPanel />}
           {activeMenu === 'mcp' && <MCPPanel />}
           {activeMenu === 'skills' && <SkillsPanel />}

@@ -56,8 +56,8 @@ export function ActivityIndicator({ sessionId }: ActivityIndicatorProps) {
     }
   };
 
-  // Don't render anything if idle
-  if (status === 'idle') {
+  // Don't render anything if idle or awaiting approval
+  if (status === 'idle' || status === 'awaiting_approval') {
     return null;
   }
 

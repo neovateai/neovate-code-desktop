@@ -746,6 +746,16 @@ type SessionConfigRemoveInput = {
   key: string;
 };
 
+type SessionsRemoveInput = {
+  cwd: string;
+  sessionId: string;
+};
+
+type SessionsRemoveOutput = {
+  success: boolean;
+  error?: string;
+};
+
 // ============================================================================
 // Sessions Handlers
 // ============================================================================
@@ -1107,6 +1117,7 @@ type UtilsPlaySoundOutput = SuccessResponse | ErrorResponse;
 type ToolApprovalInput = {
   toolUse: ToolUse;
   category?: ApprovalCategory;
+  sessionId: string;
 };
 
 type ToolApprovalOutput = {
@@ -1300,6 +1311,10 @@ export type HandlerMap = {
   'session.config.remove': {
     input: SessionConfigRemoveInput;
     output: SuccessResponse;
+  };
+  'sessions.remove': {
+    input: SessionsRemoveInput;
+    output: SessionsRemoveOutput;
   };
 
   // Sessions handlers

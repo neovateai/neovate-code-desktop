@@ -1,14 +1,21 @@
 import type { StateCreator } from 'zustand';
+import {
+  DEFAULT_KEYBINDINGS,
+  type KeybindingAction,
+} from '../../lib/keybindings';
 
 // Types
 export type ThemeValue = 'light' | 'dark' | 'system';
 export type SendMessageWith = 'enter' | 'cmdEnter';
+export type KeybindingsConfig = Record<KeybindingAction, string>;
 
 export interface DesktopSettingsSliceState {
   theme: ThemeValue;
   sendMessageWith: SendMessageWith;
   terminalFontSize: number;
   terminalFont: string;
+  keybindings: KeybindingsConfig;
+  developerMode: boolean;
 }
 
 export interface DesktopSettingsSliceActions {
@@ -16,6 +23,9 @@ export interface DesktopSettingsSliceActions {
   setSendMessageWith: (value: SendMessageWith) => void;
   setTerminalFontSize: (size: number) => void;
   setTerminalFont: (font: string) => void;
+  setKeybinding: (action: KeybindingAction, binding: string) => void;
+  resetKeybindings: () => void;
+  setDeveloperMode: (enabled: boolean) => void;
 }
 
 export type DesktopSettingsSlice = DesktopSettingsSliceState &
@@ -27,6 +37,8 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   sendMessageWith: 'enter',
   terminalFontSize: 12,
   terminalFont: '',
+  keybindings: { ...DEFAULT_KEYBINDINGS },
+  developerMode: false,
 };
 
 export const createDesktopSettingsSlice: StateCreator<
@@ -53,5 +65,22 @@ export const createDesktopSettingsSlice: StateCreator<
 
   setTerminalFont: (terminalFont: string) => {
     set({ terminalFont });
+  },
+
+  setKeybinding: (action: KeybindingAction, binding: string) => {
+    set((state) => ({
+      keybindings: {
+        ...state.keybindings,
+        [action]: binding,
+      },
+    }));
+  },
+
+  resetKeybindings: () => {
+    set({ keybindings: { ...DEFAULT_KEYBINDINGS } });
+  },
+
+  setDeveloperMode: (developerMode: boolean) => {
+    set({ developerMode });
   },
 });

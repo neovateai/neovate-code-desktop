@@ -67,7 +67,6 @@ export const WorkspacePanel = ({
   emptyStateType: 'no-repos' | 'no-workspace' | null;
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   // Get store actions and state
   const request = useStore((state) => state.request);
@@ -88,6 +87,12 @@ export const WorkspacePanel = ({
   const slashCommandJSXBySession = useStore(
     (state) => state.slashCommandJSXBySession,
   );
+  const getSessionProcessing = useStore((state) => state.getSessionProcessing);
+
+  // Derive isLoading from per-session processing state
+  const isLoading = selectedSessionId
+    ? getSessionProcessing(selectedSessionId).status === 'processing'
+    : false;
 
   // Fork modal state and actions
   const forkModalVisible = useStore((state) => state.forkModalVisible);
@@ -234,18 +239,13 @@ export const WorkspacePanel = ({
 
       const inputState = getSessionInput(selectedSessionId || '');
 
-      setIsLoading(true);
-      try {
-        await storeSendMessage({
-          message: content,
-          planMode: inputState.planMode,
-          think: inputState.thinking,
-          images,
-        });
-        setInputValue('');
-      } finally {
-        setIsLoading(false);
-      }
+      await storeSendMessage({
+        message: content,
+        planMode: inputState.planMode,
+        think: inputState.thinking,
+        images,
+      });
+      setInputValue('');
     },
     [isLoading, selectedSessionId, getSessionInput, storeSendMessage],
   );
@@ -262,7 +262,6 @@ export const WorkspacePanel = ({
     if (selectedSessionId) {
       cancelSession(selectedSessionId);
     }
-    setIsLoading(false);
   }, [selectedSessionId, cancelSession]);
 
   const handleShowForkModal = useCallback(() => {

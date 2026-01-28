@@ -10,11 +10,8 @@ import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
 import { UpdaterToast } from './components/UpdaterToast';
-import {
-  MIN_LOADING_TIME_MS,
-  LETTER_ANIMATION_DELAY_MS,
-  FOCUS_DELAY_MS,
-} from './constants';
+import { AppLoading } from './components/AppLoading';
+import { MIN_LOADING_TIME_MS } from './constants';
 import {
   AppLayout,
   AppLayoutTitleBar,
@@ -29,6 +26,7 @@ import {
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { TitleBar } from './components/app/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
+import { matchesBinding } from './lib/keybindings';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -44,6 +42,7 @@ function App() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const initialized = useStore((s) => s.initialized);
+  const developerMode = useStore((s) => s.developerMode);
 
   // Minimum display time for loading animation
   const loadStartTime = useRef(Date.now());
@@ -78,6 +77,54 @@ function App() {
       cleanupTheme();
     };
   }, [setShowSettings, setTheme, theme]);
+
+  // Listen for Cmd+N to create new chat
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const {
+        keybindings,
+        selectedWorkspaceId,
+        showSettings,
+        onboardingVisible,
+        createOrSelectEmptySession,
+        selectPrevSession,
+        selectNextSession,
+      } = useStore.getState();
+
+      // Don't handle shortcuts when in settings or onboarding
+      if (showSettings || onboardingVisible) return;
+
+      // New Chat
+      if (matchesBinding(e, keybindings.newChat)) {
+        e.preventDefault();
+
+        if (selectedWorkspaceId) {
+          createOrSelectEmptySession();
+
+          // Dispatch focus event for ChatInput to pick up
+          window.dispatchEvent(new CustomEvent('chat-input:focus'));
+        }
+        return;
+      }
+
+      // Previous Session
+      if (matchesBinding(e, keybindings.prevSession)) {
+        e.preventDefault();
+        selectPrevSession();
+        return;
+      }
+
+      // Next Session
+      if (matchesBinding(e, keybindings.nextSession)) {
+        e.preventDefault();
+        selectNextSession();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Apply dark/light mode based on theme setting
   useEffect(() => {
@@ -258,70 +305,8 @@ function App() {
       {/* Onboarding Modal - renders on top when visible */}
       <OnboardingModal />
       <UpdaterToast />
-      {process.env.NODE_ENV !== 'production' && <Agentation />}
+      {process.env.NODE_ENV !== 'production' && developerMode && <Agentation />}
     </>
-  );
-}
-
-function AppLoading() {
-  const fullText = 'Neovate';
-  const [visibleCount, setVisibleCount] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
-  const [isDark] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches,
-  );
-
-  useEffect(() => {
-    if (visibleCount < fullText.length) {
-      const timer = setTimeout(() => {
-        setVisibleCount((c) => c + 1);
-      }, LETTER_ANIMATION_DELAY_MS);
-      return () => clearTimeout(timer);
-    } else {
-      // Trigger completion flourish after last letter
-      const timer = setTimeout(() => setIsComplete(true), FOCUS_DELAY_MS);
-      return () => clearTimeout(timer);
-    }
-  }, [visibleCount]);
-
-  const glowStyle = {
-    textShadow: isDark
-      ? `0 0 ${isComplete ? 40 : 30}px rgba(255, 255, 255, ${isComplete ? 0.2 : 0.15})`
-      : `0 0 ${isComplete ? 30 : 20}px rgba(0, 0, 0, ${isComplete ? 0.15 : 0.1})`,
-    transition: 'text-shadow 300ms ease-out',
-  };
-
-  return (
-    <div
-      className={`flex h-screen w-screen flex-col items-center justify-center ${
-        isDark ? 'bg-neutral-950 text-neutral-100' : 'bg-white text-neutral-900'
-      }`}
-    >
-      <div
-        className={`text-6xl font-light ${isComplete ? 'animate-flourish' : ''}`}
-        style={glowStyle}
-      >
-        {fullText.split('').map((char, i) => (
-          <span
-            key={i}
-            className={`transition-opacity duration-200 ease-out ${
-              i < visibleCount ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            {char}
-          </span>
-        ))}
-        <span
-          className={`animate-cursor-blink ml-0.5 ${
-            visibleCount > 0 ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          |
-        </span>
-      </div>
-    </div>
   );
 }
 

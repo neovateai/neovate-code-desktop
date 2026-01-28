@@ -11,6 +11,7 @@ import {
   DatabaseIcon,
   CloudIcon,
   Comment01Icon,
+  HelpCircleIcon,
 } from '@hugeicons/core-free-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import type { RepoData } from '../client/types/entities';
@@ -96,7 +97,9 @@ export const RepoSidebar = ({
   const deleteRepo = useStore((state) => state.deleteRepo);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
-  const createSession = useStore((state) => state.createSession);
+  const createOrSelectEmptySession = useStore(
+    (state) => state.createOrSelectEmptySession,
+  );
   const sessionProcessing = useStore((state) => state.sessionProcessing);
   const messages = useStore((state) => state.messages);
 
@@ -106,6 +109,12 @@ export const RepoSidebar = ({
     useState<RepoData | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<{
+    sessionId: string;
+    workspaceId: string;
+    summary: string;
+  } | null>(null);
 
   const handleRepoInfoClick = (repo: RepoData, e: MouseEvent) => {
     e.stopPropagation();
@@ -128,6 +137,7 @@ export const RepoSidebar = ({
   };
 
   const updateSession = useStore((state) => state.updateSession);
+  const removeSession = useStore((state) => state.removeSession);
   const request = useStore((state) => state.request);
 
   const startRename = (sessionId: string, currentSummary: string) => {
@@ -158,6 +168,70 @@ export const RepoSidebar = ({
 
   const cancelRename = () => {
     setEditingSessionId(null);
+  };
+
+  const handleDeleteSessionClick = (
+    session: { sessionId: string; summary: string; messageCount: number },
+    workspaceId: string,
+  ) => {
+    setSessionToDelete({
+      sessionId: session.sessionId,
+      workspaceId,
+      summary: session.summary || 'New Chat',
+    });
+    setSessionAlertOpen(true);
+  };
+
+  const handleConfirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+
+    const { sessionId, workspaceId } = sessionToDelete;
+    const workspace = workspaces[workspaceId];
+    if (!workspace) return;
+
+    // Find the session to check if it has messages
+    const session = (sessions[workspaceId] || []).find(
+      (s) => s.sessionId === sessionId,
+    );
+    const isLocalOnly = !session || session.messageCount === 0;
+
+    try {
+      // Only call API if session has messages (persisted to backend)
+      if (!isLocalOnly) {
+        const result = await request('sessions.remove', {
+          cwd: workspace.worktreePath,
+          sessionId,
+        });
+
+        if (!result.success) {
+          console.error('Failed to delete session:', result.error);
+          setSessionAlertOpen(false);
+          setSessionToDelete(null);
+          return;
+        }
+      }
+
+      // Remove from local store
+      removeSession(workspaceId, sessionId);
+
+      // Auto-select next session if this was selected
+      if (selectedSessionId === sessionId) {
+        const remaining = (sessions[workspaceId] || [])
+          .filter((s) => s.sessionId !== sessionId)
+          .sort((a, b) => b.modified - a.modified);
+
+        if (remaining.length > 0) {
+          selectSession(remaining[0].sessionId);
+        } else {
+          selectSession(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+    }
+
+    setSessionAlertOpen(false);
+    setSessionToDelete(null);
   };
 
   return (
@@ -255,21 +329,8 @@ export const RepoSidebar = ({
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const workspaceSessions = (
-                                  sessions[workspaceId] || []
-                                )
-                                  .slice()
-                                  .sort((a, b) => b.modified - a.modified);
-                                const topSession = workspaceSessions[0];
-                                const isTopSessionEmpty =
-                                  topSession && topSession.messageCount === 0;
-
                                 selectWorkspace(workspaceId);
-                                if (isTopSessionEmpty) {
-                                  selectSession(topSession.sessionId);
-                                } else {
-                                  createSession();
-                                }
+                                createOrSelectEmptySession(workspaceId);
                               }}
                             >
                               <HugeiconsIcon
@@ -297,6 +358,8 @@ export const RepoSidebar = ({
                               ] || { status: 'idle' };
                               const isProcessing =
                                 processing.status === 'processing';
+                              const isAwaitingApproval =
+                                processing.status === 'awaiting_approval';
                               const isFailed = processing.status === 'failed';
                               const textColor = isFailed
                                 ? '#ef4444'
@@ -333,6 +396,13 @@ export const RepoSidebar = ({
                                   >
                                     {isProcessing ? (
                                       <Spinner className="size-3.5" />
+                                    ) : isAwaitingApproval ? (
+                                      <HugeiconsIcon
+                                        icon={HelpCircleIcon}
+                                        size={14}
+                                        strokeWidth={1.5}
+                                        style={{ color: '#f59e0b' }}
+                                      />
                                     ) : (
                                       <HugeiconsIcon
                                         icon={Comment01Icon}
@@ -389,6 +459,17 @@ export const RepoSidebar = ({
                                       }
                                     >
                                       Rename
+                                    </ContextMenuItem>
+                                    <ContextMenuItem
+                                      onClick={() =>
+                                        handleDeleteSessionClick(
+                                          session,
+                                          workspaceId,
+                                        )
+                                      }
+                                      className="text-red-500"
+                                    >
+                                      Delete
                                     </ContextMenuItem>
                                   </ContextMenuPopup>
                                 </ContextMenu>
@@ -510,6 +591,31 @@ export const RepoSidebar = ({
             <Button
               variant="destructive"
               onClick={handleConfirmDelete}
+              className="gap-2"
+            >
+              <HugeiconsIcon icon={DeleteIcon} size={16} strokeWidth={1.5} />
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
+
+      <AlertDialog open={sessionAlertOpen} onOpenChange={setSessionAlertOpen}>
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{sessionToDelete?.summary}". This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose>
+              <Button variant="outline">Cancel</Button>
+            </AlertDialogClose>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteSession}
               className="gap-2"
             >
               <HugeiconsIcon icon={DeleteIcon} size={16} strokeWidth={1.5} />

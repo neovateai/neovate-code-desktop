@@ -86,6 +86,7 @@ interface UISelectionState {
     | 'preferences'
     | 'chat'
     | 'appearance'
+    | 'keybindings'
     | 'providers'
     | 'mcp'
     | 'skills';
@@ -131,10 +132,18 @@ interface CoreActions {
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
   setSettingsActiveTab: (
-    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
+    tab:
+      | 'preferences'
+      | 'chat'
+      | 'appearance'
+      | 'keybindings'
+      | 'providers'
+      | 'mcp'
+      | 'skills',
   ) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
+  setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => void;
   setTestComponentVisible: (visible: boolean) => void;
 
   // Session control actions
@@ -352,8 +361,9 @@ const useStore = create<Store>()((set, get, api) => ({
     const { messageBus } = get();
     if (messageBus) {
       messageBus.registerHandler('toolApproval', async (data: any) => {
-        const { toolUse, category } = data;
-        const sessionId = get().selectedSessionId;
+        const { sessionId: dataSessionId, toolUse, category } = data;
+        // Use sessionId from data if available, otherwise fall back to selected session
+        const sessionId = dataSessionId ?? get().selectedSessionId;
         if (!sessionId) {
           return { approved: false, denyReason: 'No active session' };
         }
@@ -757,7 +767,14 @@ const useStore = create<Store>()((set, get, api) => ({
   },
 
   setSettingsActiveTab: (
-    tab: 'preferences' | 'chat' | 'appearance' | 'providers' | 'mcp' | 'skills',
+    tab:
+      | 'preferences'
+      | 'chat'
+      | 'appearance'
+      | 'keybindings'
+      | 'providers'
+      | 'mcp'
+      | 'skills',
   ) => {
     set(() => ({
       settingsActiveTab: tab,
@@ -775,6 +792,15 @@ const useStore = create<Store>()((set, get, api) => ({
       expandedSessionGroups: {
         ...state.expandedSessionGroups,
         [workspaceId]: !state.expandedSessionGroups[workspaceId],
+      },
+    }));
+  },
+
+  setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => {
+    set((state) => ({
+      expandedSessionGroups: {
+        ...state.expandedSessionGroups,
+        [workspaceId]: expanded,
       },
     }));
   },
