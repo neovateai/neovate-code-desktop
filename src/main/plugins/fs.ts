@@ -9,6 +9,7 @@ export const fsPlugin: Plugin = {
   nodeBridgeHandler() {
     return {
       'fs.tree': async (data: { cwd: string }) => {
+        /** TODO: 后续考虑大项目的性能问题 */
         return {
           success: true,
           data: { tree: getFileTree(data?.cwd) },

@@ -148,9 +148,12 @@ export function FileTree() {
 
   useEffect(() => {
     init();
-  }, []);
+  }, [cwd]);
 
   const init = async () => {
+    if (!cwd) {
+      return;
+    }
     request<any>('fs.tree', { cwd }).then((res) => {
       if (res?.data?.tree) {
         setTreeData(res.data.tree);
