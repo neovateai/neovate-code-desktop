@@ -97,3 +97,7 @@ See [WebSocketComponent.example.tsx](src/renderer/WebSocketComponent.example.tsx
 ### Debug Mode
 
 Double hit `Ctrl+L` to toggle the UI into debug mode, which renders a Test Component for debugging purposes.
+
+### Developer Mode
+
+Enable Developer Mode in Settings > Preferences to show additional debug information in the chat input and other places. This is useful when developing or troubleshooting the application.

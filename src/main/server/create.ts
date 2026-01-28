@@ -12,6 +12,7 @@ import {
 } from './constants';
 import type { ServerInstance, NeovatePlugin } from './types';
 import { examplePlugin } from '../plugins/example';
+import { fsPlugin } from './../plugins/fs';
 
 async function waitForTcpReady(
   hostname: string,
@@ -70,7 +71,7 @@ export async function createNeovateServer(
   const { shutdown } = await runNeovate({
     productName: 'neovate', // should be neovate to use same config with neovate cli
     version: app.getVersion(),
-    plugins: plugins ?? [examplePlugin],
+    plugins: [examplePlugin, fsPlugin, ...plugins || []],
     argv,
   });
 

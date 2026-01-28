@@ -14,6 +14,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { registerMainHandlers } from '../../shared/lib/ipc/main';
+import { codeServerManager } from '../code-server';
 import { ipcMainHandlers } from '../ipc';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
@@ -286,6 +287,8 @@ export class MainApp {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
+        webSecurity: false,
+        allowRunningInsecureContent: true,
       },
     });
 
@@ -341,6 +344,7 @@ export class MainApp {
     }
     updaterService.destroy();
     ptyManager.destroyAll();
+    codeServerManager.stop();
     neovateServerManager.stop();
   }
 }
