@@ -10,7 +10,7 @@ import {
   PORT_RANGE_START,
   STARTUP_TIMEOUT_MS,
 } from './constants';
-import type { ServerInstance } from './types';
+import type { ServerInstance, NeovatePlugin } from './types';
 import { examplePlugin } from '../plugins/example';
 
 async function waitForTcpReady(
@@ -41,7 +41,9 @@ async function waitForTcpReady(
   throw new Error(`Server not accepting connections after ${timeout}ms`);
 }
 
-export async function createNeovateServer(): Promise<ServerInstance> {
+export async function createNeovateServer(
+  plugins?: NeovatePlugin[],
+): Promise<ServerInstance> {
   if (process.env.NEOVATE_FAKE_ERROR) {
     throw new Error(
       process.env.NEOVATE_FAKE_ERROR || 'Fake server error for testing',
@@ -68,7 +70,7 @@ export async function createNeovateServer(): Promise<ServerInstance> {
   const { shutdown } = await runNeovate({
     productName: 'neovate', // should be neovate to use same config with neovate cli
     version: app.getVersion(),
-    plugins: [examplePlugin],
+    plugins: plugins ?? [examplePlugin],
     argv,
   });
 
