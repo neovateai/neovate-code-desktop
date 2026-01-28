@@ -7,7 +7,8 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/menu';
 import { ChevronDown, Loader2 } from 'lucide-react';
-import type { App, HandlerMap, HandlerOutput } from '../nodeBridge.types';
+import type { App } from '../nodeBridge.types';
+import { useStore } from '../store';
 import cursorIcon from '../assets/icons/cursor.png';
 import finderIcon from '../assets/icons/finder.png';
 import itermIcon from '../assets/icons/iterm.png';
@@ -54,17 +55,14 @@ const APP_ICON_SRC: Partial<Record<App, string>> = {
 
 interface OpenAppButtonProps {
   cwd: string;
-  request: <K extends keyof HandlerMap>(
-    method: K,
-    params: HandlerMap[K]['input'],
-  ) => Promise<HandlerOutput<K>>;
 }
 
 /**
  * Button with dropdown menu to open the current workspace in an available app.
  * Detects available apps on click and displays user-friendly names.
  */
-export function OpenAppButton({ cwd, request }: OpenAppButtonProps) {
+export function OpenAppButton({ cwd }: OpenAppButtonProps) {
+  const request = useStore((state) => state.request);
   const [apps, setApps] = useState<App[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 

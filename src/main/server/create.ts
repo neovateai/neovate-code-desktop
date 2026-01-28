@@ -71,7 +71,7 @@ export async function createNeovateServer(
   const { shutdown } = await runNeovate({
     productName: 'neovate', // should be neovate to use same config with neovate cli
     version: app.getVersion(),
-    plugins: [examplePlugin, fsPlugin, ...plugins || []],
+    plugins: [examplePlugin, fsPlugin, ...(plugins || [])],
     argv,
   });
 
