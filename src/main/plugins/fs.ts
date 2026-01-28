@@ -44,19 +44,22 @@ function getExcludePatterns(): string[] {
   return [...new Set(allPatterns)];
 }
 
-function getFileTree(root: string): FileTreeNode[] {
+function getFileTree(parent: string, root?: string): FileTreeNode[] {
   let includePatterns: string[] = [];
+  const actualRoot = root || parent;
 
   const excludePatterns = getExcludePatterns();
 
-  const dirFilePath = root;
+  const dirFilePath = parent;
   let tree: FileTreeNode[] = [];
   const files = fs.readdirSync(dirFilePath);
 
   files.forEach((file) => {
     const filePath = path.join(dirFilePath, file);
     const stats = fs.statSync(filePath);
-    const relativePath = path.relative(root, filePath);
+    const relativePath = path
+      .relative(actualRoot, filePath)
+      .replace(/\\/g, '/');
 
     const isExcluded = excludePatterns.some((pattern) =>
       minimatch(relativePath, pattern),
@@ -80,7 +83,7 @@ function getFileTree(root: string): FileTreeNode[] {
       if (!isIncluded) return;
       node.languageId = file.split('.').pop();
     } else {
-      node.children = getFileTree(filePath);
+      node.children = getFileTree(filePath, actualRoot);
     }
 
     if (node.isFolder && node.children?.length === 0) {
