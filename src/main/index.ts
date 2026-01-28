@@ -14,6 +14,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { registerMainHandlers } from '../shared/lib/ipc/main';
+import { codeServerManager } from './code-server';
 import { ipcMainHandlers } from './ipc';
 import { ptyManager } from './pty';
 import { neovateServerManager } from './server';
@@ -175,6 +176,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      webSecurity: false,
+      allowRunningInsecureContent: true,
     },
   });
 
@@ -346,5 +349,6 @@ app.on('before-quit', () => {
   }
   updaterService.destroy();
   ptyManager.destroyAll();
+  codeServerManager.stop();
   neovateServerManager.stop();
 });

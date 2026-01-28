@@ -1,4 +1,5 @@
 import { createMainHandler } from '../../shared/lib/ipc/main';
+import { codeServerManager } from '../code-server';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
 import { updaterService } from '../updater';
@@ -84,6 +85,22 @@ export const ipcMainHandlers = {
   },
 
   updater: updaterService.mainHandlers,
+
+  codeServer: {
+    start: createMainHandler<{ folderPath?: string }, { url: string }>(
+      async () => {
+        const instance = await codeServerManager.start();
+        return { url: instance.url };
+      },
+    ),
+
+    getStatus: createMainHandler<
+      void,
+      { isRunning: boolean; url: string | null }
+    >(async () => {
+      return codeServerManager.getStatus();
+    }),
+  },
 };
 
 export type IPCMainHandlers = typeof ipcMainHandlers;
