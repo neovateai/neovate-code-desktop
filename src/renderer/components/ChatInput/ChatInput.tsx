@@ -99,13 +99,12 @@ export const ChatInput = memo(
 
     // Get store methods
     const sendMessageWith = useStore((state) => state.sendMessageWith);
-    const getSessionProcessing = useStore(
-      (state) => state.getSessionProcessing,
-    );
     const developerMode = useStore((state) => state.developerMode);
 
-    // Get processing state for current session (for debug info)
-    const processingState = sessionId ? getSessionProcessing(sessionId) : null;
+    // Subscribe directly to sessionProcessing state for proper reactivity
+    const processingState = useStore((state) =>
+      sessionId ? state.sessionProcessing[sessionId] : null,
+    );
 
     // Expose focus method to parent via ref
     useImperativeHandle(

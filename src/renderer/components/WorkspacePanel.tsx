@@ -87,13 +87,15 @@ export const WorkspacePanel = ({
   const slashCommandJSXBySession = useStore(
     (state) => state.slashCommandJSXBySession,
   );
-  const getSessionProcessing = useStore((state) => state.getSessionProcessing);
   const developerMode = useStore((state) => state.developerMode);
 
+  // Subscribe directly to sessionProcessing state for proper reactivity
+  const sessionProcessing = useStore((state) =>
+    selectedSessionId ? state.sessionProcessing[selectedSessionId] : null,
+  );
+
   // Derive isLoading from per-session processing state
-  const isLoading = selectedSessionId
-    ? getSessionProcessing(selectedSessionId).status === 'processing'
-    : false;
+  const isLoading = sessionProcessing?.status === 'processing';
 
   // Fork modal state and actions
   const forkModalVisible = useStore((state) => state.forkModalVisible);
@@ -363,12 +365,7 @@ export const WorkspacePanel = ({
             <div>Selected Session ID: {selectedSessionId || 'null'}</div>
             <div>Selected Workspace ID: {selectedWorkspaceId || 'null'}</div>
             <div>isLoading: {String(isLoading)}</div>
-            <div>
-              Processing State:{' '}
-              {selectedSessionId
-                ? getSessionProcessing(selectedSessionId).status
-                : 'null'}
-            </div>
+            <div>Processing State: {sessionProcessing?.status ?? 'null'}</div>
             <div>Connection State: {connectionState}</div>
             <div>Sessions Count: {allSessions.length}</div>
             <div>Messages Count: {messages.length}</div>
