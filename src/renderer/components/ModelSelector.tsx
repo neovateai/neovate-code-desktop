@@ -59,38 +59,50 @@ export const ModelSelector = ({
 
   const itemRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
-  // Fetch current model based on type
+  // Fetch current model based on type with fallback chain: session -> project -> global
   const fetchCurrentModel = useCallback(async () => {
     if (state !== 'connected') return;
 
+    const LOG_PREFIX = '[ModelSelector]';
+
+    const getGlobalConfig = () =>
+      request('config.get', {
+        cwd: cwd || '/tmp',
+        isGlobal: true,
+        key: configKey,
+      });
+    const getProjectConfig = () =>
+      cwd
+        ? request('config.get', { cwd, isGlobal: false, key: configKey })
+        : null;
+    const getSessionConfig = () =>
+      cwd && sessionId
+        ? request('session.config.get', { cwd, sessionId, key: configKey })
+        : null;
+
     try {
-      if (type === 'global') {
-        const res = await request('config.get', {
-          cwd: cwd || '/tmp',
-          isGlobal: true,
-          key: configKey,
-        });
-        setCurrentModel(res.data?.value || null);
-      } else if (type === 'project') {
-        if (!cwd) return;
-        const res = await request('config.get', {
-          cwd,
-          isGlobal: false,
-          key: configKey,
-        });
-        setCurrentModel(res.data?.value || null);
-      } else {
-        // session
-        if (!cwd || !sessionId) return;
-        const res = await request('session.config.get', {
-          cwd,
-          sessionId,
-          key: configKey,
-        });
-        setCurrentModel(res.data?.value || null);
+      // Build fallback chain based on type
+      const fetchers =
+        type === 'session'
+          ? [getSessionConfig, getProjectConfig, getGlobalConfig]
+          : type === 'project'
+            ? [getProjectConfig, getGlobalConfig]
+            : [getGlobalConfig];
+
+      for (const fetcher of fetchers) {
+        const res = await fetcher();
+        const value = res?.data?.value;
+        console.log(LOG_PREFIX, `${type} fetching, got:`, value);
+
+        if (value) {
+          setCurrentModel(value);
+          return;
+        }
       }
+
+      setCurrentModel(null);
     } catch (error) {
-      console.error('Failed to fetch current model:', error);
+      console.error(LOG_PREFIX, 'Failed to fetch current model:', error);
     }
   }, [state, type, configKey, cwd, sessionId, request]);
 
