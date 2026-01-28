@@ -11,4 +11,4 @@ export {
 
 // Test components
 export { SystemInfo, DirectoryList } from './test';
-export { TestUIComponents } from './TestUIComponents';
+export { TestUIComponents } from './test/TestUIComponents';

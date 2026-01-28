@@ -5,7 +5,7 @@ import { useStoreConnection, useGlobalKeybindings } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
 import { WorkspacePanel } from './components/WorkspacePanel';
 import { ContentPanel } from './components/ContentPanel';
-import TestComponent from './TestComponent';
+import TestComponent from './components/test/TestComponent';
 import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
 import { UpdaterToast } from './components/UpdaterToast';
