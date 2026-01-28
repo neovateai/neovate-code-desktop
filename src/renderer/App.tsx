@@ -4,7 +4,6 @@ import { useStore } from './store';
 import { useStoreConnection, useGlobalKeybindings } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
 import { WorkspacePanel } from './components/WorkspacePanel';
-// import { WorkspaceChanges } from './components/WorkspaceChanges';
 import { ContentPanel } from './components/ContentPanel';
 import TestComponent from './TestComponent';
 import { SettingsPage } from './components/settings';
