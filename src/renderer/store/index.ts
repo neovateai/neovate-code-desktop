@@ -810,7 +810,7 @@ const useStore = create<Store>()((set, get, api) => ({
   },
 
   updateSessions: async (workspaceId: string) => {
-    const { request, workspaces, sessions, setSessions } = get();
+    const { request, workspaces, setSessions } = get();
 
     const workspace = workspaces[workspaceId];
     if (!workspace) {
@@ -829,8 +829,9 @@ const useStore = create<Store>()((set, get, api) => ({
           created: new Date(s.created).getTime(),
         }));
 
-        // Preserve local-only sessions (messageCount === 0 and not in backend)
-        const currentSessions = sessions[workspaceId] || [];
+        // Read sessions AFTER async completes to avoid race condition
+        // (e.g., createSession may have added a local session during the fetch)
+        const currentSessions = get().sessions[workspaceId] || [];
         const backendSessionIds = new Set(
           backendSessions.map((s: { sessionId: string }) => s.sessionId),
         );
