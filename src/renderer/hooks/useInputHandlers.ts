@@ -86,7 +86,7 @@ export function useInputHandlers({
     cwd,
   });
 
-  const slashCommands = useSlashCommands({ value, fetchCommands });
+  const slashCommands = useSlashCommands({ value, sessionId, fetchCommands });
   const pasteManager = usePasteManager(pastedTextMap, setPastedTextMap);
   const imageManager = useImagePasteManager(
     sessionId,

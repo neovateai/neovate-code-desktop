@@ -8,15 +8,22 @@ export interface SlashCommand {
 
 interface UseSlashCommandsProps {
   value: string;
+  sessionId: string | null;
   fetchCommands: () => Promise<SlashCommand[]>;
 }
 
 export function useSlashCommands({
   value,
+  sessionId,
   fetchCommands,
 }: UseSlashCommandsProps) {
   const [commands, setCommands] = useState<SlashCommand[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Reset commands when session changes
+  useEffect(() => {
+    setCommands([]);
+  }, [sessionId]);
 
   const suggestions = useMemo(() => {
     if (!value.startsWith('/')) return [];
