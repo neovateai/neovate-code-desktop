@@ -120,7 +120,8 @@ export type KeybindingAction =
   | 'toggleTheme'
   | 'clearTerminal'
   | 'prevSession'
-  | 'nextSession';
+  | 'nextSession'
+  | 'copyPath';
 
 /**
  * Actions that are read-only (not customizable by user)
@@ -143,6 +144,7 @@ export const KEYBINDING_LABELS: Record<KeybindingAction, string> = {
   clearTerminal: 'Clear Terminal',
   prevSession: 'Previous Session',
   nextSession: 'Next Session',
+  copyPath: 'Copy Path',
 };
 
 /**
@@ -156,4 +158,5 @@ export const DEFAULT_KEYBINDINGS: Record<KeybindingAction, string> = {
   clearTerminal: 'Cmd+K',
   prevSession: 'Cmd+Option+ArrowUp',
   nextSession: 'Cmd+Option+ArrowDown',
+  copyPath: 'Cmd+Shift+C',
 };

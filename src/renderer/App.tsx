@@ -26,7 +26,7 @@ import {
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { TitleBar } from './components/app/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
-import { matchesBinding } from './lib/keybindings';
+import { matchesBinding, DEFAULT_KEYBINDINGS } from './lib/keybindings';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -118,6 +118,22 @@ function App() {
       if (matchesBinding(e, keybindings.nextSession)) {
         e.preventDefault();
         selectNextSession();
+        return;
+      }
+
+      // Copy Path
+      if (
+        matchesBinding(e, keybindings.copyPath ?? DEFAULT_KEYBINDINGS.copyPath)
+      ) {
+        e.preventDefault();
+        const { workspaces, selectedWorkspaceId, copyPathToClipboard } =
+          useStore.getState();
+        const workspace = selectedWorkspaceId
+          ? workspaces[selectedWorkspaceId]
+          : null;
+        if (workspace) {
+          copyPathToClipboard(workspace.worktreePath);
+        }
         return;
       }
     };

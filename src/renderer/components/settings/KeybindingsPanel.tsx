@@ -17,6 +17,7 @@ const KEYBINDING_ACTIONS: KeybindingAction[] = [
   'newChat',
   'prevSession',
   'nextSession',
+  'copyPath',
   'closeSettings',
   'toggleTheme',
   'clearTerminal',
@@ -245,7 +246,7 @@ export const KeybindingsPanel = () => {
           <KeybindingRow
             key={action}
             action={action}
-            binding={keybindings[action]}
+            binding={keybindings[action] ?? DEFAULT_KEYBINDINGS[action]}
             isReadonly={READONLY_ACTIONS.includes(action)}
             isRecording={recordingAction === action}
             conflict={

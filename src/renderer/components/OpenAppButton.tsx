@@ -6,7 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/menu';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2, Copy } from 'lucide-react';
 import type { App } from '../nodeBridge.types';
 import { useStore } from '../store';
 import cursorIcon from '../assets/icons/cursor.png';
@@ -63,6 +63,7 @@ interface OpenAppButtonProps {
  */
 export function OpenAppButton({ cwd }: OpenAppButtonProps) {
   const request = useStore((state) => state.request);
+  const copyPathToClipboard = useStore((state) => state.copyPathToClipboard);
   const [apps, setApps] = useState<App[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -89,6 +90,10 @@ export function OpenAppButton({ cwd }: OpenAppButtonProps) {
     } catch (error) {
       console.error('Failed to open app:', error);
     }
+  };
+
+  const handleCopyPath = () => {
+    copyPathToClipboard(cwd);
   };
 
   return (
@@ -139,6 +144,16 @@ export function OpenAppButton({ cwd }: OpenAppButtonProps) {
             );
           })
         )}
+        <DropdownMenuItem onClick={handleCopyPath}>
+          <Copy className="size-4 shrink-0" />
+          <span>Copy path</span>
+          <span
+            className="ml-auto text-xs"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            ⌘⇧C
+          </span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
