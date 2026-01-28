@@ -190,10 +190,7 @@ export const GeneralConfigStep = () => {
         title="Theme"
         description="Choose your preferred color scheme"
       >
-        <div
-          className="flex gap-1 p-1 rounded-lg"
-          style={{ backgroundColor: 'var(--bg-surface)' }}
-        >
+        <div className="flex gap-1 p-1 rounded-lg bg-bg-surface">
           <ThemeOption
             label="Light"
             isActive={theme === 'light'}

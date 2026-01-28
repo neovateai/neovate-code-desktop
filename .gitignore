@@ -27,3 +27,4 @@ npm-debug.log*
 
 # Temporary files
 *.tmp
+.bakery-buffer

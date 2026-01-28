@@ -54,7 +54,7 @@ export const SettingsPage = () => {
             WebkitAppRegion: 'drag',
           }}
         />
-        <div className="max-w-2xl px-8 pb-8">
+        <div className=" px-8 pb-8">
           {activeMenu === 'preferences' && <PreferencesPanel />}
           {activeMenu === 'chat' && <ChatPanel />}
           {activeMenu === 'appearance' && <AppearancePanel />}
