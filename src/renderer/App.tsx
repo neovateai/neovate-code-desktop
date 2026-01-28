@@ -23,7 +23,7 @@ import {
   SecondarySidebar,
 } from './components/layout';
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
-import { TitleBar } from './components/app/TitleBar';
+import { TitleBar } from './components/layout/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
 
 function App() {

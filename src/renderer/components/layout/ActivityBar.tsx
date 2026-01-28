@@ -8,7 +8,7 @@ import {
 import { useStore } from '../../store';
 import { cn } from '../../lib/utils';
 import { Button, Separator } from '../ui';
-import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
+import { useAppLayoutPanels } from './AppLayoutProvider';
 import type { SecondarySidebarTab } from '../../store/slices/ui';
 
 export const ActivityBar = function ActivityBar() {

@@ -11,7 +11,7 @@ import { useStore } from '../../store';
 import { AddRepoMenu } from '../AddRepoMenu';
 import { Button } from '../ui/button';
 import { Separator as UISeparator } from '../ui/separator';
-import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
+import { useAppLayoutPanels } from './AppLayoutProvider';
 
 export function TitleBar() {
   const {
