@@ -48,9 +48,8 @@ export const SettingsMenu = ({
     >
       {/* Back to app button */}
       <button
-        className="flex items-center gap-3 ml-2 px-4 py-3 text-sm font-medium transition-colors hover:bg-opacity-50"
+        className="flex items-center text-text-secondary gap-3 ml-2 px-4 py-3 text-sm transition-colors hover:bg-opacity-50 cursor-pointer hover:text-text-primary"
         style={{
-          color: 'var(--text-secondary)',
           borderBottom: '1px solid var(--border-subtle)',
           // @ts-expect-error - Electron specific CSS property
           WebkitAppRegion: 'no-drag',
@@ -75,30 +74,20 @@ export const SettingsMenu = ({
           return (
             <button
               key={item.id}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors"
+              className={`
+                w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer
+                rounded-[6px] mx-2
+                ${
+                  isActive
+                    ? 'bg-background text-text-primary'
+                    : 'text-text-secondary hover:text-text-primary'
+                }
+              `}
               style={{
-                backgroundColor: isActive ? 'var(--accent)' : 'transparent',
-                color: isActive
-                  ? 'var(--text-primary)'
-                  : 'var(--text-secondary)',
-                borderRadius: '6px',
-                margin: '0 8px',
-                width: 'calc(100% - 16px)',
                 // @ts-expect-error - Electron specific CSS property
                 WebkitAppRegion: 'no-drag',
               }}
               onClick={() => onMenuSelect(item.id)}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor =
-                    'var(--bg-base-hover)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
             >
               <HugeiconsIcon icon={item.icon} size={18} strokeWidth={1.5} />
               <span>{item.label}</span>
