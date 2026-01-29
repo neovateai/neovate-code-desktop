@@ -126,7 +126,6 @@ export function setupPersistence(store: StoreApi<any>): void {
   const debouncedSave = debounce(async () => {
     try {
       const persistableState = getPersistableState();
-      // @ts-expect-error
       await window.electron.saveStore(persistableState);
     } catch (error) {
       console.error('Failed to save store:', error);
@@ -156,7 +155,6 @@ export function setupPersistence(store: StoreApi<any>): void {
  */
 export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
   try {
-    // @ts-expect-error
     const persistedState = await window.electron.loadStore();
 
     // No persisted state - fresh start
