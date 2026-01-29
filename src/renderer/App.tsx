@@ -197,7 +197,7 @@ function App() {
       {/* Main App - hidden with CSS when settings is shown */}
       <AppLayout>
         <div
-          className="flex flex-col h-dvh bg-(--bg-surface)"
+          className="flex flex-col h-dvh bg-sidebar"
           style={{ display: showSettings ? 'none' : 'flex' }}
         >
           {/* Custom Title Bar */}

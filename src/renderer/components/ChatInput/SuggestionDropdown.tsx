@@ -42,13 +42,7 @@ export function SuggestionDropdown({
   const visibleItems = items.slice(startIndex, startIndex + maxVisible);
 
   return (
-    <div
-      className="absolute bottom-full left-0 mb-1 w-full max-w-lg rounded-lg shadow-lg overflow-hidden z-50"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
-      }}
-    >
+    <div className="absolute bottom-full left-0 mb-1 w-full max-w-lg rounded-lg shadow-lg overflow-hidden z-50 bg-muted border border-border">
       <ScrollArea className="max-h-64">
         <ul className="py-1">
           {visibleItems.map((item, index) => {
@@ -63,29 +57,18 @@ export function SuggestionDropdown({
               return (
                 <li
                   key={actualIndex}
-                  className="px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors"
-                  style={{
-                    backgroundColor: isSelected
-                      ? 'var(--bg-active)'
-                      : 'transparent',
-                  }}
+                  className={`px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors ${isSelected ? 'bg-accent' : 'bg-transparent'}`}
                 >
                   <HugeiconsIcon
                     icon={CodeIcon}
                     size={16}
-                    color="var(--text-secondary)"
+                    className="text-muted-foreground"
                   />
-                  <span
-                    className="font-mono text-sm flex-1"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
+                  <span className="font-mono text-sm flex-1 text-foreground">
                     /{name}
                   </span>
                   {description && (
-                    <span
-                      className="text-xs truncate max-w-[200px]"
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
+                    <span className="text-xs truncate max-w-[200px] text-muted-foreground">
                       {description}
                     </span>
                   )}
@@ -100,30 +83,18 @@ export function SuggestionDropdown({
             return (
               <li
                 key={actualIndex}
-                className="px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors min-w-0"
-                style={{
-                  backgroundColor: isSelected
-                    ? 'var(--bg-active)'
-                    : 'transparent',
-                }}
+                className={`px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors min-w-0 ${isSelected ? 'bg-accent' : 'bg-transparent'}`}
               >
                 <HugeiconsIcon
                   icon={isDir ? FolderIcon : FileIcon}
                   size={16}
-                  color="var(--text-secondary)"
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 text-muted-foreground"
                 />
-                <span
-                  className="text-sm font-medium truncate"
-                  style={{ color: 'var(--text-primary)' }}
-                >
+                <span className="text-sm font-medium truncate text-foreground">
                   {fileName || fullPath}
                 </span>
                 {dirPath && (
-                  <span
-                    className="text-xs truncate flex-1 text-right"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <span className="text-xs truncate flex-1 text-right text-muted-foreground">
                     {dirPath}
                   </span>
                 )}
@@ -132,13 +103,7 @@ export function SuggestionDropdown({
           })}
         </ul>
       </ScrollArea>
-      <div
-        className="px-3 py-1.5 text-xs border-t flex justify-between"
-        style={{
-          borderColor: 'var(--border-subtle)',
-          color: 'var(--text-tertiary)',
-        }}
-      >
+      <div className="px-3 py-1.5 text-xs border-t border-border text-muted-foreground flex justify-between">
         <span>
           <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
             ↑↓

@@ -77,21 +77,14 @@ export const DirectoryList = () => {
 
       {files.length > 0 && (
         <div className="mt-4">
-          <h3
-            className="text-lg font-bold"
-            style={{ color: 'var(--text-primary)' }}
-          >
+          <h3 className="text-lg font-bold text-foreground">
             Directory Contents:
           </h3>
-          <ul
-            className="mt-2 rounded p-4 max-h-40 overflow-y-auto"
-            style={{ border: '1px solid var(--border-subtle)' }}
-          >
+          <ul className="mt-2 rounded p-4 max-h-40 overflow-y-auto border border-border">
             {files.map((file, index) => (
               <li
                 key={index}
-                className="py-1 last:border-b-0"
-                style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                className="py-1 last:border-b-0 border-b border-border"
               >
                 {file}
               </li>

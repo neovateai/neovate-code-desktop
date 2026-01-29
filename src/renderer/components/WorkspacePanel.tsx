@@ -354,14 +354,7 @@ export const WorkspacePanel = ({
       <div className="flex flex-col h-full">
         {/* Debug Info */}
         {developerMode && (
-          <div
-            className="mx-4 mt-2 px-3 py-2 rounded-md text-xs font-mono"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-tertiary)',
-            }}
-          >
+          <div className="mx-4 mt-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
             <div>Selected Session ID: {selectedSessionId || 'null'}</div>
             <div>Selected Workspace ID: {selectedWorkspaceId || 'null'}</div>
             <div>isLoading: {String(isLoading)}</div>
@@ -437,10 +430,7 @@ WorkspacePanel.Header = function Header() {
 
   return (
     <div className="flex items-center justify-between h-12 px-4">
-      <h2
-        className="text-base font-semibold"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <h2 className="text-base font-semibold text-foreground">
         {workspace.repoPath.split('/').pop()}
       </h2>
       <OpenAppButton cwd={workspace.worktreePath} />

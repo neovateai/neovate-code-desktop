@@ -10,21 +10,10 @@ interface SettingsRowProps {
 
 const SettingsRow = ({ title, description, children }: SettingsRowProps) => {
   return (
-    <div
-      className="flex items-center justify-between py-4"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between py-4 border-b border-border">
       <div className="flex-1 pr-4">
-        <div
-          className="text-sm font-medium"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {title}
-        </div>
-        <div
-          className="text-sm mt-0.5"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        <div className="text-sm font-medium text-foreground">{title}</div>
+        <div className="text-sm mt-0.5 text-muted-foreground">
           {description}
         </div>
       </div>
@@ -48,7 +37,7 @@ export const ModelConfigStep = () => {
 
   return (
     <div className="space-y-2">
-      <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-sm mb-4 text-muted-foreground">
         Choose which AI models to use. You can change these later in Settings.
       </p>
 

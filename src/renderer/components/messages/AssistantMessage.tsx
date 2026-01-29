@@ -2,6 +2,7 @@ import { useMemo, useCallback, type ReactNode } from 'react';
 import Markdown from 'marked-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { BrainIcon } from '@hugeicons/core-free-icons';
+import { cn } from '../../lib/utils';
 import type { NormalizedMessage } from '../../client/types/message';
 import {
   extractTextParts,
@@ -44,53 +45,22 @@ export function AssistantMessage({
 
   return (
     <div className="flex justify-start min-w-0 w-full">
-      <div
-        className="min-w-0 w-full"
-        style={
-          {
-            // maxWidth: '80%',
-            // backgroundColor: 'var(--bg-surface)',
-            // borderRadius: '12px',
-            // padding: '12px 0',
-          }
-        }
-      >
+      <div className="min-w-0 w-full">
         {/* Reasoning (thinking) parts */}
         {reasoningParts.length > 0 && (
-          <div style={{ marginBottom: textParts.length > 0 ? '12px' : '0' }}>
+          <div className={textParts.length > 0 ? 'mb-3' : ''}>
             {reasoningParts.map((part, index) => (
-              <div
-                key={`reasoning-${message.uuid}-${index}`}
-                style={{
-                  marginBottom: '8px',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: 'var(--text-secondary)',
-                    marginBottom: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
+              <div key={`reasoning-${message.uuid}-${index}`} className="mb-2">
+                <div className="text-[13px] font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
                   <HugeiconsIcon
                     icon={BrainIcon}
                     size={14}
-                    color="var(--text-secondary)"
+                    className="text-muted-foreground"
                     strokeWidth={1.5}
                   />
-                  <span style={{ fontStyle: 'italic' }}>Thought</span>
+                  <span className="italic">Thought</span>
                 </div>
-                <div
-                  style={{
-                    paddingLeft: '20px',
-                    color: 'var(--text-secondary)',
-                    fontStyle: 'italic',
-                  }}
-                >
+                <div className="pl-5 text-muted-foreground italic">
                   <MarkdownContent content={part.text} isThought />
                 </div>
               </div>
@@ -100,11 +70,7 @@ export function AssistantMessage({
 
         {/* Text parts with markdown rendering */}
         {textParts.length > 0 && (
-          <div
-            style={{
-              marginBottom: '12px',
-            }}
-          >
+          <div className="mb-3">
             {textParts.map((part, index) => (
               <MarkdownContent
                 key={`text-${message.uuid}-${index}`}
@@ -116,12 +82,7 @@ export function AssistantMessage({
 
         {/* Tool use parts with results */}
         {toolPairs.length > 0 && (
-          <div
-            style={{
-              marginTop: textParts.length > 0 ? '12px' : '0',
-              marginBottom: '12px',
-            }}
-          >
+          <div className={cn('mb-3', textParts.length > 0 && 'mt-3')}>
             {toolPairs.map((pair, index) => (
               <ToolMessage
                 key={`tool-${pair.toolUse.id}-${index}`}
@@ -135,14 +96,7 @@ export function AssistantMessage({
         {textParts.length === 0 &&
           reasoningParts.length === 0 &&
           toolPairs.length === 0 && (
-            <div
-              style={{
-                fontSize: '13px',
-                color: 'var(--text-secondary)',
-                fontStyle: 'italic',
-                marginBottom: '12px',
-              }}
-            >
+            <div className="text-[13px] text-muted-foreground italic mb-3">
               (Empty message)
             </div>
           )}
@@ -193,13 +147,10 @@ function MarkdownContent({
 
   return (
     <div
-      style={{
-        fontSize: '14px',
-        lineHeight: '1.6',
-        color: isThought ? 'var(--text-secondary)' : 'var(--text-primary)',
-        fontStyle: isThought ? 'italic' : 'normal',
-      }}
-      className="markdown-content"
+      className={cn(
+        'text-sm leading-relaxed markdown-content',
+        isThought ? 'text-muted-foreground italic' : 'text-foreground',
+      )}
     >
       <Markdown value={rendered} renderer={renderer} />
     </div>

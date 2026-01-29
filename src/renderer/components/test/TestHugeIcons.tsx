@@ -39,7 +39,7 @@ import {
 
 export const TestHugeIcons = () => {
   const iconSize = 24;
-  const iconColor = 'var(--text-primary)';
+  const iconColor = 'currentColor';
 
   const iconSections = [
     {
@@ -119,15 +119,9 @@ export const TestHugeIcons = () => {
   ];
 
   return (
-    <div
-      className="p-6 rounded-lg"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        color: 'var(--text-primary)',
-      }}
-    >
+    <div className="p-6 rounded-lg bg-muted text-foreground">
       <h2 className="text-2xl font-bold mb-6">HugeIcons Test Showcase</h2>
-      <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
+      <p className="mb-6 text-sm text-muted-foreground">
         A showcase of various icons from @hugeicons/react and
         @hugeicons/core-free-icons. This library provides 4,400+ free icons.
         Import the HugeiconsIcon component from @hugeicons/react and icon data
@@ -142,10 +136,7 @@ export const TestHugeIcons = () => {
               {section.icons.map(({ name, icon }) => (
                 <div
                   key={name}
-                  className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-opacity-50 transition-all cursor-pointer"
-                  style={{
-                    backgroundColor: 'var(--bg-base)',
-                  }}
+                  className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-opacity-50 transition-all cursor-pointer bg-background"
                   title={name}
                 >
                   <HugeiconsIcon
@@ -154,10 +145,7 @@ export const TestHugeIcons = () => {
                     color={iconColor}
                     strokeWidth={1.5}
                   />
-                  <span
-                    className="text-xs text-center"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
+                  <span className="text-xs text-center text-muted-foreground">
                     {name}
                   </span>
                 </div>
@@ -167,10 +155,7 @@ export const TestHugeIcons = () => {
         ))}
       </div>
 
-      <div
-        className="mt-8 pt-6 border-t"
-        style={{ borderColor: 'var(--border-base)' }}
-      >
+      <div className="mt-8 pt-6 border-t border-border">
         <h3 className="text-lg font-semibold mb-4">Icon Variants & Sizes</h3>
         <div className="flex flex-wrap gap-6 items-center">
           <div className="flex flex-col items-center gap-2">
@@ -180,12 +165,7 @@ export const TestHugeIcons = () => {
               color={iconColor}
               strokeWidth={1.5}
             />
-            <span
-              className="text-xs"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              16px
-            </span>
+            <span className="text-xs text-muted-foreground">16px</span>
           </div>
           <div className="flex flex-col items-center gap-2">
             <HugeiconsIcon
@@ -194,12 +174,7 @@ export const TestHugeIcons = () => {
               color={iconColor}
               strokeWidth={1.5}
             />
-            <span
-              className="text-xs"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              24px
-            </span>
+            <span className="text-xs text-muted-foreground">24px</span>
           </div>
           <div className="flex flex-col items-center gap-2">
             <HugeiconsIcon
@@ -208,12 +183,7 @@ export const TestHugeIcons = () => {
               color={iconColor}
               strokeWidth={1.5}
             />
-            <span
-              className="text-xs"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              32px
-            </span>
+            <span className="text-xs text-muted-foreground">32px</span>
           </div>
           <div className="flex flex-col items-center gap-2">
             <HugeiconsIcon
@@ -222,28 +192,14 @@ export const TestHugeIcons = () => {
               color={iconColor}
               strokeWidth={1.5}
             />
-            <span
-              className="text-xs"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              48px
-            </span>
+            <span className="text-xs text-muted-foreground">48px</span>
           </div>
         </div>
       </div>
 
-      <div
-        className="mt-8 pt-6 border-t"
-        style={{ borderColor: 'var(--border-base)' }}
-      >
+      <div className="mt-8 pt-6 border-t border-border">
         <h3 className="text-lg font-semibold mb-4">Usage Example</h3>
-        <pre
-          className="p-4 rounded-lg text-xs overflow-x-auto"
-          style={{
-            backgroundColor: 'var(--bg-base)',
-            color: 'var(--text-primary)',
-          }}
-        >
+        <pre className="p-4 rounded-lg text-xs overflow-x-auto bg-background text-foreground">
           {`import { HugeiconsIcon } from '@hugeicons/react';
 import { SearchIcon, HomeIcon } from '@hugeicons/core-free-icons';
 

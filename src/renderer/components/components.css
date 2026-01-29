@@ -1,70 +1,3 @@
-/* Component color utilities using CSS variables */
-.bg-gray-900 {
-  background-color: var(--bg-base);
-}
-
-.bg-gray-850 {
-  background-color: var(--bg-primary);
-}
-
-.bg-gray-800 {
-  background-color: var(--bg-elevated);
-}
-
-.bg-gray-700 {
-  background-color: var(--bg-surface);
-}
-
-.bg-gray-600 {
-  background-color: var(--bg-subtle);
-}
-
-.text-gray-200 {
-  color: var(--text-primary);
-}
-
-.text-gray-300 {
-  color: var(--text-secondary);
-}
-
-.text-gray-400 {
-  color: var(--text-tertiary);
-}
-
-.text-gray-500 {
-  color: var(--text-muted);
-}
-
-.border-gray-700 {
-  border-color: var(--border-subtle);
-}
-
-.border-gray-800 {
-  border-color: var(--border-elevated);
-}
-
-.border-gray-850 {
-  border-color: var(--border-elevated);
-}
-
-/* Interactive state utilities */
-.hover-bg:hover {
-  background-color: var(--bg-hover);
-}
-
-.active-bg:active {
-  background-color: var(--bg-active);
-}
-
-.focus-border:focus {
-  border-color: var(--border-focus);
-  outline: none;
-}
-
-.hover-border:hover {
-  border-color: var(--border-hover);
-}
-
 /* Markdown content styling */
 .markdown-content {
   line-height: 1.6;
@@ -100,13 +33,13 @@
 
 .markdown-content h1 {
   font-size: 1.5em;
-  border-bottom: 1px solid var(--border-subtle);
+  @apply border-b border-border;
   padding-bottom: 0.3em;
 }
 
 .markdown-content h2 {
   font-size: 1.3em;
-  border-bottom: 1px solid var(--border-subtle);
+  @apply border-b border-border;
   padding-bottom: 0.3em;
 }
 
@@ -119,7 +52,7 @@
 }
 
 .markdown-content code {
-  background-color: var(--bg-surface);
+  @apply bg-muted;
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-family: monospace;
@@ -127,8 +60,7 @@
 }
 
 .markdown-content pre {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  @apply bg-neutral-100 dark:bg-neutral-900 border border-border;
   border-radius: 6px;
   padding: 12px;
   overflow-x: auto;
@@ -166,10 +98,9 @@
 }
 
 .markdown-content blockquote {
-  border-left: 3px solid var(--border-subtle);
+  @apply border-l-[3px] border-border text-muted-foreground;
   margin: 0.5em 0;
   padding-left: 1em;
-  color: var(--text-secondary);
 }
 
 .markdown-content a {
@@ -189,19 +120,19 @@
 
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid var(--border-subtle);
+  @apply border border-border;
   padding: 0.5em;
   text-align: left;
 }
 
 .markdown-content th {
-  background-color: var(--bg-primary);
+  @apply bg-card;
   font-weight: 600;
 }
 
 .markdown-content hr {
   border: none;
-  border-top: 1px solid var(--border-subtle);
+  @apply border-t border-border;
   margin: 1em 0;
 }
 

@@ -593,12 +593,7 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
   return (
     <div
       ref={containerRef}
-      className="flex-1 p-2"
-      style={{
-        minHeight: 0,
-        backgroundColor: 'var(--bg-base)',
-        display: isActive ? 'block' : 'none',
-      }}
+      className={`flex-1 p-2 min-h-0 bg-background ${isActive ? 'block' : 'hidden'}`}
       onClick={() => terminalInstances.get(tab.id)?.xterm.focus()}
     />
   );

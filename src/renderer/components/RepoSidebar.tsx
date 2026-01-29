@@ -246,7 +246,7 @@ export const RepoSidebar = ({
                 icon={FolderIcon}
                 size={48}
                 strokeWidth={1.5}
-                style={{ color: 'var(--text-tertiary)' }}
+                className="text-muted-foreground"
               />
             </EmptyMedia>
             <EmptyHeader>
@@ -273,9 +273,8 @@ export const RepoSidebar = ({
                     />
                     <span className="font-medium text-sm">{repo.name}</span>
                     <span
-                      className="ml-auto p-1 rounded hover:bg-opacity-70"
+                      className="ml-auto p-1 rounded hover:bg-opacity-70 text-muted-foreground"
                       onClick={(e) => handleRepoInfoClick(repo, e)}
-                      style={{ color: 'var(--text-secondary)' }}
                     >
                       <HugeiconsIcon
                         icon={InformationCircleIcon}
@@ -310,23 +309,7 @@ export const RepoSidebar = ({
                           <div>
                             {/* Create session button */}
                             <button
-                              className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left"
-                              style={{
-                                color: 'var(--text-tertiary)',
-                                backgroundColor: 'transparent',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  'var(--bg-base-hover)';
-                                e.currentTarget.style.color =
-                                  'var(--text-secondary)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  'transparent';
-                                e.currentTarget.style.color =
-                                  'var(--text-tertiary)';
-                              }}
+                              className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left text-muted-foreground bg-transparent hover:bg-accent hover:text-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 selectWorkspace(workspaceId);
@@ -361,34 +344,20 @@ export const RepoSidebar = ({
                               const isAwaitingApproval =
                                 processing.status === 'awaiting_approval';
                               const isFailed = processing.status === 'failed';
-                              const textColor = isFailed
-                                ? '#ef4444'
-                                : isSessionSelected
-                                  ? 'var(--text-primary)'
-                                  : 'var(--text-tertiary)';
-
                               return (
                                 <ContextMenu key={session.sessionId}>
                                   <ContextMenuTrigger
-                                    className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors"
-                                    style={{
-                                      backgroundColor: isSessionSelected
-                                        ? 'var(--bg-base)'
-                                        : 'transparent',
-                                      color: textColor,
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      if (!isSessionSelected) {
-                                        e.currentTarget.style.backgroundColor =
-                                          'var(--bg-base-hover)';
-                                      }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      if (!isSessionSelected) {
-                                        e.currentTarget.style.backgroundColor =
-                                          'transparent';
-                                      }
-                                    }}
+                                    className={cn(
+                                      'flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors',
+                                      isSessionSelected
+                                        ? 'bg-background'
+                                        : 'bg-transparent hover:bg-accent',
+                                      isFailed
+                                        ? 'text-destructive'
+                                        : isSessionSelected
+                                          ? 'text-foreground'
+                                          : 'text-muted-foreground',
+                                    )}
                                     onClick={() => {
                                       selectWorkspace(workspaceId);
                                       selectSession(session.sessionId);
@@ -412,7 +381,7 @@ export const RepoSidebar = ({
                                     )}
                                     {isEditing ? (
                                       <input
-                                        className="flex-1 text-xs bg-transparent border border-[var(--border-primary)] rounded px-1 py-0.5 outline-none"
+                                        className="flex-1 text-xs bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
                                         value={editingValue}
                                         onChange={(e) =>
                                           setEditingValue(e.target.value)
@@ -442,10 +411,7 @@ export const RepoSidebar = ({
                                         {displaySummary}
                                       </span>
                                     )}
-                                    <span
-                                      className="text-xs"
-                                      style={{ color: 'var(--text-tertiary)' }}
-                                    >
+                                    <span className="text-xs text-muted-foreground">
                                       {formatRelativeTime(session.modified)}
                                     </span>
                                   </ContextMenuTrigger>
@@ -479,16 +445,7 @@ export const RepoSidebar = ({
                             {/* Show more/less toggle */}
                             {hiddenCount > 0 && (
                               <button
-                                className="px-3 py-1 text-xs cursor-pointer transition-colors"
-                                style={{ color: 'var(--text-tertiary)' }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.color =
-                                    'var(--text-secondary)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.color =
-                                    'var(--text-tertiary)';
-                                }}
+                                className="px-3 py-1 text-xs cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleSessionGroupExpanded(expandKey);
@@ -643,21 +600,13 @@ function InfoRow({
         icon={icon}
         size={16}
         strokeWidth={1.5}
-        style={{ color: 'var(--text-secondary)', marginTop: '2px' }}
+        className="text-muted-foreground mt-0.5"
       />
       <div className="flex-1 min-w-0">
-        <div
-          className="text-xs font-medium mb-0.5"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        <div className="text-xs font-medium mb-0.5 text-muted-foreground">
           {label}
         </div>
-        <div
-          className="text-sm break-all"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {value}
-        </div>
+        <div className="text-sm break-all text-foreground">{value}</div>
       </div>
     </div>
   );

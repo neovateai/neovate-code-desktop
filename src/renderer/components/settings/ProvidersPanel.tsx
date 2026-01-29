@@ -658,30 +658,20 @@ export const ProvidersPanel = () => {
 
   return (
     <div>
-      <h1
-        className="text-xl font-semibold mb-6 flex items-center gap-2"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={CloudIcon} size={22} strokeWidth={1.5} />
         Providers
       </h1>
 
       <div
-        className="flex rounded-lg overflow-hidden"
+        className="flex rounded-lg overflow-hidden border border-border"
         style={{
-          border: '1px solid var(--border-subtle)',
           minHeight: '400px',
           maxHeight: 'calc(100vh - 140px)',
         }}
       >
         {/* Provider List */}
-        <div
-          className="w-56 flex-shrink-0 flex flex-col"
-          style={{
-            borderRight: '1px solid var(--border-subtle)',
-            backgroundColor: 'var(--bg-surface)',
-          }}
-        >
+        <div className="w-56 flex-shrink-0 flex flex-col border-r border-border bg-muted">
           {/* Search */}
           <div className="p-2">
             <input
@@ -689,12 +679,7 @@ export const ProvidersPanel = () => {
               placeholder="Search providers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm rounded-md outline-none"
-              style={{
-                backgroundColor: 'var(--bg-base)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-primary)',
-              }}
+              className="w-full px-3 py-1.5 text-sm rounded-md outline-none bg-background border border-border text-foreground"
             />
           </div>
 
@@ -704,10 +689,10 @@ export const ProvidersPanel = () => {
               <button
                 key={provider.id}
                 className={cn(
-                  'w-full flex items-center text-text-secondary gap-2 px-3 py-2 text-sm text-left transition-colors group',
+                  'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group',
                   selectedProviderId === provider.id
-                    ? 'bg-accent text-primary'
-                    : 'text-text-secondary',
+                    ? 'bg-accent text-foreground'
+                    : 'text-muted-foreground',
                 )}
                 onClick={() => setSelectedProviderId(provider.id)}
               >
@@ -715,8 +700,7 @@ export const ProvidersPanel = () => {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {provider.source !== 'built-in' && (
                     <button
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity"
-                      style={{ color: 'var(--text-secondary)' }}
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity text-muted-foreground"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteCustomProvider(provider.id);
@@ -732,10 +716,7 @@ export const ProvidersPanel = () => {
                   )}
                   {provider.source !== 'built-in' && (
                     <span
-                      style={{
-                        color: '#8b5cf6',
-                        fontSize: '12px',
-                      }}
+                      className="text-violet-500 text-xs"
                       title="Custom provider"
                     >
                       ★
@@ -743,8 +724,7 @@ export const ProvidersPanel = () => {
                   )}
                   {isProviderActive(provider) && (
                     <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: '#22c55e' }}
+                      className="w-2 h-2 rounded-full bg-green-500"
                       title="Active"
                     />
                   )}
@@ -754,26 +734,10 @@ export const ProvidersPanel = () => {
           </div>
 
           {/* Add custom provider button */}
-          <div
-            className="p-2"
-            style={{ borderTop: '1px solid var(--border-subtle)' }}
-          >
+          <div className="p-2 border-t border-border">
             <button
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors"
-              style={{
-                backgroundColor: 'var(--bg-base)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-secondary)',
-              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors bg-background border border-border text-muted-foreground hover:bg-accent hover:border-accent"
               onClick={() => setShowAddProviderModal(true)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
-                e.currentTarget.style.borderColor = 'var(--accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-base)';
-                e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              }}
             >
               <HugeiconsIcon icon={Add01Icon} size={16} strokeWidth={1.5} />
               Add custom provider
@@ -782,10 +746,7 @@ export const ProvidersPanel = () => {
         </div>
 
         {/* Provider Detail */}
-        <div
-          className="flex-1 p-4"
-          style={{ backgroundColor: 'var(--bg-base)' }}
-        >
+        <div className="flex-1 p-4 bg-background">
           {selectedProvider ? (
             isLoadingConfig ? (
               <div className="flex items-center justify-center py-12">
@@ -796,22 +757,16 @@ export const ProvidersPanel = () => {
                 {/* Provider Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <h2
-                      className="text-lg font-semibold"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
+                    <h2 className="text-lg font-semibold text-foreground">
                       {selectedProvider.name}
                     </h2>
                     <span
-                      className="px-2 py-0.5 text-xs rounded-full"
-                      style={{
-                        backgroundColor: isProviderActive(selectedProvider)
-                          ? 'rgba(34, 197, 94, 0.1)'
-                          : 'rgba(156, 163, 175, 0.1)',
-                        color: isProviderActive(selectedProvider)
-                          ? '#22c55e'
-                          : 'var(--text-secondary)',
-                      }}
+                      className={cn(
+                        'px-2 py-0.5 text-xs rounded-full',
+                        isProviderActive(selectedProvider)
+                          ? 'bg-green-500/10 text-green-500'
+                          : 'bg-gray-400/10 text-muted-foreground',
+                      )}
                     >
                       {isProviderActive(selectedProvider)
                         ? 'Active'
@@ -825,28 +780,14 @@ export const ProvidersPanel = () => {
                       <button
                         onClick={() => setShowTestDropdown(!showTestDropdown)}
                         disabled={testStatus === 'testing'}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors"
-                        style={{
-                          backgroundColor:
-                            testStatus === 'success'
-                              ? 'rgba(34, 197, 94, 0.1)'
-                              : testStatus === 'error'
-                                ? 'rgba(239, 68, 68, 0.1)'
-                                : 'var(--bg-surface)',
-                          border: `1px solid ${
-                            testStatus === 'success'
-                              ? 'rgba(34, 197, 94, 0.3)'
-                              : testStatus === 'error'
-                                ? 'rgba(239, 68, 68, 0.3)'
-                                : 'var(--border-subtle)'
-                          }`,
-                          color:
-                            testStatus === 'success'
-                              ? '#22c55e'
-                              : testStatus === 'error'
-                                ? '#ef4444'
-                                : 'var(--text-secondary)',
-                        }}
+                        className={cn(
+                          'flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors border',
+                          testStatus === 'success'
+                            ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                            : testStatus === 'error'
+                              ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                              : 'bg-muted border-border text-muted-foreground',
+                        )}
                         title={
                           testStatus === 'error' && testError
                             ? testError
@@ -884,32 +825,21 @@ export const ProvidersPanel = () => {
                       {/* Dropdown */}
                       {showTestDropdown && (
                         <div
-                          className="absolute right-0 top-full mt-1 z-10 rounded-md shadow-lg overflow-hidden"
+                          className="absolute right-0 top-full mt-1 z-10 rounded-md shadow-lg overflow-hidden bg-muted border border-border"
                           style={{
-                            backgroundColor: 'var(--bg-surface)',
-                            border: '1px solid var(--border-subtle)',
                             minWidth: '200px',
                             maxHeight: '300px',
                             overflowY: 'auto',
                           }}
                         >
-                          <div
-                            className="px-3 py-2 text-xs font-medium"
-                            style={{
-                              color: 'var(--text-secondary)',
-                              borderBottom: '1px solid var(--border-subtle)',
-                            }}
-                          >
+                          <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
                             Select a model to test
                           </div>
                           {selectedProviderModels.map((model) => (
                             <button
                               key={model.modelId}
                               onClick={() => handleTestModel(model.value)}
-                              className="w-full px-3 py-2 text-sm text-left transition-colors hover:bg-bg-hover"
-                              style={{
-                                color: 'var(--text-primary)',
-                              }}
+                              className="w-full px-3 py-2 text-sm text-left transition-colors hover:bg-accent text-foreground"
                             >
                               {model.name || model.modelId}
                             </button>
@@ -925,13 +855,7 @@ export const ProvidersPanel = () => {
                   <div>
                     <button
                       onClick={() => openExternalUrl(selectedProvider.doc!)}
-                      className="text-sm hover:underline cursor-pointer"
-                      style={{
-                        color: '#3b82f6',
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                      }}
+                      className="text-sm hover:underline cursor-pointer text-blue-500 bg-transparent border-none p-0"
                     >
                       View Documentation →
                     </button>
@@ -941,20 +865,11 @@ export const ProvidersPanel = () => {
                 {/* Environment Variables Info */}
                 {selectedProvider.validEnvs &&
                   selectedProvider.validEnvs.length > 0 && (
-                    <div
-                      className="p-3 rounded-md text-sm"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        border: '1px solid var(--border-subtle)',
-                      }}
-                    >
-                      <div
-                        className="font-medium mb-1"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
+                    <div className="p-3 rounded-md text-sm bg-muted border border-border">
+                      <div className="font-medium mb-1 text-foreground">
                         Environment Variables
                       </div>
-                      <div style={{ color: 'var(--text-secondary)' }}>
+                      <div className="text-muted-foreground">
                         {selectedProvider.validEnvs.join(', ')}
                       </div>
                     </div>
@@ -963,21 +878,15 @@ export const ProvidersPanel = () => {
                 {/* OAuth Provider Notice */}
                 {isOAuthProvider && (
                   <div
-                    className="p-3 rounded-md text-sm"
-                    style={{
-                      backgroundColor: selectedProvider.hasApiKey
-                        ? 'rgba(34, 197, 94, 0.1)'
-                        : 'rgba(59, 130, 246, 0.1)',
-                      border: selectedProvider.hasApiKey
-                        ? '1px solid rgba(34, 197, 94, 0.2)'
-                        : '1px solid rgba(59, 130, 246, 0.2)',
-                    }}
+                    className={cn(
+                      'p-3 rounded-md text-sm border',
+                      selectedProvider.hasApiKey
+                        ? 'bg-green-500/10 border-green-500/20'
+                        : 'bg-blue-500/10 border-blue-500/20',
+                    )}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <div
-                        className="font-medium"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
+                      <div className="font-medium text-foreground">
                         OAuth Provider
                       </div>
                       {selectedProvider.hasApiKey ? (
@@ -1009,7 +918,7 @@ export const ProvidersPanel = () => {
                         </Button>
                       )}
                     </div>
-                    <div style={{ color: 'var(--text-secondary)' }}>
+                    <div className="text-muted-foreground">
                       {selectedProvider.hasApiKey
                         ? 'You are logged in. Click Logout to remove your credentials.'
                         : 'This provider uses OAuth authentication.'}
@@ -1020,10 +929,7 @@ export const ProvidersPanel = () => {
                 {/* API Key Input */}
                 {!isOAuthProvider && (
                   <div className="space-y-2">
-                    <label
-                      className="block text-sm font-medium"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
+                    <label className="block text-sm font-medium text-foreground">
                       API Key
                     </label>
                     <div className="flex items-center gap-2">
@@ -1033,25 +939,12 @@ export const ProvidersPanel = () => {
                           value={apiKey}
                           onChange={(e) => setApiKey(e.target.value)}
                           placeholder="Enter your API key"
-                          className="w-full px-3 py-2 pr-10 text-sm rounded-md outline-none"
-                          style={{
-                            backgroundColor: 'var(--bg-surface)',
-                            border: '1px solid var(--border-subtle)',
-                            color: 'var(--text-primary)',
-                          }}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--accent)';
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor =
-                              'var(--border-subtle)';
-                          }}
+                          className="w-full px-3 py-2 pr-10 text-sm rounded-md outline-none bg-muted border border-border text-foreground focus:border-accent"
                         />
                         <button
                           type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-opacity-10"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-accent text-muted-foreground"
                           onClick={() => setShowApiKey(!showApiKey)}
-                          style={{ color: 'var(--text-secondary)' }}
                         >
                           <HugeiconsIcon
                             icon={showApiKey ? ViewOffIcon : ViewIcon}
@@ -1080,21 +973,11 @@ export const ProvidersPanel = () => {
                       )}
                     </div>
                     {selectedProvider.doc && (
-                      <p
-                        className="text-xs"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
+                      <p className="text-xs text-muted-foreground">
                         Get your API key from{' '}
                         <button
                           onClick={() => openExternalUrl(selectedProvider.doc!)}
-                          className="hover:underline cursor-pointer"
-                          style={{
-                            color: '#3b82f6',
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                            font: 'inherit',
-                          }}
+                          className="hover:underline cursor-pointer text-blue-500 bg-transparent border-none p-0 font-inherit"
                         >
                           {selectedProvider.name} API Keys
                         </button>
@@ -1106,10 +989,7 @@ export const ProvidersPanel = () => {
                 {/* Base URL Input */}
                 {!isOAuthProvider && (
                   <div className="space-y-2">
-                    <label
-                      className="block text-sm font-medium"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
+                    <label className="block text-sm font-medium text-foreground">
                       Base URL (Optional)
                     </label>
                     <div className="flex items-center gap-2">
@@ -1121,19 +1001,7 @@ export const ProvidersPanel = () => {
                           selectedProvider.api ||
                           'Custom base URL (leave empty for default)'
                         }
-                        className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          border: '1px solid var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = 'var(--accent)';
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor =
-                            'var(--border-subtle)';
-                        }}
+                        className="flex-1 px-3 py-2 text-sm rounded-md outline-none bg-muted border border-border text-foreground focus:border-accent"
                       />
                       <Button
                         variant="outline"
@@ -1144,10 +1012,7 @@ export const ProvidersPanel = () => {
                         {isSaving ? <Spinner className="h-4 w-4" /> : 'Save'}
                       </Button>
                     </div>
-                    <p
-                      className="text-xs"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
+                    <p className="text-xs text-muted-foreground">
                       Leave empty to use the default API endpoint
                     </p>
                   </div>
@@ -1156,16 +1021,12 @@ export const ProvidersPanel = () => {
                 {/* Models List */}
                 {selectedProviderModels.length > 0 && (
                   <div className="space-y-2">
-                    <label
-                      className="block text-sm font-medium"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
+                    <label className="block text-sm font-medium text-foreground">
                       Models ({selectedProviderModels.length})
                     </label>
                     <div
-                      className="rounded-md overflow-hidden"
+                      className="rounded-md overflow-hidden border border-border"
                       style={{
-                        border: '1px solid var(--border-subtle)',
                         maxHeight: '300px',
                         overflowY: 'auto',
                       }}
@@ -1178,39 +1039,22 @@ export const ProvidersPanel = () => {
                         return (
                           <div
                             key={model.modelId}
-                            className="flex items-center justify-between px-3 py-2 text-sm"
-                            style={{
-                              backgroundColor: 'var(--bg-surface)',
-                              borderBottom: '1px solid var(--border-subtle)',
-                            }}
+                            className="flex items-center justify-between px-3 py-2 text-sm bg-muted border-b border-border"
                           >
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <span
-                                className="truncate"
-                                style={{ color: 'var(--text-primary)' }}
+                                className="truncate text-foreground"
                                 title={model.name || model.modelId}
                               >
                                 {model.name || model.modelId}
                               </span>
                               {isCurrentModel && (
-                                <span
-                                  className="px-1.5 py-0.5 text-xs rounded"
-                                  style={{
-                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                    color: '#3b82f6',
-                                  }}
-                                >
+                                <span className="px-1.5 py-0.5 text-xs rounded bg-blue-500/10 text-blue-500">
                                   Default
                                 </span>
                               )}
                               {isCurrentSmallModel && (
-                                <span
-                                  className="px-1.5 py-0.5 text-xs rounded"
-                                  style={{
-                                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                                    color: '#22c55e',
-                                  }}
-                                >
+                                <span className="px-1.5 py-0.5 text-xs rounded bg-green-500/10 text-green-500">
                                   Small
                                 </span>
                               )}
@@ -1219,12 +1063,7 @@ export const ProvidersPanel = () => {
                               {!isCurrentModel && (
                                 <button
                                   onClick={() => handleSetModel(model.value)}
-                                  className="px-2 py-1 text-xs rounded hover:bg-opacity-80 transition-colors"
-                                  style={{
-                                    backgroundColor: 'var(--bg-base)',
-                                    color: 'var(--text-secondary)',
-                                    border: '1px solid var(--border-subtle)',
-                                  }}
+                                  className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
                                   title="Set as default model"
                                 >
                                   Set Default
@@ -1235,12 +1074,7 @@ export const ProvidersPanel = () => {
                                   onClick={() =>
                                     handleSetSmallModel(model.value)
                                   }
-                                  className="px-2 py-1 text-xs rounded hover:bg-opacity-80 transition-colors"
-                                  style={{
-                                    backgroundColor: 'var(--bg-base)',
-                                    color: 'var(--text-secondary)',
-                                    border: '1px solid var(--border-subtle)',
-                                  }}
+                                  className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
                                   title="Set as small model"
                                 >
                                   Set Small
@@ -1256,10 +1090,7 @@ export const ProvidersPanel = () => {
               </div>
             )
           ) : (
-            <div
-              className="flex items-center justify-center h-full text-sm"
-              style={{ color: 'var(--text-secondary)' }}
-            >
+            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
               Select a provider to configure
             </div>
           )}
@@ -1269,33 +1100,21 @@ export const ProvidersPanel = () => {
       {/* Add Custom Provider Modal */}
       {showAddProviderModal && (
         <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          className="fixed inset-0 flex items-center justify-center z-50 bg-black/50"
           onClick={() => setShowAddProviderModal(false)}
         >
           <div
-            className="rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-            }}
+            className="rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto bg-muted border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div
-              className="px-4 py-3 flex items-center justify-between"
-              style={{ borderBottom: '1px solid var(--border-subtle)' }}
-            >
-              <h3
-                className="text-lg font-semibold"
-                style={{ color: 'var(--text-primary)' }}
-              >
+            <div className="px-4 py-3 flex items-center justify-between border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">
                 Add Custom Provider
               </h3>
               <button
                 onClick={() => setShowAddProviderModal(false)}
-                className="p-1 rounded hover:bg-opacity-10 transition-colors"
-                style={{ color: 'var(--text-secondary)' }}
+                className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground"
               >
                 <HugeiconsIcon
                   icon={Cancel01Icon}
@@ -1309,11 +1128,8 @@ export const ProvidersPanel = () => {
             <div className="p-4 space-y-4">
               {/* Name */}
               <div className="space-y-1">
-                <label
-                  className="block text-sm font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  Name <span style={{ color: '#ef4444' }}>*</span>
+                <label className="block text-sm font-medium text-foreground">
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -1325,28 +1141,14 @@ export const ProvidersPanel = () => {
                     }))
                   }
                   placeholder="e.g., My Custom Provider"
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none"
-                  style={{
-                    backgroundColor: 'var(--bg-base)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                  }}
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                 />
               </div>
 
               {/* Base URL */}
               <div className="space-y-1">
-                <label
-                  className="block text-sm font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  Base URL <span style={{ color: '#ef4444' }}>*</span>
+                <label className="block text-sm font-medium text-foreground">
+                  Base URL <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -1358,27 +1160,13 @@ export const ProvidersPanel = () => {
                     }))
                   }
                   placeholder="e.g., https://api.example.com/v1"
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none"
-                  style={{
-                    backgroundColor: 'var(--bg-base)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                  }}
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                 />
               </div>
 
               {/* API Key */}
               <div className="space-y-1">
-                <label
-                  className="block text-sm font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
+                <label className="block text-sm font-medium text-foreground">
                   API Key
                 </label>
                 <input
@@ -1391,27 +1179,13 @@ export const ProvidersPanel = () => {
                     }))
                   }
                   placeholder="Enter your API key"
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none"
-                  style={{
-                    backgroundColor: 'var(--bg-base)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                  }}
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                 />
               </div>
 
               {/* API Format */}
               <div className="space-y-1">
-                <label
-                  className="block text-sm font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
+                <label className="block text-sm font-medium text-foreground">
                   API Format
                 </label>
                 <select
@@ -1422,12 +1196,7 @@ export const ProvidersPanel = () => {
                       apiFormat: e.target.value as CustomProvider['apiFormat'],
                     }))
                   }
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none cursor-pointer"
-                  style={{
-                    backgroundColor: 'var(--bg-base)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className="w-full px-3 py-2 text-sm rounded-md outline-none cursor-pointer bg-background border border-border text-foreground"
                 >
                   {API_FORMAT_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -1436,12 +1205,9 @@ export const ProvidersPanel = () => {
                   ))}
                 </select>
                 {newProvider.apiFormat === 'anthropic' && (
-                  <p
-                    className="text-xs mt-1"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
+                  <p className="text-xs mt-1 text-muted-foreground">
                     This will set{' '}
-                    <code style={{ color: '#8b5cf6' }}>
+                    <code className="text-violet-500">
                       createModelType: anthropic
                     </code>{' '}
                     in the config.
@@ -1451,10 +1217,7 @@ export const ProvidersPanel = () => {
 
               {/* Models */}
               <div className="space-y-2">
-                <label
-                  className="block text-sm font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
+                <label className="block text-sm font-medium text-foreground">
                   Models
                 </label>
                 <div className="space-y-2">
@@ -1464,19 +1227,7 @@ export const ProvidersPanel = () => {
                       value={newModelId}
                       onChange={(e) => setNewModelId(e.target.value)}
                       placeholder="Model ID (e.g., gpt-4)"
-                      className="flex-1 px-3 py-2 text-sm rounded-md outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-base)',
-                        border: '1px solid var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--accent)';
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor =
-                          'var(--border-subtle)';
-                      }}
+                      className="flex-1 px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1499,18 +1250,12 @@ export const ProvidersPanel = () => {
                     {Object.keys(newProvider.models).map((modelId) => (
                       <span
                         key={modelId}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md"
-                        style={{
-                          backgroundColor: 'var(--bg-base)',
-                          border: '1px solid var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-background border border-border text-foreground"
                       >
                         {modelId}
                         <button
                           onClick={() => handleRemoveModel(modelId)}
-                          className="p-0.5 rounded hover:bg-opacity-20 transition-colors"
-                          style={{ color: 'var(--text-secondary)' }}
+                          className="p-0.5 rounded hover:bg-accent transition-colors text-muted-foreground"
                         >
                           <HugeiconsIcon
                             icon={Cancel01Icon}
@@ -1522,20 +1267,14 @@ export const ProvidersPanel = () => {
                     ))}
                   </div>
                 )}
-                <p
-                  className="text-xs"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
+                <p className="text-xs text-muted-foreground">
                   Enter model ID. Press Enter or click Add.
                 </p>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div
-              className="px-4 py-3 flex items-center justify-end gap-2"
-              style={{ borderTop: '1px solid var(--border-subtle)' }}
-            >
+            <div className="px-4 py-3 flex items-center justify-end gap-2 border-t border-border">
               <Button
                 variant="outline"
                 size="sm"

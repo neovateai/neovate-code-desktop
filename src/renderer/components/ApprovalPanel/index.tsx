@@ -111,20 +111,20 @@ function ApprovalPanelContent({
   const question = useMemo(() => getQuestionText(toolUse, cwd), [toolUse, cwd]);
 
   return (
-    <div className="border-t border-(--border-primary) bg-(--bg-surface) p-4">
+    <div className="border-t border-border bg-sidebar p-4">
       {/* Header */}
       <div className="mb-3">
-        <h3 className="text-sm font-semibold text-(--text-primary)">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
 
       {/* Tool Preview */}
-      <div className="mb-4 max-h-80 overflow-auto rounded border border-(--border-secondary) bg-(--bg-base)">
+      <div className="mb-4 max-h-80 overflow-auto rounded border border-border bg-background">
         <ToolPreview toolUse={toolUse} cwd={cwd} />
       </div>
 
       {/* Question */}
       <div className="mb-3">
-        <p className="text-sm text-(--text-secondary)">{question}</p>
+        <p className="text-sm text-muted-foreground">{question}</p>
       </div>
 
       {/* Deny Input */}
@@ -132,7 +132,7 @@ function ApprovalPanelContent({
         <div className="mb-3">
           <input
             type="text"
-            className="w-full rounded border border-(--border-primary) bg-(--bg-base) px-3 py-2 text-sm text-(--text-primary) placeholder-(--text-tertiary) focus:border-(--border-focus) focus:outline-none"
+            className="w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none"
             placeholder="Tell the AI what to do differently..."
             value={denyReason}
             onChange={(e) => setDenyReason(e.target.value)}
@@ -176,7 +176,7 @@ function ApprovalPanelContent({
 
       {/* Hint */}
       <div className="mt-2">
-        <p className="text-xs text-(--text-tertiary)">Press Esc to deny</p>
+        <p className="text-xs text-muted-foreground">Press Esc to deny</p>
       </div>
     </div>
   );
@@ -201,7 +201,7 @@ function ToolPreview({ toolUse, cwd }: ToolPreviewProps) {
   // Generic tool preview
   return (
     <div className="p-3">
-      <pre className="text-xs text-(--text-secondary) whitespace-pre-wrap">
+      <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
         {JSON.stringify(params, null, 2)}
       </pre>
     </div>
@@ -255,11 +255,11 @@ function BashPreview({ toolUse }: { toolUse: ToolUse }) {
 
   return (
     <div className="p-3">
-      <div className="font-mono text-sm text-(--text-primary) bg-(--bg-tertiary) p-2 rounded">
+      <div className="font-mono text-sm text-foreground bg-muted p-2 rounded">
         $ {params.command}
       </div>
       {params.description && (
-        <p className="mt-2 text-xs text-(--text-secondary)">
+        <p className="mt-2 text-xs text-muted-foreground">
           {params.description}
         </p>
       )}

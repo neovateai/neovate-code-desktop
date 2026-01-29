@@ -14,14 +14,8 @@ export function SecondarySidebar() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div
-        className="h-10 flex items-center px-3 shrink-0"
-        style={{ borderBottom: '1px solid var(--border-subtle)' }}
-      >
-        <span
-          className="text-sm font-medium"
-          style={{ color: 'var(--text-primary)' }}
-        >
+      <div className="h-10 flex items-center px-3 shrink-0 border-b border-border">
+        <span className="text-sm font-medium text-foreground">
           {panelTitle}
         </span>
       </div>

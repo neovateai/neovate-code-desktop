@@ -66,10 +66,7 @@ export function TitleBar() {
           onClick={() => setShowSettings(true)}
           title="Settings"
         />
-        <UISeparator
-          orientation="vertical"
-          className="h-4 mx-1 bg-(--border-elevated)"
-        />
+        <UISeparator orientation="vertical" className="h-4 mx-1 bg-border" />
         <TitleBarButton
           icon={
             isSecondarySidebarCollapsed()

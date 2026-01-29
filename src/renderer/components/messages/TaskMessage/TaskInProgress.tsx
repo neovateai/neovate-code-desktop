@@ -23,67 +23,25 @@ export function TaskInProgress({ toolUse, progressData }: TaskInProgressProps) {
   const hiddenCount = logItems.length - visibleItems.length;
 
   return (
-    <div
-      style={{
-        borderLeft: '2px solid var(--border-warning)',
-        paddingLeft: '12px',
-        paddingTop: '4px',
-        paddingBottom: '4px',
-      }}
-    >
+    <div className="border-l-2 border-amber-500 pl-3 py-1">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '8px',
-        }}
-      >
+      <div className="flex items-center gap-2 mb-2">
         <Spinner className="size-3.5" />
-        <span
-          style={{
-            fontWeight: 500,
-            fontSize: '14px',
-            color: 'var(--text-warning)',
-          }}
-        >
-          {agentType}
-        </span>
+        <span className="font-medium text-sm text-amber-500">{agentType}</span>
         {toolUse.input?.description && (
-          <span
-            style={{
-              fontSize: '13px',
-              color: 'var(--text-secondary)',
-            }}
-          >
+          <span className="text-[13px] text-muted-foreground">
             ({toolUse.input.description})
           </span>
         )}
       </div>
 
       {/* Nested items */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          marginBottom: '8px',
-        }}
-      >
+      <div className="flex flex-col gap-1 mb-2">
         {hiddenCount > 0 && !expanded && (
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            style={{
-              fontSize: '12px',
-              color: 'var(--text-tertiary)',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
+            className="text-xs text-muted-foreground bg-transparent border-none p-0 cursor-pointer text-left"
           >
             ... {hiddenCount} more items
           </button>
@@ -94,27 +52,13 @@ export function TaskInProgress({ toolUse, progressData }: TaskInProgressProps) {
       </div>
 
       {/* Stats footer */}
-      <div
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-tertiary)',
-        }}
-      >
+      <div className="text-xs text-muted-foreground">
         {stats.toolCalls} tool uses · {formatTokens(stats.tokens)} tokens
         {expanded && logItems.length > VISIBLE_LIMIT && (
           <button
             type="button"
             onClick={() => setExpanded(false)}
-            style={{
-              marginLeft: '8px',
-              fontSize: '12px',
-              color: 'var(--text-tertiary)',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
+            className="ml-2 text-xs text-muted-foreground bg-transparent border-none p-0 cursor-pointer underline"
           >
             Collapse
           </button>

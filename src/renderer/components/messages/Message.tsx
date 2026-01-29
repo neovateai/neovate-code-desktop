@@ -27,34 +27,16 @@ class MessageErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid #ef4444',
-            borderRadius: '8px',
-            padding: '12px',
-            color: '#ef4444',
-            fontSize: '13px',
-          }}
-        >
-          <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-            Failed to render message
-          </div>
-          <div style={{ fontSize: '12px', fontFamily: 'monospace' }}>
+        <div className="bg-red-500/10 border border-red-500 rounded-lg p-3 text-red-500 text-[13px]">
+          <div className="font-semibold mb-1">Failed to render message</div>
+          <div className="text-xs font-mono">
             Role: {this.props.message.role} | UUID: {this.props.message.uuid}
           </div>
-          <div style={{ fontSize: '12px', fontFamily: 'monospace' }}>
+          <div className="text-xs font-mono">
             {JSON.stringify(this.props.message)}
           </div>
           {this.state.error && (
-            <div
-              style={{
-                marginTop: '8px',
-                fontSize: '12px',
-                fontFamily: 'monospace',
-                opacity: 0.8,
-              }}
-            >
+            <div className="mt-2 text-xs font-mono opacity-80">
               {this.state.error.message}
             </div>
           )}
@@ -104,19 +86,8 @@ function SystemMessage({ message }: { message: any }) {
 
   return (
     <div className="flex justify-center">
-      <div
-        style={{
-          maxWidth: '80%',
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
-          padding: '8px 12px',
-          fontSize: '12px',
-          color: 'var(--text-secondary)',
-          fontStyle: 'italic',
-        }}
-      >
-        <span style={{ fontWeight: 600, marginRight: '8px' }}>System:</span>
+      <div className="max-w-[80%] bg-muted border border-border rounded-lg px-3 py-2 text-xs text-muted-foreground italic">
+        <span className="font-semibold mr-2">System:</span>
         {content}
       </div>
     </div>

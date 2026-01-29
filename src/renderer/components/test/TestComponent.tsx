@@ -60,40 +60,22 @@ const TestComponent = () => {
   if (!isVisible) return null;
 
   return (
-    <div
-      style={{
-        padding: '16px',
-        borderTop: '2px solid var(--border-subtle)',
-        backgroundColor: 'var(--bg-secondary)',
-      }}
-    >
-      <div style={{ marginBottom: '8px', fontSize: '14px', fontWeight: 600 }}>
-        Test Controls
-      </div>
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div className="p-4 border-t-2 border-border bg-card">
+      <div className="mb-2 text-sm font-semibold">Test Controls</div>
+      <div className="flex gap-2 items-center">
         <Button onClick={handleClearSelections} variant="outline" size="sm">
           Clear All Selections
         </Button>
-        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+        <div className="text-xs text-muted-foreground">
           Repo: {selectedRepoPath || 'none'} | Workspace:{' '}
           {selectedWorkspaceId || 'none'} | Session:{' '}
           {selectedSessionId || 'none'}
         </div>
       </div>
       {selectedWorkspaceId && workspaces[selectedWorkspaceId] && (
-        <div
-          style={{
-            marginTop: '8px',
-            fontSize: '12px',
-            color: 'var(--text-secondary)',
-            borderTop: '1px solid var(--border-subtle)',
-            paddingTop: '8px',
-          }}
-        >
-          <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-            Current Workspace Info:
-          </div>
-          <div style={{ display: 'grid', gap: '4px' }}>
+        <div className="mt-2 text-xs text-muted-foreground border-t border-border pt-2">
+          <div className="font-semibold mb-1">Current Workspace Info:</div>
+          <div className="grid gap-1">
             <div>ID: {workspaces[selectedWorkspaceId].id}</div>
             <div>Branch: {workspaces[selectedWorkspaceId].branch}</div>
             <div>Path: {workspaces[selectedWorkspaceId].worktreePath}</div>
@@ -106,30 +88,21 @@ const TestComponent = () => {
           </div>
 
           {/* Slash Commands */}
-          <div style={{ marginTop: '12px' }}>
-            <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+          <div className="mt-3">
+            <div className="font-semibold mb-1">
               Slash Commands (
               {slashCommandsByWorkspace[selectedWorkspaceId]?.length || 0}):
             </div>
-            <div
-              style={{
-                maxHeight: '150px',
-                overflow: 'auto',
-                backgroundColor: 'var(--bg-tertiary)',
-                padding: '8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-              }}
-            >
+            <div className="max-h-[150px] overflow-auto bg-muted p-2 rounded text-[11px]">
               {slashCommandsByWorkspace[selectedWorkspaceId]?.length > 0 ? (
-                <div style={{ display: 'grid', gap: '4px' }}>
+                <div className="grid gap-1">
                   {slashCommandsByWorkspace[selectedWorkspaceId].map(
                     (cmd, index) => (
                       <div key={`${index}-${cmd.name}`}>
                         {/* <span>{JSON.stringify(cmd)}</span> */}
-                        <span style={{ fontWeight: 600 }}>/{cmd.name}</span>
+                        <span className="font-semibold">/{cmd.name}</span>
                         {cmd.description && (
-                          <span style={{ color: 'var(--text-tertiary)' }}>
+                          <span className="text-muted-foreground">
                             {' '}
                             - {cmd.description}
                           </span>
@@ -139,7 +112,7 @@ const TestComponent = () => {
                   )}
                 </div>
               ) : (
-                <div style={{ color: 'var(--text-tertiary)' }}>
+                <div className="text-muted-foreground">
                   No slash commands cached
                 </div>
               )}
@@ -147,34 +120,19 @@ const TestComponent = () => {
           </div>
 
           {/* Files */}
-          <div style={{ marginTop: '12px' }}>
-            <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+          <div className="mt-3">
+            <div className="font-semibold mb-1">
               Files ({filesByWorkspace[selectedWorkspaceId]?.length || 0}):
             </div>
-            <div
-              style={{
-                maxHeight: '150px',
-                overflow: 'auto',
-                backgroundColor: 'var(--bg-tertiary)',
-                padding: '8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontFamily: 'monospace',
-              }}
-            >
+            <div className="max-h-[150px] overflow-auto bg-muted p-2 rounded text-[11px] font-mono">
               {filesByWorkspace[selectedWorkspaceId]?.length > 0 ? (
-                <div style={{ display: 'grid', gap: '2px' }}>
+                <div className="grid gap-0.5">
                   {filesByWorkspace[selectedWorkspaceId].map((file, index) => (
                     <div key={`${index}-${file}`}>{JSON.stringify(file)}</div>
                   ))}
                 </div>
               ) : (
-                <div
-                  style={{
-                    color: 'var(--text-tertiary)',
-                    fontFamily: 'inherit',
-                  }}
-                >
+                <div className="text-muted-foreground font-sans">
                   No files cached
                 </div>
               )}
@@ -184,43 +142,15 @@ const TestComponent = () => {
       )}
 
       {/* Global Config */}
-      <div
-        style={{
-          marginTop: '8px',
-          fontSize: '12px',
-          color: 'var(--text-secondary)',
-          borderTop: '1px solid var(--border-subtle)',
-          paddingTop: '8px',
-        }}
-      >
-        <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-          Global Config:
-        </div>
-        <div
-          style={{
-            maxHeight: '200px',
-            overflow: 'auto',
-            backgroundColor: 'var(--bg-tertiary)',
-            padding: '8px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontFamily: 'monospace',
-          }}
-        >
+      <div className="mt-2 text-xs text-muted-foreground border-t border-border pt-2">
+        <div className="font-semibold mb-1">Global Config:</div>
+        <div className="max-h-[200px] overflow-auto bg-muted p-2 rounded text-[11px] font-mono">
           {globalConfig ? (
-            <pre
-              style={{
-                margin: 0,
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}
-            >
+            <pre className="m-0 whitespace-pre-wrap break-words">
               {JSON.stringify(globalConfig, null, 2)}
             </pre>
           ) : (
-            <div
-              style={{ color: 'var(--text-tertiary)', fontFamily: 'inherit' }}
-            >
+            <div className="text-muted-foreground font-sans">
               No config loaded
             </div>
           )}
@@ -228,23 +158,13 @@ const TestComponent = () => {
       </div>
 
       {/* Onboarding Control */}
-      <div
-        style={{
-          marginTop: '8px',
-          fontSize: '12px',
-          color: 'var(--text-secondary)',
-          borderTop: '1px solid var(--border-subtle)',
-          paddingTop: '8px',
-        }}
-      >
-        <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-          Onboarding Control:
-        </div>
-        <div style={{ marginBottom: '8px' }}>
+      <div className="mt-2 text-xs text-muted-foreground border-t border-border pt-2">
+        <div className="font-semibold mb-1">Onboarding Control:</div>
+        <div className="mb-2">
           Completed: {onboardingCompleted ? 'Yes' : 'No'} | Visible:{' '}
           {onboardingVisible ? 'Yes' : 'No'} | Step: {onboardingStep}
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={resetOnboarding}>
             Reset Onboarding
           </Button>
@@ -254,19 +174,17 @@ const TestComponent = () => {
         </div>
       </div>
 
-      <div style={{ marginTop: '16px' }}>
+      <div className="mt-4">
         <TestHugeIcons />
       </div>
-      <div style={{ marginTop: '16px' }}>
+      <div className="mt-4">
         <TestMessages />
       </div>
-      <div style={{ marginTop: '16px' }}>
+      <div className="mt-4">
         <TestUIComponents />
       </div>
-      <div style={{ marginTop: '16px' }}>
-        <div style={{ fontWeight: 600, marginBottom: '8px' }}>
-          Example Plugin Demo:
-        </div>
+      <div className="mt-4">
+        <div className="font-semibold mb-2">Example Plugin Demo:</div>
         <ExamplePluginDemo />
       </div>
     </div>

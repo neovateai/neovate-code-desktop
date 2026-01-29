@@ -16,15 +16,11 @@ export function ImagePreview({ images, onRemove }: ImagePreviewProps) {
   if (images.length === 0) return null;
 
   return (
-    <div
-      className="flex gap-2 px-3 py-2 border-t"
-      style={{ borderColor: 'var(--border-subtle)' }}
-    >
+    <div className="flex gap-2 px-3 py-2 border-t border-border">
       {images.map(({ imageId, base64, filename }) => (
         <div
           key={imageId}
-          className="relative group w-12 h-12 rounded-lg overflow-hidden"
-          style={{ border: '1px solid var(--border-subtle)' }}
+          className="relative group w-12 h-12 rounded-lg overflow-hidden border border-border"
         >
           <img
             src={base64}

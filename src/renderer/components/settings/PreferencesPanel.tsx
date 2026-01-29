@@ -14,21 +14,10 @@ interface SettingsRowProps {
 
 const SettingsRow = ({ title, description, children }: SettingsRowProps) => {
   return (
-    <div
-      className="flex items-center justify-between py-4"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between py-4 border-b border-border">
       <div className="flex-1 pr-4">
-        <div
-          className="text-sm font-medium"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {title}
-        </div>
-        <div
-          className="text-sm mt-0.5"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        <div className="text-sm font-medium text-foreground">{title}</div>
+        <div className="text-sm mt-0.5 text-muted-foreground">
           {description}
         </div>
       </div>
@@ -71,10 +60,7 @@ export const PreferencesPanel = () => {
 
   return (
     <div>
-      <h1
-        className="text-xl font-semibold mb-6 flex items-center gap-2"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={SettingsIcon} size={22} strokeWidth={1.5} />
         Preferences
       </h1>
@@ -119,24 +105,16 @@ export const PreferencesPanel = () => {
           <button
             type="button"
             onClick={() => setDeveloperMode(!developerMode)}
-            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-            style={{
-              backgroundColor: developerMode
-                ? 'var(--brand-primary, #3b82f6)'
-                : 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-            }}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors border border-border ${
+              developerMode ? 'bg-blue-500' : 'bg-muted'
+            }`}
           >
             <span
-              className="inline-block h-4 w-4 transform rounded-full transition-transform"
-              style={{
-                backgroundColor: developerMode
-                  ? 'white'
-                  : 'var(--text-secondary)',
-                transform: developerMode
-                  ? 'translateX(22px)'
-                  : 'translateX(4px)',
-              }}
+              className={`inline-block h-4 w-4 rounded-full transition-transform ${
+                developerMode
+                  ? 'translate-x-[22px] bg-white'
+                  : 'translate-x-1 bg-muted-foreground'
+              }`}
             />
           </button>
         </SettingsRow>

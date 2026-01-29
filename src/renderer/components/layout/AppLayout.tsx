@@ -87,9 +87,7 @@ export function AppLayoutChatPanel({ children }: { children: ReactNode }) {
       panelRef={panelRefs[AppLayoutPanelId.ChatPanel]}
       className="overflow-hidden"
     >
-      <div className="ml-2 h-full rounded-lg bg-(--bg-primary) pb-2">
-        {children}
-      </div>
+      <div className="ml-2 h-full rounded-lg bg-card pb-2">{children}</div>
     </Panel>
   );
 }
@@ -108,7 +106,7 @@ export function AppLayoutContentPanel({ children }: { children: ReactNode }) {
         minSize={CONTENT_PANEL_MIN_SIZE}
         panelRef={panelRefs[AppLayoutPanelId.ContentPanel]}
       >
-        <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">
+        <div className="ml-2 h-full overflow-hidden rounded-lg bg-card pb-2">
           {children}
         </div>
       </Panel>
@@ -135,7 +133,7 @@ export function AppLayoutSecondarySidebar({
         maxSize={SECONDARY_SIDEBAR_MAX_SIZE}
         panelRef={panelRefs[AppLayoutPanelId.SecondarySidebar]}
       >
-        <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">
+        <div className="ml-2 h-full overflow-hidden rounded-lg bg-card pb-2">
           {children}
         </div>
       </Panel>

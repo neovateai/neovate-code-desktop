@@ -71,7 +71,7 @@ function TreeNode({
   return (
     <div className="select-none relative group">
       <div
-        className={`flex items-center py-1 px-2 rounded cursor-pointer text-sm transition-colors relative z-0 group ${isSelected ? 'bg-(--bg-active)' : 'hover:bg-(--bg-hover)/50'}`}
+        className={`flex items-center py-1 px-2 rounded cursor-pointer text-sm transition-colors relative z-0 group ${isSelected ? 'bg-accent' : 'hover:bg-accent/50'}`}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={handleClick}
       >
@@ -85,7 +85,7 @@ function TreeNode({
                 icon={ChevronRight}
                 size={12}
                 strokeWidth={1.5}
-                className={`transition-transform text-(--text-tertiary) ${isExpanded ? 'rotate-90' : ''}`}
+                className={`transition-transform text-muted-foreground ${isExpanded ? 'rotate-90' : ''}`}
               />
             )}
           </div>
@@ -98,16 +98,16 @@ function TreeNode({
             icon={FolderIcon}
             size={14}
             strokeWidth={1.5}
-            className="text-(--text-tertiary) flex-shrink-0 mr-1.5"
+            className="text-muted-foreground flex-shrink-0 mr-1.5"
           />
         ) : (
           <FileLangIcon path={item.fullPath} />
         )}
 
-        <span className="truncate text-(--text-primary) ml-1">
+        <span className="truncate text-foreground ml-1">
           {filename}
           {item.editStatus === 'rename' && (
-            <span className="ml-1 text-xs text-(--text-tertiary)">
+            <span className="ml-1 text-xs text-muted-foreground">
               (重命名中)
             </span>
           )}

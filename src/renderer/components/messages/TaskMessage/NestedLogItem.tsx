@@ -1,3 +1,4 @@
+import { cn } from '../../../lib/utils';
 import type { LogItem } from './utils';
 import { truncate, formatToolArgs, extractResultText } from './utils';
 
@@ -9,15 +10,8 @@ export function NestedLogItem({ item }: NestedLogItemProps) {
   // User message (the prompt sent to sub-agent)
   if (item.type === 'user') {
     return (
-      <div
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-tertiary)',
-          display: 'flex',
-          gap: '4px',
-        }}
-      >
-        <span style={{ color: 'var(--text-secondary)' }}>›</span>
+      <div className="text-xs text-muted-foreground flex gap-1">
+        <span className="text-muted-foreground">›</span>
         <span>{truncate(item.content, 100)}</span>
       </div>
     );
@@ -32,27 +26,19 @@ export function NestedLogItem({ item }: NestedLogItemProps) {
     const isError = toolResult?.result?.isError;
 
     return (
-      <div style={{ fontSize: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span
-            style={{
-              fontWeight: 500,
-              color: 'var(--text-accent)',
-            }}
-          >
+      <div className="text-xs">
+        <div className="flex items-center gap-1">
+          <span className="font-medium text-accent-foreground">
             {toolUse.name}
           </span>
-          <span style={{ color: 'var(--text-tertiary)' }}>
-            ({truncate(args, 60)})
-          </span>
+          <span className="text-muted-foreground">({truncate(args, 60)})</span>
         </div>
         {toolResult && (
           <div
-            style={{
-              paddingLeft: '12px',
-              color: isError ? 'var(--text-error)' : 'var(--text-tertiary)',
-              marginTop: '2px',
-            }}
+            className={cn(
+              'pl-3 mt-0.5',
+              isError ? 'text-destructive' : 'text-muted-foreground',
+            )}
           >
             {truncate(resultText.trim(), 150)}
           </div>
@@ -67,13 +53,7 @@ export function NestedLogItem({ item }: NestedLogItemProps) {
     if (!trimmed) return null;
 
     return (
-      <div
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-tertiary)',
-          paddingLeft: '8px',
-        }}
-      >
+      <div className="text-xs text-muted-foreground pl-2">
         {truncate(trimmed, 200)}
       </div>
     );

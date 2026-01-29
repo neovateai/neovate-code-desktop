@@ -10,27 +10,13 @@ export function TaskStarting({ toolUse }: TaskStartingProps) {
   const description = toolUse.input?.description;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        fontSize: '13px',
-        color: 'var(--text-secondary)',
-        borderLeft: '2px solid var(--border-warning)',
-        paddingLeft: '12px',
-        paddingTop: '4px',
-        paddingBottom: '4px',
-      }}
-    >
+    <div className="flex items-center gap-2 text-[13px] text-muted-foreground border-l-2 border-amber-500 pl-3 py-1">
       <Spinner className="size-3.5" />
-      <span style={{ fontWeight: 500 }}>{agentType}</span>
+      <span className="font-medium">{agentType}</span>
       {description && (
-        <span style={{ color: 'var(--text-tertiary)' }}>({description})</span>
+        <span className="text-muted-foreground">({description})</span>
       )}
-      <span style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-        Initializing...
-      </span>
+      <span className="text-muted-foreground italic">Initializing...</span>
     </div>
   );
 }

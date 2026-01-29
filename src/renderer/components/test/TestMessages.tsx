@@ -1200,37 +1200,12 @@ export function TestMessages() {
   const comprehensiveMessages = createComprehensiveMessages();
 
   return (
-    <div
-      style={{
-        padding: '16px',
-        backgroundColor: 'var(--bg-primary)',
-        borderRadius: '8px',
-        border: '1px solid var(--border-subtle)',
-      }}
-    >
-      <div
-        style={{
-          marginBottom: '16px',
-          fontSize: '16px',
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          borderBottom: '1px solid var(--border-subtle)',
-          paddingBottom: '8px',
-        }}
-      >
+    <div className="p-4 bg-card rounded-lg border border-border">
+      <div className="mb-4 text-base font-semibold text-foreground border-b border-border pb-2">
         Message Component Test Scenarios
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          maxHeight: '800px',
-          overflowY: 'auto',
-          padding: '8px',
-        }}
-      >
+      <div className="flex flex-col gap-4 max-h-[800px] overflow-y-auto p-2">
         {/* LOOP 1: Simple Ping-Pong */}
         {pingPongMessages.map((msg, idx) => (
           <Message
@@ -1255,19 +1230,7 @@ export function TestMessages() {
 
 function LoopHeader({ title }: { title: string }) {
   return (
-    <div
-      style={{
-        fontSize: '14px',
-        fontWeight: 700,
-        color: 'var(--text-primary)',
-        backgroundColor: 'var(--bg-tertiary)',
-        padding: '10px 14px',
-        borderRadius: '6px',
-        marginTop: '16px',
-        marginBottom: '8px',
-        borderLeft: '4px solid var(--accent-primary)',
-      }}
-    >
+    <div className="text-sm font-bold text-foreground bg-muted py-2.5 px-3.5 rounded-md mt-4 mb-2 border-l-4 border-accent">
       {title}
     </div>
   );
@@ -1275,17 +1238,7 @@ function LoopHeader({ title }: { title: string }) {
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div
-      style={{
-        fontSize: '13px',
-        fontWeight: 600,
-        color: 'var(--text-secondary)',
-        backgroundColor: 'var(--bg-secondary)',
-        padding: '6px 12px',
-        borderRadius: '4px',
-        marginTop: '8px',
-      }}
-    >
+    <div className="text-[13px] font-semibold text-muted-foreground bg-card py-1.5 px-3 rounded mt-2">
       {title}
     </div>
   );

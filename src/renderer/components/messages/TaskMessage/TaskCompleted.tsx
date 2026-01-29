@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Markdown from 'marked-react';
+import { cn } from '../../../lib/utils';
 import type {
   ToolUsePart,
   ToolResultPart,
@@ -30,126 +31,68 @@ export function TaskCompleted({ toolUse, toolResult }: TaskCompletedProps) {
       : extractResultText(toolResult));
   const stats = returnDisplay?.stats;
 
-  const borderColor = isError ? 'var(--border-error)' : 'var(--border-success)';
-  const statusColor = isError ? 'var(--text-error)' : 'var(--text-success)';
-  const statusIcon = isError ? '✗' : '✓';
-
   return (
     <div
-      style={{
-        borderLeft: `2px solid ${borderColor}`,
-        paddingLeft: '12px',
-        paddingTop: '4px',
-        paddingBottom: '4px',
-      }}
+      className={cn(
+        'border-l-2 pl-3 py-1',
+        isError ? 'border-destructive' : 'border-green-500',
+      )}
     >
       {/* Collapsed header - always visible */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          width: '100%',
-          textAlign: 'left',
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          cursor: 'pointer',
-          fontSize: '14px',
-        }}
+        className="flex items-center gap-2 w-full text-left bg-transparent border-none p-0 cursor-pointer text-sm"
       >
-        <span style={{ color: statusColor }}>{statusIcon}</span>
-        <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
-          {agentType}
+        <span className={isError ? 'text-destructive' : 'text-green-500'}>
+          {isError ? '\u2717' : '\u2713'}
         </span>
+        <span className="font-medium text-foreground">{agentType}</span>
         {description && (
-          <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+          <span className="text-muted-foreground text-[13px]">
             ({description})
           </span>
         )}
         {stats && (
-          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+          <span className="text-xs text-muted-foreground">
             {stats.toolCalls} tools ·{' '}
             {formatTokens(stats.tokens.input + stats.tokens.output)} tokens ·{' '}
             {formatDuration(stats.duration)}
           </span>
         )}
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: '12px',
-            color: 'var(--text-tertiary)',
-          }}
-        >
-          {expanded ? '▼' : '▶'}
+        <span className="ml-auto text-xs text-muted-foreground">
+          {expanded ? '\u25BC' : '\u25B6'}
         </span>
       </button>
 
       {/* Error message for failed tasks */}
       {isError && !expanded && (
-        <div
-          style={{
-            marginTop: '8px',
-            fontSize: '13px',
-            color: 'var(--text-error)',
-          }}
-        >
-          {content}
-        </div>
+        <div className="mt-2 text-[13px] text-destructive">{content}</div>
       )}
 
       {/* Expanded content */}
       {expanded && (
-        <div
-          style={{
-            marginTop: '12px',
-            paddingLeft: '16px',
-            borderLeft: '1px solid var(--border-subtle)',
-          }}
-        >
+        <div className="mt-3 pl-4 border-l border-border">
           {prompt && (
-            <div style={{ marginBottom: '12px' }}>
-              <div
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  color: 'var(--text-secondary)',
-                  marginBottom: '4px',
-                }}
-              >
+            <div className="mb-3">
+              <div className="text-xs font-medium text-muted-foreground mb-1">
                 Prompt:
               </div>
-              <div
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--text-tertiary)',
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
+              <div className="text-[13px] text-muted-foreground whitespace-pre-wrap">
                 {prompt}
               </div>
             </div>
           )}
 
           <div>
-            <div
-              style={{
-                fontSize: '12px',
-                fontWeight: 500,
-                color: 'var(--text-secondary)',
-                marginBottom: '4px',
-              }}
-            >
+            <div className="text-xs font-medium text-muted-foreground mb-1">
               Response:
             </div>
             <div
-              style={{
-                fontSize: '14px',
-                color: isError ? 'var(--text-error)' : 'var(--text-primary)',
-              }}
-              className="markdown-content"
+              className={cn(
+                'text-sm markdown-content',
+                isError ? 'text-destructive' : 'text-foreground',
+              )}
             >
               <Markdown value={content} />
             </div>

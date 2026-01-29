@@ -109,19 +109,13 @@ export function OpenAppButton({ cwd }: OpenAppButtonProps) {
         {isLoading ? (
           <div className="flex items-center justify-center py-2 px-4">
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span
-              className="text-sm"
-              style={{ color: 'var(--text-secondary)' }}
-            >
+            <span className="text-sm text-muted-foreground">
               Detecting apps...
             </span>
           </div>
         ) : apps.length === 0 ? (
           <div className="py-2 px-4">
-            <span
-              className="text-sm"
-              style={{ color: 'var(--text-secondary)' }}
-            >
+            <span className="text-sm text-muted-foreground">
               No apps detected
             </span>
           </div>
@@ -147,12 +141,7 @@ export function OpenAppButton({ cwd }: OpenAppButtonProps) {
         <DropdownMenuItem onClick={handleCopyPath}>
           <Copy className="size-4 shrink-0" />
           <span>Copy path</span>
-          <span
-            className="ml-auto text-xs"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
-            ⌘⇧C
-          </span>
+          <span className="ml-auto text-xs text-muted-foreground">⌘⇧C</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
