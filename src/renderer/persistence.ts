@@ -45,6 +45,7 @@ interface PersistedState {
   terminalFont: string;
   developerMode: boolean;
   keybindings: KeybindingsConfig;
+  runOnStartup: boolean;
 }
 
 // Debounce helper
@@ -114,6 +115,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       terminalFont: state.terminalFont ?? '',
       developerMode: state.developerMode ?? false,
       keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
+      runOnStartup: state.runOnStartup ?? false,
     };
   };
 
@@ -185,6 +187,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       terminalFont = '',
       developerMode = false,
       keybindings = { ...DEFAULT_KEYBINDINGS },
+      runOnStartup = false,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -246,6 +249,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         terminalFont,
         developerMode,
         keybindings,
+        runOnStartup,
       },
       false,
     );

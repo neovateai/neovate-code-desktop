@@ -16,6 +16,7 @@ export interface DesktopSettingsSliceState {
   terminalFont: string;
   keybindings: KeybindingsConfig;
   developerMode: boolean;
+  runOnStartup: boolean;
 }
 
 export interface DesktopSettingsSliceActions {
@@ -26,6 +27,7 @@ export interface DesktopSettingsSliceActions {
   setKeybinding: (action: KeybindingAction, binding: string) => void;
   resetKeybindings: () => void;
   setDeveloperMode: (enabled: boolean) => void;
+  setRunOnStartup: (enabled: boolean) => void;
 }
 
 export type DesktopSettingsSlice = DesktopSettingsSliceState &
@@ -39,6 +41,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   terminalFont: '',
   keybindings: { ...DEFAULT_KEYBINDINGS },
   developerMode: false,
+  runOnStartup: false,
 };
 
 export const createDesktopSettingsSlice: StateCreator<
@@ -82,5 +85,9 @@ export const createDesktopSettingsSlice: StateCreator<
 
   setDeveloperMode: (developerMode: boolean) => {
     set({ developerMode });
+  },
+
+  setRunOnStartup: (runOnStartup: boolean) => {
+    set({ runOnStartup });
   },
 });

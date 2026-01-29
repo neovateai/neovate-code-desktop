@@ -44,6 +44,8 @@ export const PreferencesPanel = () => {
   const isConfigLoading = useStore((state) => state.isConfigLoading);
   const developerMode = useStore((state) => state.developerMode);
   const setDeveloperMode = useStore((state) => state.setDeveloperMode);
+  const runOnStartup = useStore((state) => state.runOnStartup);
+  const setRunOnStartup = useStore((state) => state.setRunOnStartup);
 
   const handleSendFeedback = () => {
     window.electron?.openExternal(
@@ -59,6 +61,11 @@ export const PreferencesPanel = () => {
     } finally {
       setIsCheckingForUpdates(false);
     }
+  };
+
+  const handleRunOnStartupChange = async (enabled: boolean) => {
+    setRunOnStartup(enabled);
+    await ipcMainCaller.app.setLoginItemSettings({ openAtLogin: enabled });
   };
 
   if (isConfigLoading || globalConfig === null) {
@@ -134,6 +141,36 @@ export const PreferencesPanel = () => {
                   ? 'white'
                   : 'var(--text-secondary)',
                 transform: developerMode
+                  ? 'translateX(22px)'
+                  : 'translateX(4px)',
+              }}
+            />
+          </button>
+        </SettingsRow>
+
+        {/* Run on Startup */}
+        <SettingsRow
+          title="Run on Startup"
+          description="Automatically launch the app when you log in"
+        >
+          <button
+            type="button"
+            onClick={() => handleRunOnStartupChange(!runOnStartup)}
+            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+            style={{
+              backgroundColor: runOnStartup
+                ? 'var(--brand-primary, #3b82f6)'
+                : 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
+            <span
+              className="inline-block h-4 w-4 transform rounded-full transition-transform"
+              style={{
+                backgroundColor: runOnStartup
+                  ? 'white'
+                  : 'var(--text-secondary)',
+                transform: runOnStartup
                   ? 'translateX(22px)'
                   : 'translateX(4px)',
               }}

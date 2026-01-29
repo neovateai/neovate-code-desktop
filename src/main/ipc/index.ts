@@ -1,3 +1,4 @@
+import { app } from 'electron';
 import { createMainHandler } from '../../shared/lib/ipc/main';
 import { codeServerManager } from '../code-server';
 import { ptyManager } from '../pty';
@@ -100,6 +101,16 @@ export const ipcMainHandlers = {
     >(async () => {
       return codeServerManager.getStatus();
     }),
+  },
+
+  app: {
+    setLoginItemSettings: createMainHandler<{ openAtLogin: boolean }, void>(
+      async ({ input }) => {
+        app.setLoginItemSettings({
+          openAtLogin: input.openAtLogin,
+        });
+      },
+    ),
   },
 };
 
