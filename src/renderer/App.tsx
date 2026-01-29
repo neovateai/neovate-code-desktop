@@ -1,30 +1,30 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
 import { Agentation } from 'agentation';
-import { useStore } from './store';
-import { useStoreConnection, useGlobalKeybindings } from './hooks';
-import { RepoSidebar } from './components/RepoSidebar';
-import { WorkspacePanel } from './components/WorkspacePanel';
-import { ContentPanel } from './components/ContentPanel';
-import TestComponent from './components/test/TestComponent';
-import { SettingsPage } from './components/settings';
-import { ServerErrorDialog } from './components/ServerErrorDialog';
-import { UpdaterToast } from './components/UpdaterToast';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppLoading } from './components/AppLoading';
-import { MIN_LOADING_TIME_MS } from './constants';
+import { ContentPanel } from './components/ContentPanel';
 import {
+  ActivityBar,
   AppLayout,
-  AppLayoutTitleBar,
-  AppLayoutPrimarySidebar,
+  AppLayoutActivityBar,
   AppLayoutChatPanel,
   AppLayoutContentPanel,
+  AppLayoutPrimarySidebar,
   AppLayoutSecondarySidebar,
-  AppLayoutActivityBar,
-  ActivityBar,
+  AppLayoutTitleBar,
   SecondarySidebar,
 } from './components/layout';
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
 import { TitleBar } from './components/layout/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
+import { RepoSidebar } from './components/RepoSidebar';
+import { ServerErrorDialog } from './components/ServerErrorDialog';
+import { SettingsPage } from './components/settings/SettingsPage';
+import TestComponent from './components/test/TestComponent';
+import { UpdaterToast } from './components/UpdaterToast';
+import { WorkspacePanel } from './components/WorkspacePanel';
+import { MIN_LOADING_TIME_MS } from './constants';
+import { useGlobalKeybindings, useStoreConnection } from './hooks';
+import { useStore } from './store';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
