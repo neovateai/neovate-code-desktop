@@ -1,5 +1,6 @@
 import { ComputerTerminal01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { cn } from '../../lib/utils';
 import type { NormalizedMessage } from '../../client/types/message';
 import { getMessageText, extractImageParts } from './messageHelpers';
 
@@ -38,53 +39,19 @@ function parseBashContent(text: string): {
  */
 function BashInputMessage({ command }: { command: string }) {
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 12px',
-          backgroundColor: 'var(--muted)',
-          borderBottom: '1px solid var(--border-subtle)',
-        }}
-      >
+    <div className="bg-muted border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border">
         <HugeiconsIcon
           icon={ComputerTerminal01Icon}
           size={14}
           style={{ color: '#f97316' }}
         />
-        <span
-          style={{
-            fontSize: '12px',
-            fontWeight: 500,
-            color: '#f97316',
-          }}
-        >
+        <span className="text-xs font-medium" style={{ color: '#f97316' }}>
           Bash Command
         </span>
       </div>
-      <pre
-        style={{
-          margin: 0,
-          padding: '12px',
-          fontSize: '13px',
-          fontFamily: 'ui-monospace, monospace',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          color: 'var(--foreground)',
-        }}
-      >
-        <span style={{ color: 'var(--text-tertiary)', marginRight: '8px' }}>
-          $
-        </span>
+      <pre className="m-0 p-3 text-[13px] font-mono whitespace-pre-wrap break-words text-foreground">
+        <span className="text-muted-foreground mr-2">$</span>
         {command}
       </pre>
     </div>
@@ -104,52 +71,40 @@ function BashOutputMessage({
 }) {
   return (
     <div
-      style={{
-        backgroundColor: isError
-          ? 'rgba(239, 68, 68, 0.05)'
-          : 'var(--bg-surface)',
-        border: `1px solid ${isError ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-subtle)'}`,
-        borderRadius: '8px',
-        overflow: 'hidden',
-      }}
+      className={cn(
+        'rounded-lg overflow-hidden',
+        isError
+          ? 'bg-red-500/5 border border-red-500/30'
+          : 'bg-muted border border-border',
+      )}
     >
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 12px',
-          backgroundColor: isError ? 'rgba(239, 68, 68, 0.1)' : 'var(--muted)',
-          borderBottom: `1px solid ${isError ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-subtle)'}`,
-        }}
+        className={cn(
+          'flex items-center gap-2 px-3 py-2',
+          isError
+            ? 'bg-red-500/10 border-b border-red-500/30'
+            : 'bg-muted border-b border-border',
+        )}
       >
         <HugeiconsIcon
           icon={ComputerTerminal01Icon}
           size={14}
-          style={{ color: isError ? '#ef4444' : 'var(--text-secondary)' }}
+          className={isError ? 'text-red-500' : 'text-muted-foreground'}
         />
         <span
-          style={{
-            fontSize: '12px',
-            fontWeight: 500,
-            color: isError ? '#ef4444' : 'var(--text-secondary)',
-          }}
+          className={cn(
+            'text-xs font-medium',
+            isError ? 'text-red-500' : 'text-muted-foreground',
+          )}
         >
           {isError ? 'Error Output' : 'Output'}
         </span>
       </div>
       <pre
-        style={{
-          margin: 0,
-          padding: '12px',
-          fontSize: '13px',
-          fontFamily: 'ui-monospace, monospace',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          color: isError ? '#ef4444' : 'var(--foreground)',
-          maxHeight: '400px',
-          overflow: 'auto',
-        }}
+        className={cn(
+          'm-0 p-3 text-[13px] font-mono whitespace-pre-wrap break-words max-h-[400px] overflow-auto',
+          isError ? 'text-red-500' : 'text-foreground',
+        )}
       >
         {output}
       </pre>
@@ -171,7 +126,7 @@ export function UserMessage({ message }: UserMessageProps) {
   // Render bash-specific messages
   if (bashParsed && bashParsed.type === 'bash-input') {
     return (
-      <div className="w-full" style={{ marginBottom: '12px' }}>
+      <div className="w-full mb-3">
         <BashInputMessage command={bashParsed.content} />
       </div>
     );
@@ -179,7 +134,7 @@ export function UserMessage({ message }: UserMessageProps) {
 
   if (bashParsed && bashParsed.type === 'bash-stdout') {
     return (
-      <div className="w-full" style={{ marginBottom: '12px' }}>
+      <div className="w-full mb-3">
         <BashOutputMessage output={bashParsed.content} isError={false} />
       </div>
     );
@@ -187,7 +142,7 @@ export function UserMessage({ message }: UserMessageProps) {
 
   if (bashParsed && bashParsed.type === 'bash-stderr') {
     return (
-      <div className="w-full" style={{ marginBottom: '12px' }}>
+      <div className="w-full mb-3">
         <BashOutputMessage output={bashParsed.content} isError={true} />
       </div>
     );
@@ -195,43 +150,23 @@ export function UserMessage({ message }: UserMessageProps) {
 
   return (
     <div className="w-full">
-      <div
-        style={{
-          width: '100%',
-          backgroundColor: 'var(--muted)',
-          color: 'var(--foreground)',
-          borderRadius: '8px',
-          padding: '12px 8px',
-          marginBottom: '12px',
-        }}
-      >
+      <div className="w-full bg-muted text-foreground rounded-lg px-2 py-3 mb-3">
         {/* Text content */}
         {textContent && (
-          <div
-            style={{
-              fontSize: '14px',
-              lineHeight: '1.5',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
+          <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
             {textContent}
           </div>
         )}
 
         {/* Image content */}
         {imageParts.length > 0 && (
-          <div style={{ marginTop: textContent ? '12px' : '0' }}>
+          <div className={textContent ? 'mt-3' : ''}>
             {imageParts.map((imagePart, index) => (
-              <div key={index} style={{ marginBottom: '8px' }}>
+              <div key={index} className="mb-2">
                 <img
                   src={imagePart.data}
                   alt={`User uploaded image ${index + 1}`}
-                  style={{
-                    maxWidth: '100%',
-                    borderRadius: '8px',
-                    display: 'block',
-                  }}
+                  className="max-w-full rounded-lg block"
                 />
               </div>
             ))}

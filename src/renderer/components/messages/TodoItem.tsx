@@ -4,6 +4,7 @@ import {
   ClockIcon,
   RadioIcon,
 } from '@hugeicons/core-free-icons';
+import { cn } from '../../lib/utils';
 
 export interface TodoItemProps {
   id: string;
@@ -23,7 +24,7 @@ const statusConfig = {
   },
   pending: {
     icon: RadioIcon,
-    color: 'var(--text-secondary)',
+    colorClass: 'text-muted-foreground',
   },
 };
 
@@ -34,39 +35,30 @@ const priorityConfig = {
 };
 
 export function TodoItem({ content, status, priority }: TodoItemProps) {
-  const { icon, color } = statusConfig[status];
+  const config = statusConfig[status];
   const priorityColor = priorityConfig[priority];
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '6px 0',
-        gap: '8px',
-      }}
-    >
-      <HugeiconsIcon icon={icon} size={16} color={color} strokeWidth={1.5} />
+    <div className="flex items-center py-1.5 gap-2">
+      <HugeiconsIcon
+        icon={config.icon}
+        size={16}
+        color={'color' in config ? config.color : undefined}
+        className={'colorClass' in config ? config.colorClass : undefined}
+        strokeWidth={1.5}
+      />
       <span
-        style={{
-          flex: 1,
-          color: 'var(--text-primary)',
-          fontSize: '13px',
-          textDecoration: status === 'completed' ? 'line-through' : 'none',
-          opacity: status === 'completed' ? 0.7 : 1,
-        }}
+        className={cn(
+          'flex-1 text-foreground text-[13px]',
+          status === 'completed' && 'line-through opacity-70',
+        )}
       >
         {content}
       </span>
       {priorityColor && (
         <span
-          style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: priorityColor,
-            flexShrink: 0,
-          }}
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ backgroundColor: priorityColor }}
         />
       )}
     </div>

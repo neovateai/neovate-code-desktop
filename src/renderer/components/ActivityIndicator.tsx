@@ -64,14 +64,7 @@ export function ActivityIndicator({ sessionId }: ActivityIndicatorProps) {
   // Render failed state
   if (status === 'failed') {
     return (
-      <div
-        className="flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm"
-        style={{
-          backgroundColor: 'var(--bg-danger-subtle, #fef2f2)',
-          color: 'var(--text-danger, #dc2626)',
-          border: '1px solid var(--border-danger, #fecaca)',
-        }}
-      >
+      <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm bg-red-50 dark:bg-red-950/20 text-destructive border border-red-200 dark:border-red-800">
         <div className="flex items-center gap-2">
           <AlertCircleIcon className="size-4 shrink-0" />
           <span>{error || 'An error occurred'}</span>
@@ -89,25 +82,13 @@ export function ActivityIndicator({ sessionId }: ActivityIndicatorProps) {
 
   // Render processing state
   return (
-    <div
-      className="flex items-center gap-3 px-3 py-2 rounded-md text-sm"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        color: 'var(--text-secondary)',
-        border: '1px solid var(--border-subtle)',
-      }}
-    >
+    <div className="flex items-center gap-3 px-3 py-2 rounded-md text-sm bg-muted text-muted-foreground border border-border">
       <Loader2Icon className="size-4 animate-spin shrink-0" />
       <div className="flex items-center gap-2 flex-1">
-        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-          Processing...
-        </span>
+        <span className="font-medium text-foreground">Processing...</span>
         <span>{elapsedTime}</span>
         {processingToken > 0 && (
-          <span
-            className="flex items-center gap-1"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
+          <span className="flex items-center gap-1 text-muted-foreground">
             <span>↓</span>
             <span>{processingToken} tokens</span>
           </span>
@@ -129,10 +110,7 @@ export function ActivityIndicator({ sessionId }: ActivityIndicatorProps) {
           </span>
         )}
       </div>
-      <span
-        className="text-xs whitespace-nowrap"
-        style={{ color: 'var(--text-tertiary)' }}
-      >
+      <span className="text-xs whitespace-nowrap text-muted-foreground">
         Esc to cancel
       </span>
     </div>

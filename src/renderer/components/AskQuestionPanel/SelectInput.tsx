@@ -158,9 +158,7 @@ export function SelectInput({
             <button
               type="button"
               className={`flex items-start gap-3 rounded px-3 py-2 text-left transition-colors ${
-                focused
-                  ? 'bg-(--bg-tertiary) ring-1 ring-(--border-focus)'
-                  : 'hover:bg-(--bg-secondary)'
+                focused ? 'bg-muted ring-1 ring-ring' : 'hover:bg-secondary'
               }`}
               onClick={() => handleOptionClick(option.value, !!option.isOther)}
               onFocus={() => setFocusedIndex(index)}
@@ -172,7 +170,7 @@ export function SelectInput({
                     className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
                       selected
                         ? 'border-blue-500 bg-blue-500 text-white'
-                        : 'border-(--border-primary)'
+                        : 'border-border'
                     }`}
                   >
                     {selected && '✓'}
@@ -180,9 +178,7 @@ export function SelectInput({
                 ) : (
                   <span
                     className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${
-                      selected
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-(--border-primary)'
+                      selected ? 'border-blue-500 bg-blue-500' : 'border-border'
                     }`}
                   >
                     {selected && (
@@ -196,15 +192,13 @@ export function SelectInput({
               <div className="flex flex-col gap-0.5">
                 <span
                   className={`text-sm ${
-                    selected
-                      ? 'font-medium text-(--text-primary)'
-                      : 'text-(--text-primary)'
+                    selected ? 'font-medium text-foreground' : 'text-foreground'
                   }`}
                 >
                   {option.label}
                 </span>
                 {option.description && (
-                  <span className="text-xs text-(--text-tertiary)">
+                  <span className="text-xs text-muted-foreground">
                     {option.description}
                   </span>
                 )}
@@ -217,7 +211,7 @@ export function SelectInput({
                 <input
                   ref={otherInputRef}
                   type="text"
-                  className="w-full rounded border border-(--border-primary) bg-(--bg-base) px-3 py-1.5 text-sm text-(--text-primary) placeholder-(--text-tertiary) focus:border-(--border-focus) focus:outline-none"
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none"
                   placeholder="Type your answer..."
                   value={otherValue}
                   onChange={(e) => onOtherChange?.(e.target.value)}

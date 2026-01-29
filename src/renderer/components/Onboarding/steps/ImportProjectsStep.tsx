@@ -165,9 +165,7 @@ export const ImportProjectsStep = () => {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <Spinner className="h-6 w-6" />
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Connecting to server...
-        </p>
+        <p className="text-muted-foreground">Connecting to server...</p>
       </div>
     );
   }
@@ -176,9 +174,7 @@ export const ImportProjectsStep = () => {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <Spinner className="h-6 w-6" />
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Loading projects from CLI...
-        </p>
+        <p className="text-muted-foreground">Loading projects from CLI...</p>
       </div>
     );
   }
@@ -186,8 +182,8 @@ export const ImportProjectsStep = () => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
-        <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
-        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+        <p className="text-muted-foreground">{error}</p>
+        <p className="text-sm text-muted-foreground">
           You can skip this step and add projects manually later.
         </p>
       </div>
@@ -197,10 +193,10 @@ export const ImportProjectsStep = () => {
   if (projects.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
-        <p style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-muted-foreground">
           No projects found from CLI usage.
         </p>
-        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+        <p className="text-sm text-muted-foreground">
           You can skip this step and add projects manually later.
         </p>
       </div>
@@ -209,7 +205,7 @@ export const ImportProjectsStep = () => {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-sm text-muted-foreground">
         We found {projects.length} project{projects.length !== 1 ? 's' : ''}{' '}
         from your CLI usage. Select which ones to import:
       </p>
@@ -240,45 +236,21 @@ export const ImportProjectsStep = () => {
             Uncheck All
           </Button>
         </div>
-        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <span className="text-sm text-muted-foreground">
           {selected.size} of {projects.length} selected
         </span>
       </div>
 
       {/* Project list */}
-      <div
-        className="rounded-lg overflow-hidden"
-        style={{
-          border: '1px solid var(--border-subtle)',
-          maxHeight: '250px',
-          overflowY: 'auto',
-        }}
-      >
+      <div className="rounded-lg overflow-hidden border border-border max-h-[250px] overflow-y-auto">
         {projects.map((project) => {
           const isAlreadyAdded = existingPaths.has(project.path);
           return (
             <label
               key={project.path}
-              className="flex items-center gap-3 px-4 py-3 transition-colors"
-              style={{
-                borderBottom: '1px solid var(--border-subtle)',
-                backgroundColor: selected.has(project.path)
-                  ? 'var(--bg-base)'
-                  : 'transparent',
-                cursor: isAlreadyAdded ? 'not-allowed' : 'pointer',
-                opacity: isAlreadyAdded ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!selected.has(project.path) && !isAlreadyAdded) {
-                  e.currentTarget.style.backgroundColor =
-                    'var(--bg-base-hover)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!selected.has(project.path) && !isAlreadyAdded) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
+              className={`flex items-center gap-3 px-4 py-3 transition-colors border-b border-border ${
+                selected.has(project.path) ? 'bg-background' : 'bg-transparent'
+              } ${isAlreadyAdded ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-accent'}`}
             >
               <Checkbox
                 checked={selected.has(project.path)}
@@ -286,42 +258,24 @@ export const ImportProjectsStep = () => {
                 disabled={isAlreadyAdded}
               />
               <div className="flex-1 min-w-0">
-                <div
-                  className="text-sm font-medium truncate flex items-center gap-2"
-                  style={{ color: 'var(--text-primary)' }}
-                >
+                <div className="text-sm font-medium truncate flex items-center gap-2 text-foreground">
                   {project.path.split('/').pop()}
                   {isAlreadyAdded && (
-                    <span
-                      className="text-xs px-1.5 py-0.5 rounded"
-                      style={{
-                        backgroundColor: 'var(--bg-subtle)',
-                        color: 'var(--text-tertiary)',
-                      }}
-                    >
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                       Added
                     </span>
                   )}
                 </div>
-                <div
-                  className="text-xs truncate"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
+                <div className="text-xs truncate text-muted-foreground">
                   {project.path}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-0.5">
-                <div
-                  className="text-xs"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
+                <div className="text-xs text-muted-foreground">
                   {formatDate(project.lastAccessed)}
                 </div>
                 {project.sessionCount > 0 && (
-                  <div
-                    className="text-xs"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
+                  <div className="text-xs text-muted-foreground">
                     {project.sessionCount} session
                     {project.sessionCount !== 1 ? 's' : ''}
                   </div>

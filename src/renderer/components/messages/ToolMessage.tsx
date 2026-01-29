@@ -118,39 +118,20 @@ export function ToolMessage({ pair }: ToolMessageProps) {
   const toolIcon = getToolIcon(toolUse.name);
 
   return (
-    <div style={{}}>
+    <div>
       {/* Tool header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '8px',
-        }}
-      >
+      <div className="flex items-center mb-2">
         <HugeiconsIcon
           icon={toolIcon}
           size={16}
-          color="var(--text-secondary)"
+          className="text-muted-foreground mr-2"
           strokeWidth={1.5}
-          style={{ marginRight: '8px' }}
         />
-        <span
-          style={{
-            fontWeight: 600,
-            fontSize: '14px',
-            color: 'var(--text-primary)',
-          }}
-        >
+        <span className="font-semibold text-sm text-foreground">
           {displayName}
         </span>
         {toolUse.description && (
-          <span
-            style={{
-              fontSize: '13px',
-              color: 'var(--text-secondary)',
-              marginLeft: '8px',
-            }}
-          >
+          <span className="text-[13px] text-muted-foreground ml-2">
             {toolUse.description}
           </span>
         )}
@@ -176,28 +157,14 @@ export function ToolMessage({ pair }: ToolMessageProps) {
               newContent,
             );
             return (
-              <span
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  alignItems: 'center',
-                  marginLeft: '8px',
-                  fontSize: '13px',
-                }}
-              >
+              <span className="flex gap-2 items-center ml-2 text-[13px]">
                 {deletions !== 0 && (
-                  <span
-                    style={{
-                      marginLeft: '6px',
-                      color: '#ef4444',
-                      fontWeight: 500,
-                    }}
-                  >
+                  <span className="ml-1.5 text-red-500 font-medium">
                     -{deletions}
                   </span>
                 )}
                 {additions !== 0 && (
-                  <span style={{ color: '#22c55e', fontWeight: 500 }}>
+                  <span className="text-green-500 font-medium">
                     +{additions}
                   </span>
                 )}
@@ -205,14 +172,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
             );
           })()}
         {!toolResult && (
-          <span
-            style={{
-              marginLeft: '8px',
-              fontSize: '12px',
-              color: '#f59e0b',
-              fontStyle: 'italic',
-            }}
-          >
+          <span className="ml-2 text-xs text-amber-500 italic">
             (pending...)
           </span>
         )}
@@ -220,19 +180,10 @@ export function ToolMessage({ pair }: ToolMessageProps) {
 
       {/* Tool result */}
       {toolResult && (
-        <div style={{ paddingLeft: '16px' }}>
+        <div className="pl-4">
           {/* Error handling */}
           {toolResult.result.isError && (
-            <div
-              style={{
-                color: '#ef4444',
-                fontSize: '13px',
-                padding: '0 8px 8px',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                borderRadius: '4px',
-                fontFamily: 'monospace',
-              }}
-            >
+            <div className="text-red-500 text-[13px] px-2 pb-2 bg-red-500/10 rounded font-mono">
               Error: {getResultText(toolResult.result)}
             </div>
           )}
@@ -284,17 +235,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
           {!toolResult.result.isError &&
             (!toolResult.result.returnDisplay ||
               typeof toolResult.result.returnDisplay === 'string') && (
-              <div
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--text-primary)',
-                  whiteSpace: 'pre-wrap',
-                  fontFamily: 'monospace',
-                  backgroundColor: 'var(--bg-primary)',
-                  padding: '0 8px 8px',
-                  borderRadius: '4px',
-                }}
-              >
+              <div className="text-[13px] text-foreground whitespace-pre-wrap font-mono bg-card px-2 pb-2 rounded">
                 {getResultText(toolResult.result)}
               </div>
             )}

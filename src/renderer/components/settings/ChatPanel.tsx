@@ -8,6 +8,7 @@ import {
   SelectItem,
 } from '../ui/select';
 import { useStore } from '../../store';
+import { cn } from '../../lib/utils';
 import { Spinner } from '../ui/spinner';
 import { ModelSelector } from '../ModelSelector';
 import type { SendMessageWith } from '../../store/slices/desktopSettings';
@@ -23,21 +24,10 @@ interface SettingsRowProps {
 
 const SettingsRow = ({ title, description, children }: SettingsRowProps) => {
   return (
-    <div
-      className="flex items-center justify-between py-4"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between py-4 border-b border-border">
       <div className="flex-1 pr-4">
-        <div
-          className="text-sm font-medium"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {title}
-        </div>
-        <div
-          className="text-sm mt-0.5"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        <div className="text-sm font-medium text-foreground">{title}</div>
+        <div className="text-sm mt-0.5 text-muted-foreground">
           {description}
         </div>
       </div>
@@ -61,28 +51,16 @@ const ToggleOption = ({
 }: ToggleOptionProps) => {
   return (
     <button
-      className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-      style={{
-        backgroundColor: isActive ? 'var(--bg-base)' : 'transparent',
-        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-        border: isActive
-          ? '1px solid var(--border-subtle)'
-          : '1px solid transparent',
-        opacity: disabled ? 0.5 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
+      className={cn(
+        'px-3 py-1.5 text-sm font-medium rounded-md transition-colors border',
+        isActive
+          ? 'bg-background text-foreground border-border'
+          : 'bg-transparent text-muted-foreground border-transparent hover:bg-accent',
+        disabled && 'opacity-50 cursor-not-allowed',
+        !disabled && 'cursor-pointer',
+      )}
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={(e) => {
-        if (!isActive && !disabled) {
-          e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive && !disabled) {
-          e.currentTarget.style.backgroundColor = 'transparent';
-        }
-      }}
     >
       {label}
     </button>
@@ -159,10 +137,7 @@ export const ChatPanel = () => {
 
   return (
     <div>
-      <h1
-        className="text-xl font-semibold mb-6 flex items-center gap-2"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={MessageIcon} size={22} strokeWidth={1.5} />
         Chat
       </h1>
@@ -275,10 +250,7 @@ export const ChatPanel = () => {
           title="Send Message"
           description="Keyboard shortcut to send messages"
         >
-          <div
-            className="flex gap-1 p-1 rounded-lg"
-            style={{ backgroundColor: 'var(--bg-surface)' }}
-          >
+          <div className="flex gap-1 p-1 rounded-lg bg-muted">
             <ToggleOption
               label="Enter"
               isActive={sendMessageWith === 'enter'}

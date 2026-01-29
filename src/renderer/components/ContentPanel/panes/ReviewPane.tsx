@@ -8,12 +8,7 @@ interface ReviewPaneProps {
 export function ReviewPane({ tab, isActive }: ReviewPaneProps) {
   return (
     <div
-      className="flex-1 flex items-center justify-center"
-      style={{
-        display: isActive ? 'flex' : 'none',
-        color: 'var(--text-secondary)',
-        backgroundColor: 'var(--bg-base)',
-      }}
+      className={`flex-1 items-center justify-center text-muted-foreground bg-background ${isActive ? 'flex' : 'hidden'}`}
     >
       <div className="text-center">
         <p className="text-lg">Review</p>

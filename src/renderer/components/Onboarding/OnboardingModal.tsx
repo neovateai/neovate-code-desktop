@@ -23,44 +23,17 @@ export const OnboardingModal = () => {
   if (!onboardingVisible) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       {/* Modal container */}
-      <div
-        className="relative flex flex-col rounded-lg shadow-xl overflow-hidden"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          width: '640px',
-          maxHeight: '80vh',
-        }}
-      >
+      <div className="relative flex flex-col rounded-lg shadow-xl overflow-hidden bg-muted border border-border w-[640px] max-h-[80vh]">
         {/* Header */}
-        <div
-          className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-        >
-          <h2
-            className="text-lg font-semibold"
-            style={{ color: 'var(--text-primary)' }}
-          >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">
             {STEP_TITLES[onboardingStep] || 'Setup'}
           </h2>
           <button
             onClick={skipOnboarding}
-            className="text-sm px-3 py-1 rounded-md transition-colors"
-            style={{
-              color: 'var(--text-secondary)',
-              backgroundColor: 'transparent',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className="text-sm px-3 py-1 rounded-md transition-colors text-muted-foreground bg-transparent hover:bg-accent"
           >
             Skip
           </button>
@@ -70,10 +43,7 @@ export const OnboardingModal = () => {
         <OnboardingProgress />
 
         {/* Step content */}
-        <div
-          className="flex-1 overflow-y-auto px-6 py-4"
-          style={{ minHeight: '300px' }}
-        >
+        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-[300px]">
           {onboardingStep === 'import' && <ImportProjectsStep />}
           {onboardingStep === 'provider' && <ProviderLoginStep />}
           {onboardingStep === 'model' && <ModelConfigStep />}

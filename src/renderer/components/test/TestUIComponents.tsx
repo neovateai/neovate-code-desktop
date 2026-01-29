@@ -143,37 +143,12 @@ export function TestUIComponents() {
 
   return (
     <ToastProvider>
-      <div
-        style={{
-          padding: '16px',
-          backgroundColor: 'var(--bg-primary)',
-          borderRadius: '8px',
-          border: '1px solid var(--border-subtle)',
-        }}
-      >
-        <div
-          style={{
-            marginBottom: '16px',
-            fontSize: '16px',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            borderBottom: '1px solid var(--border-subtle)',
-            paddingBottom: '8px',
-          }}
-        >
+      <div className="p-4 bg-card rounded-lg border border-border">
+        <div className="mb-4 text-base font-semibold text-foreground border-b border-border pb-2">
           UI Components Test
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            maxHeight: '600px',
-            overflowY: 'auto',
-            padding: '8px',
-          }}
-        >
+        <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto p-2">
           <div className="space-y-12 max-w-7xl mx-auto bg-background">
             <p className="text-muted-foreground">
               Comprehensive showcase of all available UI components from coss ui

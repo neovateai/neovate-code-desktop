@@ -8,6 +8,7 @@ import {
   Loading02Icon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
+import { cn } from '../../lib/utils';
 import { getSelectedRepo } from '../../store/selectors';
 import type { HandlerOutput } from '../../nodeBridge.types';
 
@@ -230,20 +231,13 @@ export const SkillsPanel = () => {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1
-          className="text-xl font-semibold flex items-center gap-2"
-          style={{ color: 'var(--text-primary)' }}
-        >
+        <h1 className="text-xl font-semibold flex items-center gap-2 text-foreground">
           <HugeiconsIcon icon={MagicWandIcon} size={22} strokeWidth={1.5} />
           Skills
         </h1>
         {addFlow.phase === 'idle' && (
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-            style={{
-              backgroundColor: 'var(--accent)',
-              color: 'var(--text-primary)',
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-accent text-foreground"
             onClick={() => setAddFlow({ phase: 'input' })}
           >
             <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
@@ -254,13 +248,7 @@ export const SkillsPanel = () => {
 
       {/* Add Section */}
       {addFlow.phase !== 'idle' && (
-        <div
-          className="mb-6 p-4 rounded-lg"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-          }}
-        >
+        <div className="mb-6 p-4 rounded-lg bg-muted border border-border">
           {/* Input phase */}
           {(addFlow.phase === 'input' || addFlow.phase === 'error') && (
             <div>
@@ -270,12 +258,7 @@ export const SkillsPanel = () => {
                   value={sourceInput}
                   onChange={(e) => setSourceInput(e.target.value)}
                   placeholder="user/repo or GitHub URL"
-                  className="flex-1 px-3 py-2 text-sm rounded-md"
-                  style={{
-                    backgroundColor: 'var(--bg-primary)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className="flex-1 px-3 py-2 text-sm rounded-md bg-card border border-border text-foreground"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && sourceInput.trim()) {
                       handlePreview();
@@ -283,22 +266,14 @@ export const SkillsPanel = () => {
                   }}
                 />
                 <button
-                  className="px-4 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50"
-                  style={{
-                    backgroundColor: 'var(--accent)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className="px-4 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50 bg-accent text-foreground"
                   onClick={handlePreview}
                   disabled={!sourceInput.trim()}
                 >
                   Preview
                 </button>
                 <button
-                  className="px-3 py-2 text-sm rounded-md transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-base-hover)',
-                    color: 'var(--text-secondary)',
-                  }}
+                  className="px-3 py-2 text-sm rounded-md transition-colors bg-accent text-muted-foreground"
                   onClick={handleCancel}
                 >
                   <HugeiconsIcon
@@ -309,19 +284,14 @@ export const SkillsPanel = () => {
                 </button>
               </div>
               {addFlow.phase === 'error' && (
-                <p className="text-sm" style={{ color: 'var(--text-error)' }}>
-                  {addFlow.message}
-                </p>
+                <p className="text-sm text-destructive">{addFlow.message}</p>
               )}
             </div>
           )}
 
           {/* Cloning phase */}
           {addFlow.phase === 'cloning' && (
-            <div
-              className="flex items-center gap-2"
-              style={{ color: 'var(--text-secondary)' }}
-            >
+            <div className="flex items-center gap-2 text-muted-foreground">
               <HugeiconsIcon
                 icon={Loading02Icon}
                 size={16}
@@ -337,10 +307,7 @@ export const SkillsPanel = () => {
           {/* Selecting phase */}
           {addFlow.phase === 'selecting' && (
             <div>
-              <p
-                className="text-sm mb-3"
-                style={{ color: 'var(--text-secondary)' }}
-              >
+              <p className="text-sm mb-3 text-muted-foreground">
                 Select skills to install:
               </p>
               <div className="space-y-2 mb-4">
@@ -349,12 +316,10 @@ export const SkillsPanel = () => {
                   return (
                     <label
                       key={skill.skillPath}
-                      className="flex items-start gap-3 p-2 rounded-md cursor-pointer transition-colors"
-                      style={{
-                        backgroundColor: isSelected
-                          ? 'var(--bg-base-hover)'
-                          : 'transparent',
-                      }}
+                      className={cn(
+                        'flex items-start gap-3 p-2 rounded-md cursor-pointer transition-colors',
+                        isSelected ? 'bg-accent' : 'bg-transparent',
+                      )}
                     >
                       <input
                         type="checkbox"
@@ -363,17 +328,11 @@ export const SkillsPanel = () => {
                         className="mt-0.5"
                       />
                       <div>
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
+                        <span className="text-sm font-medium text-foreground">
                           {skill.name}
                         </span>
                         {skill.description && (
-                          <p
-                            className="text-xs"
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
+                          <p className="text-xs text-muted-foreground">
                             {skill.description}
                           </p>
                         )}
@@ -383,13 +342,12 @@ export const SkillsPanel = () => {
                 })}
               </div>
               {/* Install options */}
-              <div
-                className="space-y-2 mb-4 pt-3 border-t"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
+              <div className="space-y-2 mb-4 pt-3 border-t border-border">
                 <label
-                  className={`flex items-center gap-2 text-sm cursor-pointer ${!hasProject ? 'opacity-50' : ''}`}
-                  style={{ color: 'var(--text-secondary)' }}
+                  className={cn(
+                    'flex items-center gap-2 text-sm cursor-pointer text-muted-foreground',
+                    !hasProject && 'opacity-50',
+                  )}
                 >
                   <input
                     type="checkbox"
@@ -399,10 +357,7 @@ export const SkillsPanel = () => {
                   />
                   Install globally
                 </label>
-                <label
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
+                <label className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={addFlow.useClaude}
@@ -412,29 +367,18 @@ export const SkillsPanel = () => {
                 </label>
               </div>
               <div className="flex items-center justify-between">
-                <span
-                  className="text-xs"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
+                <span className="text-xs text-muted-foreground">
                   {addFlow.selected.size} of {addFlow.skills.length} selected
                 </span>
                 <div className="flex gap-2">
                   <button
-                    className="px-3 py-1.5 text-sm rounded-md transition-colors"
-                    style={{
-                      backgroundColor: 'var(--bg-base-hover)',
-                      color: 'var(--text-secondary)',
-                    }}
+                    className="px-3 py-1.5 text-sm rounded-md transition-colors bg-accent text-muted-foreground"
                     onClick={handleCancel}
                   >
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-1.5 text-sm font-medium rounded-md transition-colors disabled:opacity-50"
-                    style={{
-                      backgroundColor: 'var(--accent)',
-                      color: 'var(--text-primary)',
-                    }}
+                    className="px-4 py-1.5 text-sm font-medium rounded-md transition-colors disabled:opacity-50 bg-accent text-foreground"
                     onClick={handleInstall}
                     disabled={addFlow.selected.size === 0}
                   >
@@ -447,10 +391,7 @@ export const SkillsPanel = () => {
 
           {/* Installing phase */}
           {addFlow.phase === 'installing' && (
-            <div
-              className="flex items-center gap-2"
-              style={{ color: 'var(--text-secondary)' }}
-            >
+            <div className="flex items-center gap-2 text-muted-foreground">
               <HugeiconsIcon
                 icon={Loading02Icon}
                 size={16}
@@ -466,10 +407,7 @@ export const SkillsPanel = () => {
       {/* Skills List */}
       <div>
         {loading ? (
-          <div
-            className="flex items-center gap-2"
-            style={{ color: 'var(--text-secondary)' }}
-          >
+          <div className="flex items-center gap-2 text-muted-foreground">
             <HugeiconsIcon
               icon={Loading02Icon}
               size={16}
@@ -480,12 +418,9 @@ export const SkillsPanel = () => {
           </div>
         ) : error ? (
           <div>
-            <p className="text-sm mb-2" style={{ color: 'var(--text-error)' }}>
-              {error}
-            </p>
+            <p className="text-sm mb-2 text-destructive">{error}</p>
             <button
-              className="text-sm underline"
-              style={{ color: 'var(--text-secondary)' }}
+              className="text-sm underline text-muted-foreground"
               onClick={fetchSkills}
             >
               Retry
@@ -495,17 +430,11 @@ export const SkillsPanel = () => {
           <>
             {/* Global Skills Section */}
             <div className="mb-6">
-              <h2
-                className="text-sm font-medium mb-3"
-                style={{ color: 'var(--text-secondary)' }}
-              >
+              <h2 className="text-sm font-medium mb-3 text-muted-foreground">
                 Global Skills
               </h2>
               {globalSkills.length === 0 ? (
-                <p
-                  className="text-sm"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
+                <p className="text-sm text-muted-foreground">
                   No global skills installed.
                 </p>
               ) : (
@@ -513,32 +442,18 @@ export const SkillsPanel = () => {
                   {globalSkills.map((skill) => (
                     <div
                       key={`${skill.source}-${skill.name}`}
-                      className="flex items-center justify-between p-3 rounded-md"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        border: '1px solid var(--border-subtle)',
-                      }}
+                      className="flex items-center justify-between p-3 rounded-md bg-muted border border-border"
                     >
                       <div className="flex items-center gap-3">
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
+                        <span className="text-sm font-medium text-foreground">
                           {skill.name}
                         </span>
-                        <span
-                          className="text-xs px-2 py-0.5 rounded"
-                          style={{
-                            backgroundColor: 'var(--bg-base-hover)',
-                            color: 'var(--text-tertiary)',
-                          }}
-                        >
+                        <span className="text-xs px-2 py-0.5 rounded bg-accent text-muted-foreground">
                           {skill.source}
                         </span>
                       </div>
                       <button
-                        className="p-1.5 rounded-md transition-colors disabled:opacity-50"
-                        style={{ color: 'var(--text-secondary)' }}
+                        className="p-1.5 rounded-md transition-colors disabled:opacity-50 text-muted-foreground"
                         onClick={() => handleRemove(skill)}
                         disabled={removingSkill === skill.name}
                         title="Remove skill"
@@ -567,17 +482,11 @@ export const SkillsPanel = () => {
             {/* Project Skills Section */}
             {hasProject ? (
               <div>
-                <h2
-                  className="text-sm font-medium mb-3"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
+                <h2 className="text-sm font-medium mb-3 text-muted-foreground">
                   Project Skills ({folderName})
                 </h2>
                 {projectSkills.length === 0 ? (
-                  <p
-                    className="text-sm"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <p className="text-sm text-muted-foreground">
                     No project skills installed.
                   </p>
                 ) : (
@@ -585,32 +494,18 @@ export const SkillsPanel = () => {
                     {projectSkills.map((skill) => (
                       <div
                         key={`${skill.source}-${skill.name}`}
-                        className="flex items-center justify-between p-3 rounded-md"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          border: '1px solid var(--border-subtle)',
-                        }}
+                        className="flex items-center justify-between p-3 rounded-md bg-muted border border-border"
                       >
                         <div className="flex items-center gap-3">
-                          <span
-                            className="text-sm font-medium"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
+                          <span className="text-sm font-medium text-foreground">
                             {skill.name}
                           </span>
-                          <span
-                            className="text-xs px-2 py-0.5 rounded"
-                            style={{
-                              backgroundColor: 'var(--bg-base-hover)',
-                              color: 'var(--text-tertiary)',
-                            }}
-                          >
+                          <span className="text-xs px-2 py-0.5 rounded bg-accent text-muted-foreground">
                             {skill.source}
                           </span>
                         </div>
                         <button
-                          className="p-1.5 rounded-md transition-colors disabled:opacity-50"
-                          style={{ color: 'var(--text-secondary)' }}
+                          className="p-1.5 rounded-md transition-colors disabled:opacity-50 text-muted-foreground"
                           onClick={() => handleRemove(skill)}
                           disabled={removingSkill === skill.name}
                           title="Remove skill"
@@ -636,7 +531,7 @@ export const SkillsPanel = () => {
                 )}
               </div>
             ) : (
-              <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+              <p className="text-sm text-muted-foreground">
                 Select a project to view project-level skills.
               </p>
             )}

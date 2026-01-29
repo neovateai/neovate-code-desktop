@@ -309,7 +309,7 @@ function QuestionView({
   }, [questionText, question.multiSelect, state, onAnswer, onNext]);
 
   return (
-    <div className="border-t border-(--border-primary) bg-(--bg-surface) p-4">
+    <div className="border-t border-border bg-sidebar p-4">
       {/* Navigation bar */}
       <QuestionNav
         questions={questions}
@@ -319,7 +319,7 @@ function QuestionView({
       />
 
       {/* Question title */}
-      <h3 className="mb-3 text-sm font-semibold text-(--text-primary)">
+      <h3 className="mb-3 text-sm font-semibold text-foreground">
         {question.question}
       </h3>
 
@@ -337,7 +337,7 @@ function QuestionView({
       />
 
       {/* Hints */}
-      <p className="mt-3 text-xs text-(--text-tertiary)">
+      <p className="mt-3 text-xs text-muted-foreground">
         {question.multiSelect ? 'Space' : 'Enter'} to select · Tab/Arrow keys to
         navigate · Esc to cancel
       </p>
@@ -386,7 +386,7 @@ function SubmitView({
   }, [onSubmit, onCancel, onPrev]);
 
   return (
-    <div className="border-t border-(--border-primary) bg-(--bg-surface) p-4">
+    <div className="border-t border-border bg-sidebar p-4">
       {/* Navigation bar */}
       <QuestionNav
         questions={questions}
@@ -395,7 +395,7 @@ function SubmitView({
       />
 
       {/* Title */}
-      <h3 className="mb-3 text-sm font-semibold text-(--text-primary)">
+      <h3 className="mb-3 text-sm font-semibold text-foreground">
         Review your answers
       </h3>
 
@@ -412,10 +412,8 @@ function SubmitView({
           .filter((q) => answers[q.question])
           .map((q) => (
             <div key={q.question} className="text-sm">
-              <p className="text-(--text-tertiary)">● {q.question}</p>
-              <p className="ml-4 text-(--text-primary)">
-                → {answers[q.question]}
-              </p>
+              <p className="text-muted-foreground">● {q.question}</p>
+              <p className="ml-4 text-foreground">→ {answers[q.question]}</p>
             </div>
           ))}
       </div>
@@ -431,7 +429,7 @@ function SubmitView({
         </button>
         <button
           type="button"
-          className="rounded border border-(--border-primary) px-4 py-1.5 text-sm text-(--text-secondary) hover:bg-(--bg-secondary) focus:outline-none"
+          className="rounded border border-border px-4 py-1.5 text-sm text-muted-foreground hover:bg-secondary focus:outline-none"
           onClick={onCancel}
         >
           Cancel
@@ -439,7 +437,7 @@ function SubmitView({
       </div>
 
       {/* Hints */}
-      <p className="mt-3 text-xs text-(--text-tertiary)">
+      <p className="mt-3 text-xs text-muted-foreground">
         Enter to submit · Esc to cancel · ← to go back
       </p>
     </div>

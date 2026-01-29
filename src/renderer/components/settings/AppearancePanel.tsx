@@ -1,6 +1,7 @@
 import { HugeiconsIcon } from '@hugeicons/react';
 import { PaintBrushIcon } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
+import { cn } from '../../lib/utils';
 import type { ThemeValue } from '../../store/slices/desktopSettings';
 
 interface SettingsRowProps {
@@ -11,21 +12,10 @@ interface SettingsRowProps {
 
 const SettingsRow = ({ title, description, children }: SettingsRowProps) => {
   return (
-    <div
-      className="flex items-center justify-between py-4"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between py-4 border-b border-border">
       <div className="flex-1 pr-4">
-        <div
-          className="text-sm font-medium"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {title}
-        </div>
-        <div
-          className="text-sm mt-0.5"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        <div className="text-sm font-medium text-foreground">{title}</div>
+        <div className="text-sm mt-0.5 text-muted-foreground">
           {description}
         </div>
       </div>
@@ -49,28 +39,16 @@ const ThemeOption = ({
 }: ThemeOptionProps) => {
   return (
     <button
-      className="px-3 py-1.5 text-sm rounded-md transition-colors"
-      style={{
-        backgroundColor: isActive ? 'var(--bg-base)' : 'transparent',
-        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-        border: isActive
-          ? '1px solid var(--border-subtle)'
-          : '1px solid transparent',
-        opacity: disabled ? 0.5 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
+      className={cn(
+        'px-3 py-1.5 text-sm rounded-md transition-colors border',
+        isActive
+          ? 'bg-background text-foreground border-border'
+          : 'bg-transparent text-muted-foreground border-transparent hover:bg-accent',
+        disabled && 'opacity-50 cursor-not-allowed',
+        !disabled && 'cursor-pointer',
+      )}
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={(e) => {
-        if (!isActive && !disabled) {
-          e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive && !disabled) {
-          e.currentTarget.style.backgroundColor = 'transparent';
-        }
-      }}
     >
       {label}
     </button>
@@ -92,10 +70,7 @@ export const AppearancePanel = () => {
 
   return (
     <div>
-      <h1
-        className="text-xl font-semibold mb-6 flex items-center gap-2"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={PaintBrushIcon} size={22} strokeWidth={1.5} />
         Appearance
       </h1>
@@ -106,10 +81,7 @@ export const AppearancePanel = () => {
           title="Theme"
           description="Select your preferred color scheme"
         >
-          <div
-            className="flex gap-1 p-1 rounded-lg"
-            style={{ backgroundColor: 'var(--bg-surface)' }}
-          >
+          <div className="flex gap-1 p-1 rounded-lg bg-muted">
             <ThemeOption
               label="Light"
               isActive={theme === 'light'}
@@ -139,12 +111,7 @@ export const AppearancePanel = () => {
             max={32}
             value={terminalFontSize}
             onChange={(e) => setTerminalFontSize(Number(e.target.value))}
-            className="w-20 px-2 py-1.5 text-sm rounded-md"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-subtle)',
-            }}
+            className="w-20 px-2 py-1.5 text-sm rounded-md bg-muted text-foreground border border-border"
           />
         </SettingsRow>
 
@@ -158,12 +125,7 @@ export const AppearancePanel = () => {
             value={terminalFont}
             onChange={(e) => setTerminalFont(e.target.value)}
             placeholder="Default"
-            className="w-40 px-2 py-1.5 text-sm rounded-md"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-subtle)',
-            }}
+            className="w-40 px-2 py-1.5 text-sm rounded-md bg-muted text-foreground border border-border"
           />
         </SettingsRow>
       </div>

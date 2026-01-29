@@ -24,7 +24,16 @@ import type {
   HandlerOutput,
 } from '../../nodeBridge.types';
 import { useStore } from '../../store';
-import { Button, Textarea, Tooltip, TooltipPopup, TooltipTrigger } from '../ui';
+import {
+  Button,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupTextarea,
+  Tooltip,
+  TooltipPopup,
+  TooltipTrigger,
+} from '../ui';
+import { cn } from '../../lib/utils';
 import { ModelSelector } from '../ModelSelector';
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
@@ -223,24 +232,29 @@ export const ChatInput = memo(
       }
     };
 
-    const borderColor = useMemo(() => {
+    const modeColorClass = useMemo(() => {
       // Memory and bash input modes take precedence
-      if (mode === 'memory') return 'var(--brand-purple, #8b5cf6)';
-      if (mode === 'bash') return 'var(--brand-orange, #f97316)';
+      if (mode === 'memory') return 'border-violet-500 ring-violet-500/40';
+      if (mode === 'bash') return 'border-orange-500 ring-orange-500/40';
       // Plan mode colors
-      if (planMode === 'plan') return '#3b82f6';
-      if (planMode === 'brainstorm') return '#8b5cf6';
-      return 'var(--border-subtle)';
+      if (planMode === 'plan') return 'border-blue-500 ring-blue-500/40';
+      if (planMode === 'brainstorm')
+        return 'border-violet-500 ring-violet-500/40';
+      return '';
     }, [mode, planMode]);
 
     const modeInfo = useMemo(() => {
       if (mode === 'memory')
-        return { icon: NoteIcon, label: 'Memory', color: '#8b5cf6' };
+        return {
+          icon: NoteIcon,
+          label: 'Memory',
+          colorClass: 'text-violet-500',
+        };
       if (mode === 'bash')
         return {
           icon: ComputerTerminal01Icon,
           label: 'Bash',
-          color: '#f97316',
+          colorClass: 'text-orange-500',
         };
       return null;
     }, [mode]);
@@ -258,14 +272,7 @@ export const ChatInput = memo(
       <div className="relative">
         {/* Debug Info */}
         {developerMode && (
-          <div
-            className="mb-2 px-3 py-2 rounded-md text-xs font-mono"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-tertiary)',
-            }}
-          >
+          <div className="mb-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
             <div>Session ID: {sessionId || 'null'}</div>
             <div>CWD: {cwd || 'null'}</div>
             <div>Processing: {processingState?.status || 'null'}</div>
@@ -283,57 +290,32 @@ export const ChatInput = memo(
 
         {/* Searching indicator */}
         {isSearching && suggestions.items.length === 0 && (
-          <div
-            className="absolute bottom-full left-0 mb-1 px-3 py-2 text-sm rounded-md"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-secondary)',
-            }}
-          >
+          <div className="absolute bottom-full left-0 mb-1 px-3 py-2 text-sm rounded-md bg-muted border border-border text-muted-foreground">
             Searching...
           </div>
         )}
 
         {/* Main Input Container */}
-        <div
-          className="rounded-xl overflow-hidden transition-colors"
-          style={{
-            border: `2px solid ${borderColor}`,
-            backgroundColor: 'var(--bg-surface)',
-          }}
-        >
+        <InputGroup className={modeColorClass}>
           {/* Mode indicator */}
           {modeInfo && (
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 border-b"
-              style={{
-                borderColor: 'var(--border-subtle)',
-                backgroundColor: `${modeInfo.color}10`,
-              }}
-            >
+            <InputGroupAddon align="block-start" className="border-b">
               <HugeiconsIcon
                 icon={modeInfo.icon}
                 size={14}
-                color={modeInfo.color}
+                className={modeInfo.colorClass}
               />
-              <span
-                className="text-xs font-medium"
-                style={{ color: modeInfo.color }}
-              >
+              <span className={cn('text-xs font-medium', modeInfo.colorClass)}>
                 {modeInfo.label} Mode
               </span>
-              <span
-                className="text-xs"
-                style={{ color: 'var(--text-tertiary)' }}
-              >
+              <span className="text-xs text-muted-foreground">
                 Press Esc to exit
               </span>
-            </div>
+            </InputGroupAddon>
           )}
 
           {/* Textarea */}
-          <Textarea
+          <InputGroupTextarea
             ref={textareaRef}
             value={displayValue}
             onChange={handleChange}
@@ -342,24 +324,19 @@ export const ChatInput = memo(
             onPaste={handlers.onPaste}
             placeholder={placeholder}
             disabled={disabled && !isProcessing}
-            className="border-0 rounded-none resize-none focus:ring-0 focus-visible:ring-0"
-            style={{
-              minHeight: '80px',
-              maxHeight: '200px',
-            }}
+            rows={3}
           />
 
           {/* Image Preview */}
-          <ImagePreview
-            images={pastedImages}
-            onRemove={imageManager.removePastedImage}
-          />
+          {pastedImages.length > 0 && (
+            <ImagePreview
+              images={pastedImages}
+              onRemove={imageManager.removePastedImage}
+            />
+          )}
 
           {/* Bottom Toolbar */}
-          <div
-            className="flex items-center justify-between px-2 py-1.5 border-t"
-            style={{ borderColor: 'var(--border-subtle)' }}
-          >
+          <InputGroupAddon align="block-end" className="justify-between">
             {/* Left side tools */}
             <div className="flex items-center gap-1">
               {/* Model Selector */}
@@ -376,22 +353,19 @@ export const ChatInput = memo(
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => togglePlanMode()}
-                      className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                      style={{
-                        color:
-                          planMode === 'plan'
-                            ? '#3b82f6'
-                            : planMode === 'brainstorm'
-                              ? '#8b5cf6'
-                              : 'var(--text-secondary)',
-                      }}
+                      className={cn(
+                        planMode === 'plan' && 'text-blue-500',
+                        planMode === 'brainstorm' && 'text-violet-500',
+                      )}
                     >
                       <HugeiconsIcon icon={NoteEditIcon} size={14} />
-                      <span className="font-medium capitalize">{planMode}</span>
-                    </button>
+                      <span className="capitalize">{planMode}</span>
+                    </Button>
                   }
                 />
                 <TooltipPopup>
@@ -409,30 +383,24 @@ export const ChatInput = memo(
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => toggleThinking()}
-                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${
+                        className={
                           thinking === 'high' ? 'thinking-high-twinkle' : ''
-                        }`}
-                        style={{
-                          color:
-                            thinking === 'high'
-                              ? '#d4a520'
-                              : thinking
-                                ? 'var(--brand-primary, #3b82f6)'
-                                : 'var(--text-secondary)',
-                        }}
+                        }
                       >
                         <HugeiconsIcon icon={BrainIcon} size={14} />
-                        <span className="font-medium capitalize">
+                        <span className="capitalize">
                           {thinking === null
                             ? 'Off'
                             : thinking === 'medium'
                               ? 'Med'
                               : thinking}
                         </span>
-                      </button>
+                      </Button>
                     }
                   />
                   <TooltipPopup>
@@ -449,16 +417,10 @@ export const ChatInput = memo(
                   <Button
                     type="button"
                     size="icon-sm"
-                    variant={canSend ? 'default' : 'ghost'}
                     onClick={handleSendClick}
                     disabled={!canSend || (disabled && !isProcessing)}
-                    style={
-                      canSend
-                        ? { backgroundColor: '#fa216e', border: 'none' }
-                        : undefined
-                    }
                   >
-                    <HugeiconsIcon icon={SentIcon} size={18} />
+                    <HugeiconsIcon icon={SentIcon} size={16} />
                   </Button>
                 }
               />
@@ -466,8 +428,8 @@ export const ChatInput = memo(
                 {canSend ? 'Send message (Enter)' : 'Type a message to send'}
               </TooltipPopup>
             </Tooltip>
-          </div>
-        </div>
+          </InputGroupAddon>
+        </InputGroup>
       </div>
     );
   }),

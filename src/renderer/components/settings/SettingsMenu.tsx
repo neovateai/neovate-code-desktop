@@ -10,6 +10,7 @@ import {
   KeyboardIcon,
 } from '@hugeicons/core-free-icons';
 import { useStore } from '../../store';
+import { cn } from '../../lib/utils';
 import type { SettingsMenuId } from './SettingsPage';
 
 interface MenuItem {
@@ -38,29 +39,20 @@ export const SettingsMenu = ({
 
   return (
     <div
-      className="w-56 h-full flex flex-col pt-8"
+      className="w-56 h-full flex flex-col pt-8 bg-muted border-r border-border"
       style={{
-        backgroundColor: 'var(--bg-surface)',
-        borderRight: '1px solid var(--border-subtle)',
         // @ts-expect-error - Electron specific CSS property
         WebkitAppRegion: 'drag',
       }}
     >
       {/* Back to app button */}
       <button
-        className="flex items-center text-text-secondary gap-3 ml-2 px-4 py-3 text-sm transition-colors hover:bg-opacity-50 cursor-pointer hover:text-text-primary"
+        className="flex items-center text-muted-foreground gap-3 ml-2 px-4 py-3 text-sm transition-colors cursor-pointer hover:text-foreground hover:bg-accent border-b border-border"
         style={{
-          borderBottom: '1px solid var(--border-subtle)',
           // @ts-expect-error - Electron specific CSS property
           WebkitAppRegion: 'no-drag',
         }}
         onClick={() => setShowSettings(false)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'transparent';
-        }}
       >
         <HugeiconsIcon icon={ArrowLeftIcon} size={16} strokeWidth={1.5} />
         <span>Back to app</span>
@@ -74,15 +66,12 @@ export const SettingsMenu = ({
           return (
             <button
               key={item.id}
-              className={`
-                w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer
-                rounded-[6px] mx-2
-                ${
-                  isActive
-                    ? 'bg-background text-text-primary'
-                    : 'text-text-secondary hover:text-text-primary'
-                }
-              `}
+              className={cn(
+                'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer rounded-[6px] mx-2',
+                isActive
+                  ? 'bg-background text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
               style={{
                 // @ts-expect-error - Electron specific CSS property
                 WebkitAppRegion: 'no-drag',

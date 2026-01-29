@@ -21,13 +21,8 @@ export const SelectProjectStep = () => {
   if (repoList.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
-        <p style={{ color: 'var(--text-secondary)' }}>
-          No projects available yet.
-        </p>
-        <p
-          className="text-sm text-center"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
+        <p className="text-muted-foreground">No projects available yet.</p>
+        <p className="text-sm text-center text-muted-foreground">
           You can add projects after completing setup by clicking the "+" button
           in the sidebar.
         </p>
@@ -40,65 +35,33 @@ export const SelectProjectStep = () => {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+      <p className="text-sm text-muted-foreground">
         Select a project to start working with:
       </p>
 
       {/* Project list */}
-      <div
-        className="rounded-lg overflow-hidden"
-        style={{
-          border: '1px solid var(--border-subtle)',
-          maxHeight: '300px',
-          overflowY: 'auto',
-        }}
-      >
+      <div className="rounded-lg overflow-hidden border border-border max-h-[300px] overflow-y-auto">
         {repoList.map((repo: any) => (
           <button
             key={repo.path}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-            style={{
-              borderBottom: '1px solid var(--border-subtle)',
-              backgroundColor: 'transparent',
-            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border bg-transparent hover:bg-accent"
             onClick={() => handleSelectProject(repo.path)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
           >
-            <div
-              className="w-8 h-8 rounded-md flex items-center justify-center text-sm font-medium"
-              style={{
-                backgroundColor: 'var(--primary)',
-                color: 'var(--primary-foreground)',
-              }}
-            >
+            <div className="w-8 h-8 rounded-md flex items-center justify-center text-sm font-medium bg-primary text-primary-foreground">
               {(repo.name ||
                 repo.path.split('/').pop() ||
                 '?')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div
-                className="text-sm font-medium truncate"
-                style={{ color: 'var(--text-primary)' }}
-              >
+              <div className="text-sm font-medium truncate text-foreground">
                 {repo.name || repo.path.split('/').pop()}
               </div>
-              <div
-                className="text-xs truncate"
-                style={{ color: 'var(--text-secondary)' }}
-              >
+              <div className="text-xs truncate text-muted-foreground">
                 {repo.path}
               </div>
             </div>
             {repo.metadata?.lastAccessed && (
-              <div
-                className="text-xs"
-                style={{ color: 'var(--text-tertiary)' }}
-              >
+              <div className="text-xs text-muted-foreground">
                 {formatDate(repo.metadata.lastAccessed)}
               </div>
             )}
@@ -106,10 +69,7 @@ export const SelectProjectStep = () => {
         ))}
       </div>
 
-      <p
-        className="text-xs text-center"
-        style={{ color: 'var(--text-tertiary)' }}
-      >
+      <p className="text-xs text-center text-muted-foreground">
         Click a project to select it and complete setup
       </p>
     </div>

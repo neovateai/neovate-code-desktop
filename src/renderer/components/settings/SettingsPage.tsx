@@ -38,18 +38,12 @@ export const SettingsPage = () => {
   }, [setShowSettings]);
 
   return (
-    <div
-      className="flex h-full"
-      style={{ backgroundColor: 'var(--bg-primary)' }}
-    >
+    <div className="flex h-full bg-card">
       {/* Left Sidebar */}
       <SettingsMenu activeMenu={activeMenu} onMenuSelect={setActiveMenu} />
 
       {/* Right Content */}
-      <div
-        className="flex-1 overflow-y-auto"
-        style={{ backgroundColor: 'var(--bg-primary)' }}
-      >
+      <div className="flex-1 overflow-y-auto bg-card">
         {/* Draggable header area */}
         <div
           className="h-12"

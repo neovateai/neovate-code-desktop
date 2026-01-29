@@ -13,10 +13,7 @@ import type { ContentTab } from './types';
 // Empty state when no tabs
 function EmptyState() {
   return (
-    <div
-      className="flex-1 flex items-center justify-center"
-      style={{ color: 'var(--text-secondary)' }}
-    >
+    <div className="flex-1 flex items-center justify-center text-muted-foreground">
       <p>No tabs open</p>
     </div>
   );
@@ -71,12 +68,7 @@ function ContentPanelBase({ repoPath, hidden }: ContentPanelProps) {
   return (
     <ContentPanelProvider repoPath={repoPath}>
       <div
-        className="flex flex-col flex-1"
-        style={{
-          backgroundColor: 'var(--bg-base)',
-          color: 'var(--text-primary)',
-          display: hidden ? 'none' : 'flex',
-        }}
+        className={`flex flex-col flex-1 bg-background text-foreground ${hidden ? 'hidden' : 'flex'}`}
       >
         <ContentTabBar />
         <ContentPaneRouter />

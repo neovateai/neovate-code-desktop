@@ -20,10 +20,7 @@ export const OnboardingFooter = () => {
   const isLast = currentIndex === STEPS.length - 1;
 
   return (
-    <div
-      className="flex items-center justify-between px-6 py-4"
-      style={{ borderTop: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between px-6 py-4 border-t border-border">
       {/* Back button */}
       <div>
         {!isFirst && (

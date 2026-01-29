@@ -87,9 +87,7 @@ export function AppLayoutChatPanel({ children }: { children: ReactNode }) {
       panelRef={panelRefs[AppLayoutPanelId.ChatPanel]}
       className="overflow-hidden"
     >
-      <div className="ml-2 h-full rounded-lg bg-(--bg-primary) pb-2">
-        {children}
-      </div>
+      <div className="ml-2 h-full rounded-lg bg-card pb-2">{children}</div>
     </Panel>
   );
 }
@@ -108,7 +106,7 @@ export function AppLayoutContentPanel({ children }: { children: ReactNode }) {
         minSize={CONTENT_PANEL_MIN_SIZE}
         panelRef={panelRefs[AppLayoutPanelId.ContentPanel]}
       >
-        <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">
+        <div className="ml-2 h-full overflow-hidden rounded-lg bg-card pb-2">
           {children}
         </div>
       </Panel>
@@ -135,7 +133,7 @@ export function AppLayoutSecondarySidebar({
         maxSize={SECONDARY_SIDEBAR_MAX_SIZE}
         panelRef={panelRefs[AppLayoutPanelId.SecondarySidebar]}
       >
-        <div className="ml-2 h-full overflow-hidden rounded-lg bg-(--bg-primary) pb-2">
+        <div className="ml-2 h-full overflow-hidden rounded-lg bg-card pb-2">
           {children}
         </div>
       </Panel>
@@ -167,7 +165,7 @@ function PanelSeparator({ className }: { className?: string }) {
         'before:absolute before:inset-y-0 before:w-0.5 before:left-0.75',
         'before:bg-transparent before:transition-colors',
         'before:mask-[linear-gradient(to_bottom,transparent,black_35%,black_65%,transparent)]',
-        'data-[separator=hover]:before:bg-[#93c5fd] data-[separator=active]:before:bg-[#3b82f6]',
+        'data-[separator=hover]:before:bg-primary/50 data-[separator=active]:before:bg-primary',
         className,
       )}
     />

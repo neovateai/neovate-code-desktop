@@ -11,6 +11,7 @@ import React, {
   memo,
 } from 'react';
 import { ipcMainCaller } from '../lib/ipc';
+import { cn } from '../lib/utils';
 import { useStore } from '../store';
 
 // XTerm theme configurations
@@ -198,25 +199,19 @@ function TerminalTabItem({
 
   return (
     <div
-      className={`
-        flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md cursor-pointer transition-colors
-        ${isActive ? '' : 'hover:bg-[var(--bg-hover)]'}
-      `}
-      style={{
-        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-        backgroundColor: isActive ? 'var(--bg-surface)' : undefined,
-        border: isActive
-          ? '1px solid var(--border-subtle)'
-          : '1px solid transparent',
-      }}
+      className={cn(
+        'flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md cursor-pointer transition-colors border border-transparent',
+        isActive
+          ? 'text-foreground bg-muted border-border'
+          : 'text-muted-foreground hover:bg-accent',
+      )}
       onClick={() => setActiveTab(id)}
     >
       <TerminalIcon size={14} />
       <span>{children}</span>
       {onClose && (
         <button
-          className="flex items-center justify-center w-4 h-4 rounded transition-colors ml-0.5 hover:bg-[var(--bg-active)]"
-          style={{ opacity: 0.6 }}
+          className="flex items-center justify-center w-4 h-4 rounded transition-colors ml-0.5 opacity-60 hover:bg-accent"
           onClick={(e) => {
             e.stopPropagation();
             onClose();
@@ -244,12 +239,7 @@ function TerminalTabs() {
   const { activeTabId, tabs, addTab, closeTab } = useTerminalContext();
 
   return (
-    <div
-      className="flex items-center gap-1 px-2 py-2"
-      style={{
-        borderBottom: '1px solid var(--border-subtle)',
-      }}
-    >
+    <div className="flex items-center gap-1 px-2 py-2 border-b border-border">
       {tabs.map((tab) => (
         <TerminalTabItem
           key={tab.id}
@@ -261,11 +251,7 @@ function TerminalTabs() {
         </TerminalTabItem>
       ))}
       <button
-        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
-        style={{
-          color: 'var(--text-secondary)',
-          backgroundColor: 'var(--bg-surface)',
-        }}
+        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors text-muted-foreground bg-muted"
         onClick={addTab}
         title="New Terminal"
       >
@@ -454,12 +440,10 @@ function TerminalPane({
   return (
     <div
       ref={containerRef}
-      className="flex-1 p-2"
-      style={{
-        minHeight: 0,
-        backgroundColor: 'var(--bg-base)',
-        display: isActive ? 'block' : 'none',
-      }}
+      className={cn(
+        'flex-1 p-2 min-h-0 bg-background',
+        isActive ? 'block' : 'hidden',
+      )}
       onClick={() => tab.xterm?.focus()}
     />
   );
@@ -597,12 +581,10 @@ function TerminalBase({ cwd, hidden }: { cwd: string; hidden?: boolean }) {
   return (
     <TerminalContext.Provider value={contextValue}>
       <div
-        className="flex flex-col flex-1"
-        style={{
-          backgroundColor: 'var(--bg-base)',
-          color: 'var(--text-primary)',
-          display: hidden ? 'none' : 'flex',
-        }}
+        className={cn(
+          'flex flex-col flex-1 bg-background text-foreground',
+          hidden ? 'hidden' : 'flex',
+        )}
       >
         <TerminalTabs />
         <TerminalXTermView />

@@ -1,5 +1,6 @@
 import { CheckIcon, SearchIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { cn } from '../lib/utils';
 import { useStore } from '../store';
 import { Popover, PopoverPopup, PopoverTrigger } from './ui/popover';
 import { ScrollArea } from './ui/scroll-area';
@@ -281,14 +282,7 @@ export const ModelSelector = ({
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         disabled={disabled}
-        className="inline-flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--bg-hover)]"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          color: 'var(--text-primary)',
-          minWidth: '12rem',
-          maxWidth: '16rem',
-        }}
+        className="inline-flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent bg-muted border border-border text-foreground min-w-48 max-w-64"
       >
         <span className="truncate">{displayText}</span>
         <svg
@@ -316,22 +310,15 @@ export const ModelSelector = ({
         style={{ width: '280px' }}
       >
         {/* Search Input */}
-        <div
-          className="flex items-center gap-2 px-3 py-2 border-b"
-          style={{ borderColor: 'var(--border-subtle)' }}
-        >
-          <SearchIcon
-            size={14}
-            style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}
-          />
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+          <SearchIcon size={14} className="text-muted-foreground shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search models..."
-            className="flex-1 bg-transparent border-0 outline-none text-sm"
-            style={{ color: 'var(--text-primary)' }}
+            className="flex-1 bg-transparent border-0 outline-none text-sm text-foreground"
             autoFocus
           />
         </div>
@@ -344,20 +331,14 @@ export const ModelSelector = ({
                 <Spinner className="h-5 w-5" />
               </div>
             ) : filteredModels.length === 0 ? (
-              <div
-                className="text-center py-8 text-sm"
-                style={{ color: 'var(--text-tertiary)' }}
-              >
+              <div className="text-center py-8 text-sm text-muted-foreground">
                 No models found
               </div>
             ) : (
               filteredModels.map((group) => (
                 <div key={group.providerId}>
                   {/* Provider Group Label */}
-                  <div
-                    className="px-3 py-1.5 text-xs font-medium"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
                     {group.provider}
                   </div>
 
@@ -380,19 +361,12 @@ export const ModelSelector = ({
                         type="button"
                         onClick={() => handleSelectModel(model.value)}
                         onMouseEnter={() => setFocusedIndex(flatIndex)}
-                        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors"
-                        style={{
-                          color: 'var(--text-primary)',
-                          backgroundColor:
-                            isFocused || isSelected
-                              ? 'var(--bg-hover)'
-                              : 'transparent',
-                        }}
+                        className={cn(
+                          'flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors text-foreground',
+                          (isFocused || isSelected) && 'bg-accent',
+                        )}
                       >
-                        <span
-                          className="w-4 flex-shrink-0"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
+                        <span className="w-4 flex-shrink-0 text-foreground">
                           {isSelected && <CheckIcon size={14} />}
                         </span>
                         <span className="truncate">

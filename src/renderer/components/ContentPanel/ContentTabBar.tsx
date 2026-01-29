@@ -118,8 +118,7 @@ export function TabIcon({
 function CloseButton({ onClick }: { onClick: () => void }) {
   return (
     <button
-      className="flex items-center justify-center w-4 h-4 rounded transition-colors ml-0.5 hover:bg-[var(--bg-active)]"
-      style={{ opacity: 0.6 }}
+      className="flex items-center justify-center w-4 h-4 rounded transition-colors ml-0.5 opacity-60 hover:bg-accent"
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -166,12 +165,6 @@ export function ContentTabItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
-    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-    backgroundColor: isActive ? 'var(--bg-surface)' : undefined,
-    border: isActive
-      ? '1px solid var(--border-subtle)'
-      : '1px solid transparent',
   };
 
   return (
@@ -179,7 +172,8 @@ export function ContentTabItem({
       ref={setNodeRef}
       className={`
         flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md cursor-pointer transition-colors
-        ${isActive ? '' : 'hover:bg-[var(--bg-hover)]'}
+        ${isDragging ? 'opacity-50' : 'opacity-100'}
+        ${isActive ? 'text-foreground bg-muted border border-border' : 'text-muted-foreground border border-transparent hover:bg-accent'}
       `}
       style={style}
       {...attributes}
@@ -214,12 +208,7 @@ export function ContentTabBar() {
   };
 
   return (
-    <div
-      className="flex items-center gap-1 px-2 py-2"
-      style={{
-        borderBottom: '1px solid var(--border-subtle)',
-      }}
-    >
+    <div className="flex items-center gap-1 px-2 py-2 border-b border-border">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -306,11 +295,7 @@ function AddTabButton() {
     <div className="relative">
       <button
         ref={buttonRef}
-        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-[var(--bg-hover)]"
-        style={{
-          color: 'var(--text-secondary)',
-          backgroundColor: 'var(--bg-surface)',
-        }}
+        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors text-muted-foreground bg-muted hover:bg-accent"
         onClick={() => setIsOpen(!isOpen)}
         title="New Tab"
       >
@@ -329,26 +314,18 @@ function AddTabButton() {
       {isOpen && (
         <div
           ref={menuRef}
-          className="absolute top-full left-0 mt-1 py-1 rounded-md shadow-lg z-50"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            minWidth: '120px',
-          }}
+          className="absolute top-full left-0 mt-1 py-1 rounded-md shadow-lg z-50 bg-muted border border-border min-w-[120px]"
         >
           {TAB_TYPE_OPTIONS.map((option) => {
             const disabled = isTypeDisabled(option.type);
             return (
               <button
                 key={option.type}
-                className={`flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors ${
-                  disabled ? '' : 'hover:bg-[var(--bg-hover)]'
+                className={`flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors text-foreground ${
+                  disabled
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:bg-accent cursor-pointer'
                 }`}
-                style={{
-                  color: 'var(--text-primary)',
-                  opacity: disabled ? 0.4 : 1,
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                }}
                 disabled={disabled}
                 onClick={() => !disabled && handleAddTab(option.type)}
               >

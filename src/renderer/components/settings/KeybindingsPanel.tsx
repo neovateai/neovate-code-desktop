@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { KeyboardIcon, LockIcon } from '@hugeicons/core-free-icons';
 import { Button } from '../ui/button';
 import { useStore } from '../../store';
+import { cn } from '../../lib/utils';
 import {
   captureKeybinding,
   formatKeyForDisplay,
@@ -33,14 +34,7 @@ interface KeyBadgeProps {
 }
 
 const KeyBadge = ({ keyStr }: KeyBadgeProps) => (
-  <span
-    className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded text-xs font-medium"
-    style={{
-      backgroundColor: 'var(--bg-surface)',
-      border: '1px solid var(--border-subtle)',
-      color: 'var(--text-primary)',
-    }}
-  >
+  <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded text-xs font-medium bg-muted border border-border text-foreground">
     {keyStr}
   </span>
 );
@@ -103,19 +97,14 @@ const KeybindingRow = ({
   }, [isRecording, onStopRecording]);
 
   return (
-    <div
-      className="flex items-center justify-between py-3"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between py-3 border-b border-border">
       <div className="flex-1 flex items-center gap-2">
         <div>
           <div
-            className="text-sm font-medium flex items-center gap-1.5"
-            style={{
-              color: isReadonly
-                ? 'var(--text-secondary)'
-                : 'var(--text-primary)',
-            }}
+            className={cn(
+              'text-sm font-medium flex items-center gap-1.5',
+              isReadonly ? 'text-muted-foreground' : 'text-foreground',
+            )}
           >
             {KEYBINDING_LABELS[action]}
             {isReadonly && (
@@ -123,12 +112,12 @@ const KeybindingRow = ({
                 icon={LockIcon}
                 size={12}
                 strokeWidth={1.5}
-                style={{ color: 'var(--text-tertiary)' }}
+                className="text-muted-foreground"
               />
             )}
           </div>
           {conflict && (
-            <div className="text-xs mt-0.5" style={{ color: 'var(--error)' }}>
+            <div className="text-xs mt-0.5 text-destructive">
               Already used by: {conflict}
             </div>
           )}
@@ -136,35 +125,19 @@ const KeybindingRow = ({
       </div>
       <div className="flex-shrink-0">
         {isRecording ? (
-          <div
-            className="px-3 py-1.5 rounded text-sm animate-pulse"
-            style={{
-              backgroundColor: 'var(--accent)',
-              color: 'var(--text-primary)',
-            }}
-          >
+          <div className="px-3 py-1.5 rounded text-sm animate-pulse bg-accent text-foreground">
             Press shortcut...
           </div>
         ) : isReadonly ? (
           // Read-only display (no hover, no click)
-          <div
-            className="flex items-center gap-1 px-2 py-1"
-            style={{ cursor: 'default' }}
-          >
+          <div className="flex items-center gap-1 px-2 py-1 cursor-default">
             <KeybindingDisplay binding={binding} />
           </div>
         ) : (
           <button
             type="button"
             onClick={onStartRecording}
-            className="flex items-center gap-1 px-2 py-1 rounded transition-colors hover:bg-opacity-80"
-            style={{ backgroundColor: 'transparent', cursor: 'pointer' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-base-hover)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className="flex items-center gap-1 px-2 py-1 rounded transition-colors cursor-pointer bg-transparent hover:bg-accent"
           >
             <KeybindingDisplay binding={binding} />
           </button>
@@ -233,10 +206,7 @@ export const KeybindingsPanel = () => {
 
   return (
     <div>
-      <h1
-        className="text-xl font-semibold mb-6 flex items-center gap-2"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={KeyboardIcon} size={22} strokeWidth={1.5} />
         Keybindings
       </h1>

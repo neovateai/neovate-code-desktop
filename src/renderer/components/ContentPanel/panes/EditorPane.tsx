@@ -13,18 +13,9 @@ interface EditorPaneProps {
 
 function LoadingState({ status }: { status: EditorStatus }) {
   return (
-    <div
-      className="flex-1 flex flex-col items-center justify-center gap-4"
-      style={{
-        color: 'var(--text-secondary)',
-        backgroundColor: 'var(--bg-base)',
-      }}
-    >
+    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-background">
       <div className="flex items-center gap-3">
-        <div
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"
-          style={{ borderColor: 'var(--text-tertiary)' }}
-        />
+        <div className="w-5 h-5 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
         <p className="text-sm">
           {status === 'starting' ? 'Starting editor...' : 'Loading...'}
         </p>
@@ -41,23 +32,12 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div
-      className="flex-1 flex flex-col items-center justify-center gap-4"
-      style={{
-        color: 'var(--text-secondary)',
-        backgroundColor: 'var(--bg-base)',
-      }}
-    >
+    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-background">
       <p className="text-sm text-red-500">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="px-4 py-2 text-sm rounded-md"
-        style={{
-          backgroundColor: 'var(--bg-elevated)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border-subtle)',
-        }}
+        className="px-4 py-2 text-sm rounded-md bg-card text-foreground border border-border"
       >
         Retry
       </button>
@@ -132,12 +112,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
       ref={iframeRef}
       src={serverUrl}
       title="Code Editor"
-      className="flex-1 w-full h-full border-0"
-      style={{
-        display: isActive ? 'block' : 'none',
-        backgroundColor: 'var(--bg-base)',
-        minHeight: 0,
-      }}
+      className={`flex-1 w-full h-full border-0 bg-background min-h-0 ${isActive ? 'block' : 'hidden'}`}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
     />
   );

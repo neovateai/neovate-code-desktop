@@ -24,9 +24,7 @@ export function QuestionNav({
       {/* Left arrow indicator */}
       <span
         className={`text-xs ${
-          currentIndex === 0
-            ? 'text-(--text-tertiary)'
-            : 'text-(--text-secondary)'
+          currentIndex === 0 ? 'text-muted-foreground' : 'text-muted-foreground'
         }`}
       >
         ←
@@ -46,8 +44,8 @@ export function QuestionNav({
               isActive
                 ? 'bg-blue-500 font-medium text-white'
                 : isAnswered
-                  ? 'text-(--text-primary)'
-                  : 'text-(--text-tertiary)'
+                  ? 'text-foreground'
+                  : 'text-muted-foreground'
             }`}
           >
             {icon} {label}
@@ -61,7 +59,7 @@ export function QuestionNav({
           className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs ${
             currentIndex === questions.length
               ? 'bg-blue-500 font-medium text-white'
-              : 'text-(--text-tertiary)'
+              : 'text-muted-foreground'
           }`}
         >
           ✓ Submit
@@ -72,8 +70,8 @@ export function QuestionNav({
       <span
         className={`text-xs ${
           currentIndex === questions.length
-            ? 'text-(--text-tertiary)'
-            : 'text-(--text-secondary)'
+            ? 'text-muted-foreground'
+            : 'text-muted-foreground'
         }`}
       >
         →
