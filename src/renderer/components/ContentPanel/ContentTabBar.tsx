@@ -1,21 +1,21 @@
-import type { ContentTab, ContentTabType } from './types';
-import { useContentPanelContext } from './ContentPanelProvider';
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core';
 import {
+  horizontalListSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useContentPanelContext } from './ContentPanelProvider';
+import type { ContentTab, ContentTabType } from './types';
 
 // Tab type icons
 function TerminalIcon({ size = 14 }: { size?: number }) {
@@ -236,8 +236,8 @@ export function ContentTabBar() {
 }
 
 // Add tab button with dropdown
-import { useState, useRef, useEffect } from 'react';
-import { TAB_TYPE_OPTIONS, SINGLETON_TAB_TYPES } from './types';
+import { useEffect, useRef, useState } from 'react';
+import { SINGLETON_TAB_TYPES, TAB_TYPE_OPTIONS } from './types';
 
 function AddTabButton() {
   const { addTab, tabs } = useContentPanelContext();

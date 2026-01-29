@@ -1,9 +1,9 @@
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   CheckmarkCircleIcon,
   ClockIcon,
   RadioIcon,
 } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { cn } from '../../lib/utils';
 
 export interface TodoItemProps {

@@ -1,5 +1,5 @@
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
 import AdmZip from 'adm-zip';
 import { EXTENSIONS_DIR } from './constants';
 import { getExtensionsBasePath } from './extension-path';

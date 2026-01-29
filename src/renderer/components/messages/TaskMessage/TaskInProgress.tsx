@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { ToolUsePart } from '../../../client/types/message';
 import type { AgentProgressState } from '../../../store/slices/session';
 import { Spinner } from '../../ui/spinner';

@@ -1,4 +1,4 @@
-import React, { Suspense, createContext, useContext } from 'react';
+import React, { createContext, Suspense, useContext } from 'react';
 import ReactDOM from 'react-dom/client';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ToastProvider } from '../components/ui/toast';

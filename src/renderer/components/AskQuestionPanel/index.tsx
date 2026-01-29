@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQuestionState } from '../../hooks/useQuestionState';
 import { QuestionNav } from './QuestionNav';
 import { SelectInput } from './SelectInput';
-import type { Question, Answer, SelectOption } from './types';
+import type { Answer, Question, SelectOption } from './types';
 
 interface AskQuestionPanelProps {
   sessionId: string;

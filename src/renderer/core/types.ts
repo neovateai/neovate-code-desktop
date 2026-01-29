@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
-import type { DefinePlugin } from './plugin-manager';
 import type { useStore } from '../store';
 import type { RendererApp } from './app';
+import type { DefinePlugin } from './plugin-manager';
 
 /**
  * Plugin execution context with app instance

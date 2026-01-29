@@ -1,14 +1,15 @@
-import { Terminal as XTerm, type ITheme } from 'xterm';
+import { type ITheme, Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
-import React, {
+import type React from 'react';
+import {
   createContext,
-  useContext,
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
   memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 import { ipcMainCaller } from '../lib/ipc';
 import { cn } from '../lib/utils';

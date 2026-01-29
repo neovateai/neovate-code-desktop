@@ -1,25 +1,25 @@
+import { ChevronDown, Copy, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/menu';
-import { ChevronDown, Loader2, Copy } from 'lucide-react';
-import type { App } from '../nodeBridge.types';
-import { useStore } from '../store';
+import antigravityIcon from '../assets/icons/antigravity.png';
 import cursorIcon from '../assets/icons/cursor.png';
 import finderIcon from '../assets/icons/finder.png';
 import itermIcon from '../assets/icons/iterm.png';
 import sourcetreeIcon from '../assets/icons/sourcetree.png';
 import terminalIcon from '../assets/icons/terminal.png';
-import vscodeInsidersIcon from '../assets/icons/vscode-insiders.png';
 import vscodeIcon from '../assets/icons/vscode.png';
+import vscodeInsidersIcon from '../assets/icons/vscode-insiders.png';
 import warpIcon from '../assets/icons/warp.png';
 import windsurfIcon from '../assets/icons/windsurf.png';
 import zedIcon from '../assets/icons/zed.png';
-import antigravityIcon from '../assets/icons/antigravity.png';
+import type { App } from '../nodeBridge.types';
+import { useStore } from '../store';
 
 /**
  * User-friendly display names for apps

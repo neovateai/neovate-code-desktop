@@ -1,4 +1,4 @@
-import { FileIcon, CodeIcon, FolderIcon } from '@hugeicons/core-free-icons';
+import { CodeIcon, FileIcon, FolderIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ScrollArea } from '../ui';
 

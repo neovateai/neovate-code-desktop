@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import {
   AlertCircle,
   CheckCircle2,
   CircleFadingArrowUp,
   Loader2,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { UpdaterState } from '../../shared/types/updater';
 import { UPDATER_TOAST_DISMISS_MS } from '../constants';
 import { ipcMainCaller, ipcRendererHandler } from '../lib/ipc';
-import type { UpdaterState } from '../../shared/types/updater';
 
 export function UpdaterToast() {
   const [state, setState] = useState<UpdaterState>({ status: 'idle' });

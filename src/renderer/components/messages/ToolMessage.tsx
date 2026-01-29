@@ -1,24 +1,24 @@
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  ComputerTerminalIcon,
-  FileIcon,
-  FolderIcon,
-  EditIcon,
-  SearchIcon,
-  Globe02Icon,
-  CheckmarkCircle02Icon,
-  MessageQuestionIcon,
   CancelCircleIcon,
-  FloppyDiskIcon,
+  CheckmarkCircle02Icon,
   CodeIcon,
+  ComputerTerminalIcon,
+  EditIcon,
+  FileIcon,
+  FloppyDiskIcon,
+  FolderIcon,
+  Globe02Icon,
+  MessageQuestionIcon,
   PlusSignIcon,
+  SearchIcon,
 } from '@hugeicons/core-free-icons';
-import type { ToolPair } from './types';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { diffLines } from 'diff';
 import { DiffViewer } from './DiffViewer';
-import { TodoList } from './TodoList';
-import type { TodoItemProps } from './TodoItem';
 import { TaskMessage } from './TaskMessage';
+import type { TodoItemProps } from './TodoItem';
+import { TodoList } from './TodoList';
+import type { ToolPair } from './types';
 
 interface ToolMessageProps {
   pair: ToolPair;

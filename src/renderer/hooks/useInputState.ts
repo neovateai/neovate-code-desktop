@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { logger } from '../lib/logger';
 import { INPUT_DEBOUNCE_MS } from '../constants';
+import { logger } from '../lib/logger';
 import {
   defaultSessionInputState,
   getInputMode,

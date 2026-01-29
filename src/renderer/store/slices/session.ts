@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import type { StateCreator } from 'zustand';
 import type { NormalizedMessage } from '../../client/types/message';
 

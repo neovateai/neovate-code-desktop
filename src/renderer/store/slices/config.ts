@@ -1,9 +1,9 @@
 import type { StateCreator } from 'zustand';
-import { getNestedValue, setNestedValue } from '../../lib/utils';
 import type { WorkspaceData } from '../../client/types/entities';
+import { getNestedValue, setNestedValue } from '../../lib/utils';
 import type {
-  HandlerMethod,
   HandlerInput,
+  HandlerMethod,
   HandlerOutput,
 } from '../../nodeBridge.types';
 

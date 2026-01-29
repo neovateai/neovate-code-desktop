@@ -1,7 +1,7 @@
 import type {
   NormalizedMessage,
-  ToolUsePart,
   ToolResultPart,
+  ToolUsePart,
 } from '../../client/types/message';
 
 /**

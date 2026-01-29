@@ -1,3 +1,7 @@
+import {
+  WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
+  WEBSOCKET_RECONNECT_INTERVAL_MS,
+} from '../../constants';
 import type {
   CloseHandler,
   ErrorHandler,
@@ -6,10 +10,6 @@ import type {
   TransportMessage,
   TransportState,
 } from './types';
-import {
-  WEBSOCKET_RECONNECT_INTERVAL_MS,
-  WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
-} from '../../constants';
 
 export class WebSocketTransport {
   private url: string;

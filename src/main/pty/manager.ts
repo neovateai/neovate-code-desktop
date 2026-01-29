@@ -1,9 +1,9 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import { BrowserWindow } from 'electron';
 import type { IPty } from 'node-pty';
 import * as pty from 'node-pty';
-import os from 'node:os';
-import fs from 'node:fs';
-import crypto from 'node:crypto';
-import { BrowserWindow } from 'electron';
 
 export interface PTYCreateOptions {
   cwd?: string;

@@ -1,9 +1,9 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CONTENT_TAB_PERSIST_DELAY_MS } from '../../constants';
 import type {
   ContentTab,
-  CreateTabInput,
   ContentTabType,
+  CreateTabInput,
   TabOfType,
 } from './types';
 

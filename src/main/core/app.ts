@@ -1,3 +1,6 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { is, platform } from '@electron-toolkit/utils';
 import {
   app,
@@ -10,9 +13,6 @@ import {
   shell,
   Tray,
 } from 'electron';
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 import { registerMainHandlers } from '../../shared/lib/ipc/main';
 import { codeServerManager } from '../code-server';
 import { ipcMainHandlers } from '../ipc';

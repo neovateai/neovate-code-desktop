@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ipcMainCaller } from '../../../lib/ipc';
 import { logger } from '../../../lib/logger';
 import { useContentPanelContext } from '../ContentPanelProvider';

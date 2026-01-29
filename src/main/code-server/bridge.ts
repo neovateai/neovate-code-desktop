@@ -1,5 +1,5 @@
-import net from 'net';
 import { EventEmitter } from 'events';
+import net from 'net';
 
 interface IBridgeRequestParams {
   operationType: string;

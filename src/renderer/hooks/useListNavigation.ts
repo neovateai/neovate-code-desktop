@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useListNavigation<T>(items: T[]) {
   const [selectedIndex, setSelectedIndex] = useState(0);

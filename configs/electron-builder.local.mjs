@@ -40,7 +40,7 @@ const config = {
     'dist/**/*',
     // Include all node_modules (electron-builder will automatically prune devDependencies)
     'node_modules/**/*',
-    'assets/extensions/**/*'
+    'assets/extensions/**/*',
   ],
 
   compression: 'store',

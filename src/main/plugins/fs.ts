@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { minimatch } from 'minimatch';
 import type { Plugin } from '@neovate/code';
+import { minimatch } from 'minimatch';
 import { bridgeServer } from '../code-server/bridge';
 
 export const fsPlugin: Plugin = {
@@ -58,13 +58,13 @@ function getExcludePatterns(): string[] {
 }
 
 function getFileTree(parent: string, root?: string): FileTreeNode[] {
-  let includePatterns: string[] = [];
+  const includePatterns: string[] = [];
   const actualRoot = root || parent;
 
   const excludePatterns = getExcludePatterns();
 
   const dirFilePath = parent;
-  let tree: FileTreeNode[] = [];
+  const tree: FileTreeNode[] = [];
   const files = fs.readdirSync(dirFilePath);
 
   files.forEach((file) => {

@@ -1,6 +1,6 @@
-import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { CodeIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import React from 'react';
 
 export const MCPPanel = () => {
   return (

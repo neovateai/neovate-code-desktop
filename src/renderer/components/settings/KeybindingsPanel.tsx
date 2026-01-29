@@ -1,17 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { KeyboardIcon, LockIcon } from '@hugeicons/core-free-icons';
-import { Button } from '../ui/button';
-import { useStore } from '../../store';
-import { cn } from '../../lib/utils';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   captureKeybinding,
+  DEFAULT_KEYBINDINGS,
   formatKeyForDisplay,
   KEYBINDING_LABELS,
-  DEFAULT_KEYBINDINGS,
-  READONLY_ACTIONS,
   type KeybindingAction,
+  READONLY_ACTIONS,
 } from '../../lib/keybindings';
+import { cn } from '../../lib/utils';
+import { useStore } from '../../store';
+import { Button } from '../ui/button';
 
 const KEYBINDING_ACTIONS: KeybindingAction[] = [
   'openSettings',

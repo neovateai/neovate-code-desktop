@@ -4,10 +4,10 @@ import {
   useContentPanelContext,
 } from './ContentPanelProvider';
 import { ContentTabBar } from './ContentTabBar';
-import { TerminalPane } from './panes/TerminalPane';
+import { BrowserPane } from './panes/BrowserPane';
 import { EditorPane } from './panes/EditorPane';
 import { ReviewPane } from './panes/ReviewPane';
-import { BrowserPane } from './panes/BrowserPane';
+import { TerminalPane } from './panes/TerminalPane';
 import type { ContentTab } from './types';
 
 // Empty state when no tabs
@@ -80,6 +80,6 @@ function ContentPanelBase({ repoPath, hidden }: ContentPanelProps) {
 // Export memoized component
 export const ContentPanel = memo(ContentPanelBase);
 
+export { useContentPanelContext } from './ContentPanelProvider';
 // Re-export types and hooks for external use
 export type { ContentTab, ContentTabType } from './types';
-export { useContentPanelContext } from './ContentPanelProvider';
