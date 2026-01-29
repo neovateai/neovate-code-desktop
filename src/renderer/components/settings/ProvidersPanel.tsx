@@ -1,22 +1,31 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { cn } from '../../lib/utils';
 import {
-  ViewIcon,
-  ViewOffIcon,
-  Tick01Icon,
-  Cancel01Icon,
-  Loading01Icon,
-  CloudIcon,
+  AccountSetting03Icon,
   Add01Icon,
+  AlertCircleIcon,
+  ArrowDown01Icon,
+  Cancel01Icon,
+  CloudIcon,
   Delete01Icon,
   FlashIcon,
-  ArrowDown01Icon,
-  AlertCircleIcon,
+  StarIcon,
+  Tick01Icon,
+  ViewIcon,
+  ViewOffIcon,
 } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { cn } from '../../lib/utils';
 import { useStore } from '../../store';
-import { Spinner } from '../ui/spinner';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { Spinner } from '../ui/spinner';
 import { toastManager } from '../ui/toast';
 
 interface Provider {
@@ -158,31 +167,38 @@ export const ProvidersPanel = () => {
     setTestingModel(null);
   }, [selectedProviderId]);
 
+  // Refresh providers list
+  const refreshProviders = useCallback(async () => {
+    try {
+      const result = await request('providers.list', { cwd: '/tmp' });
+      if (result.success) {
+        setProviders(result.data.providers as Provider[]);
+        return result.data.providers as Provider[];
+      }
+      return [];
+    } catch (error) {
+      toastManager.add({
+        type: 'error',
+        title: 'Failed to load providers',
+        description: String(error),
+      });
+      return [];
+    }
+  }, [request]);
+
   // Load providers list
   useEffect(() => {
     const loadProviders = async () => {
       setIsLoading(true);
-      try {
-        const result = await request('providers.list', { cwd: '/tmp' });
-        if (result.success) {
-          setProviders(result.data.providers as Provider[]);
-          // Select first provider by default
-          if (result.data.providers.length > 0 && !selectedProviderId) {
-            setSelectedProviderId(result.data.providers[0].id);
-          }
-        }
-      } catch (error) {
-        toastManager.add({
-          type: 'error',
-          title: 'Failed to load providers',
-          description: String(error),
-        });
-      } finally {
-        setIsLoading(false);
+      const providers = await refreshProviders();
+      // Select first provider by default
+      if (providers.length > 0 && !selectedProviderId) {
+        setSelectedProviderId(providers[0].id);
       }
+      setIsLoading(false);
     };
     loadProviders();
-  }, [request]);
+  }, [request, refreshProviders]);
 
   // Load models list and current model config
   useEffect(() => {
@@ -273,14 +289,9 @@ export const ProvidersPanel = () => {
         setNewModelId('');
 
         // Refresh providers list from backend
-        const providersResult = await request('providers.list', {
-          cwd: '/tmp',
-        });
-        if (providersResult.success) {
-          setProviders(providersResult.data.providers as Provider[]);
-          // Auto-select the newly created provider
-          setSelectedProviderId(providerId);
-        }
+        await refreshProviders();
+        // Auto-select the newly created provider
+        setSelectedProviderId(providerId);
 
         toastManager.add({
           type: 'success',
@@ -308,16 +319,10 @@ export const ProvidersPanel = () => {
         });
 
         if (result.success) {
-          // Refresh providers list from backend
-          const providersResult = await request('providers.list', {
-            cwd: '/tmp',
-          });
-          if (providersResult.success) {
-            setProviders(providersResult.data.providers as Provider[]);
-          }
+          const updatedProviders = await refreshProviders();
 
           if (selectedProviderId === providerId) {
-            setSelectedProviderId(providers[0]?.id || null);
+            setSelectedProviderId(updatedProviders[0]?.id || null);
           }
           toastManager.add({
             type: 'info',
@@ -332,7 +337,7 @@ export const ProvidersPanel = () => {
         });
       }
     },
-    [selectedProviderId, providers, request],
+    [selectedProviderId, refreshProviders, request],
   );
 
   // Add model to new provider
@@ -421,12 +426,7 @@ export const ProvidersPanel = () => {
           description: `API key for ${selectedProvider?.name} has been saved.`,
         });
         // Refresh providers list to update hasApiKey status
-        const providersResult = await request('providers.list', {
-          cwd: '/tmp',
-        });
-        if (providersResult.success) {
-          setProviders(providersResult.data.providers as Provider[]);
-        }
+        await refreshProviders();
       } else {
         throw new Error('Failed to save');
       }
@@ -439,7 +439,13 @@ export const ProvidersPanel = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [selectedProviderId, apiKey, selectedProvider?.name, request]);
+  }, [
+    selectedProviderId,
+    apiKey,
+    selectedProvider?.name,
+    refreshProviders,
+    request,
+  ]);
 
   const handleSaveBaseUrl = useCallback(async () => {
     if (!selectedProviderId) return;
@@ -508,12 +514,7 @@ export const ProvidersPanel = () => {
           description: `API key for ${selectedProvider?.name} has been removed.`,
         });
         // Refresh providers list
-        const providersResult = await request('providers.list', {
-          cwd: '/tmp',
-        });
-        if (providersResult.success) {
-          setProviders(providersResult.data.providers as Provider[]);
-        }
+        await refreshProviders();
       }
     } catch (error) {
       toastManager.add({
@@ -524,7 +525,7 @@ export const ProvidersPanel = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [selectedProviderId, selectedProvider?.name, request]);
+  }, [selectedProviderId, selectedProvider?.name, refreshProviders, request]);
 
   // Get models for the selected provider
   const selectedProviderModels =
@@ -667,19 +668,17 @@ export const ProvidersPanel = () => {
         className="flex rounded-lg overflow-hidden border border-border"
         style={{
           minHeight: '400px',
-          maxHeight: 'calc(100vh - 140px)',
+          height: 'calc(100vh - 140px)',
         }}
       >
         {/* Provider List */}
-        <div className="w-56 flex-shrink-0 flex flex-col border-r border-border bg-muted">
+        <div className="w-56 flex-shrink-0 flex flex-col border-r border-border">
           {/* Search */}
           <div className="p-2">
-            <input
-              type="text"
+            <Input
               placeholder="Search providers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm rounded-md outline-none bg-background border border-border text-foreground"
             />
           </div>
 
@@ -689,9 +688,9 @@ export const ProvidersPanel = () => {
               <button
                 key={provider.id}
                 className={cn(
-                  'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group',
+                  'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group hover:text-foreground hover:bg-muted',
                   selectedProviderId === provider.id
-                    ? 'bg-accent text-foreground'
+                    ? 'text-foreground bg-muted'
                     : 'text-muted-foreground',
                 )}
                 onClick={() => setSelectedProviderId(provider.id)}
@@ -700,7 +699,7 @@ export const ProvidersPanel = () => {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {provider.source !== 'built-in' && (
                     <button
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity text-muted-foreground"
+                      className="opacity-0 group-hover:opacity-100 cursor-pointer hover:text-foreground p-1 rounded transition-opacity text-muted-foreground"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteCustomProvider(provider.id);
@@ -715,12 +714,11 @@ export const ProvidersPanel = () => {
                     </button>
                   )}
                   {provider.source !== 'built-in' && (
-                    <span
-                      className="text-violet-500 text-xs"
-                      title="Custom provider"
-                    >
-                      ★
-                    </span>
+                    <HugeiconsIcon
+                      icon={AccountSetting03Icon}
+                      size={14}
+                      strokeWidth={1.5}
+                    />
                   )}
                   {isProviderActive(provider) && (
                     <span
@@ -1039,7 +1037,7 @@ export const ProvidersPanel = () => {
                         return (
                           <div
                             key={model.modelId}
-                            className="flex items-center justify-between px-3 py-2 text-sm bg-muted border-b border-border"
+                            className="flex items-center justify-between px-3 py-2 text-sm  border-b border-border hover:bg-muted"
                           >
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <span
@@ -1131,8 +1129,7 @@ export const ProvidersPanel = () => {
                 <label className="block text-sm font-medium text-foreground">
                   Name <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newProvider.name}
                   onChange={(e) =>
                     setNewProvider((prev) => ({
@@ -1141,7 +1138,6 @@ export const ProvidersPanel = () => {
                     }))
                   }
                   placeholder="e.g., My Custom Provider"
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                 />
               </div>
 
@@ -1150,8 +1146,7 @@ export const ProvidersPanel = () => {
                 <label className="block text-sm font-medium text-foreground">
                   Base URL <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newProvider.baseUrl}
                   onChange={(e) =>
                     setNewProvider((prev) => ({
@@ -1160,7 +1155,6 @@ export const ProvidersPanel = () => {
                     }))
                   }
                   placeholder="e.g., https://api.example.com/v1"
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                 />
               </div>
 
@@ -1169,7 +1163,7 @@ export const ProvidersPanel = () => {
                 <label className="block text-sm font-medium text-foreground">
                   API Key
                 </label>
-                <input
+                <Input
                   type="password"
                   value={newProvider.apiKey}
                   onChange={(e) =>
@@ -1179,7 +1173,6 @@ export const ProvidersPanel = () => {
                     }))
                   }
                   placeholder="Enter your API key"
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                 />
               </div>
 
@@ -1188,22 +1181,26 @@ export const ProvidersPanel = () => {
                 <label className="block text-sm font-medium text-foreground">
                   API Format
                 </label>
-                <select
+                <Select
                   value={newProvider.apiFormat}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setNewProvider((prev) => ({
                       ...prev,
-                      apiFormat: e.target.value as CustomProvider['apiFormat'],
+                      apiFormat: value as CustomProvider['apiFormat'],
                     }))
                   }
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none cursor-pointer bg-background border border-border text-foreground"
                 >
-                  {API_FORMAT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectPopup>
+                    {API_FORMAT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectPopup>
+                </Select>
                 {newProvider.apiFormat === 'anthropic' && (
                   <p className="text-xs mt-1 text-muted-foreground">
                     This will set{' '}
@@ -1222,12 +1219,10 @@ export const ProvidersPanel = () => {
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <input
-                      type="text"
+                    <Input
                       value={newModelId}
                       onChange={(e) => setNewModelId(e.target.value)}
                       placeholder="Model ID (e.g., gpt-4)"
-                      className="flex-1 px-3 py-2 text-sm rounded-md outline-none bg-background border border-border text-foreground focus:border-accent"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();

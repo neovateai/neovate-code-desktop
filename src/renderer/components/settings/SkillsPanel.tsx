@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
+  Cancel01Icon,
+  Delete02Icon,
+  Loading02Icon,
   MagicWandIcon,
   PlusSignIcon,
-  Delete02Icon,
-  Cancel01Icon,
-  Loading02Icon,
 } from '@hugeicons/core-free-icons';
-import { useStore } from '../../store';
+import { HugeiconsIcon } from '@hugeicons/react';
+import React, { useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
-import { getSelectedRepo } from '../../store/selectors';
 import type { HandlerOutput } from '../../nodeBridge.types';
+import { useStore } from '../../store';
+import { getSelectedRepo } from '../../store/selectors';
+import { Button } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
+import { Input } from '../ui/input';
 
 // Types from nodeBridge.types.ts
 interface Skill {
@@ -236,13 +239,14 @@ export const SkillsPanel = () => {
           Skills
         </h1>
         {addFlow.phase === 'idle' && (
-          <button
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-accent text-foreground"
+          <Button
+            variant="default"
+            size="sm"
             onClick={() => setAddFlow({ phase: 'input' })}
           >
             <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
             Add Skill
-          </button>
+          </Button>
         )}
       </div>
 
@@ -253,35 +257,31 @@ export const SkillsPanel = () => {
           {(addFlow.phase === 'input' || addFlow.phase === 'error') && (
             <div>
               <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
+                <Input
                   value={sourceInput}
                   onChange={(e) => setSourceInput(e.target.value)}
                   placeholder="user/repo or GitHub URL"
-                  className="flex-1 px-3 py-2 text-sm rounded-md bg-card border border-border text-foreground"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && sourceInput.trim()) {
                       handlePreview();
                     }
                   }}
                 />
-                <button
-                  className="px-4 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50 bg-accent text-foreground"
+                <Button
+                  variant="default"
+                  size="sm"
                   onClick={handlePreview}
                   disabled={!sourceInput.trim()}
                 >
                   Preview
-                </button>
-                <button
-                  className="px-3 py-2 text-sm rounded-md transition-colors bg-accent text-muted-foreground"
-                  onClick={handleCancel}
-                >
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleCancel}>
                   <HugeiconsIcon
                     icon={Cancel01Icon}
                     size={16}
                     strokeWidth={1.5}
                   />
-                </button>
+                </Button>
               </div>
               {addFlow.phase === 'error' && (
                 <p className="text-sm text-destructive">{addFlow.message}</p>
@@ -321,11 +321,9 @@ export const SkillsPanel = () => {
                         isSelected ? 'bg-accent' : 'bg-transparent',
                       )}
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={isSelected}
-                        onChange={() => toggleSkillSelection(skill.name)}
-                        className="mt-0.5"
+                        onCheckedChange={() => toggleSkillSelection(skill.name)}
                       />
                       <div>
                         <span className="text-sm font-medium text-foreground">
@@ -349,19 +347,17 @@ export const SkillsPanel = () => {
                     !hasProject && 'opacity-50',
                   )}
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={addFlow.installGlobally}
-                    onChange={toggleInstallGlobally}
+                    onCheckedChange={toggleInstallGlobally}
                     disabled={!hasProject}
                   />
                   Install globally
                 </label>
                 <label className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={addFlow.useClaude}
-                    onChange={toggleUseClaude}
+                    onCheckedChange={toggleUseClaude}
                   />
                   Use .claude directory
                 </label>
@@ -371,19 +367,17 @@ export const SkillsPanel = () => {
                   {addFlow.selected.size} of {addFlow.skills.length} selected
                 </span>
                 <div className="flex gap-2">
-                  <button
-                    className="px-3 py-1.5 text-sm rounded-md transition-colors bg-accent text-muted-foreground"
-                    onClick={handleCancel}
-                  >
+                  <Button variant="outline" size="sm" onClick={handleCancel}>
                     Cancel
-                  </button>
-                  <button
-                    className="px-4 py-1.5 text-sm font-medium rounded-md transition-colors disabled:opacity-50 bg-accent text-foreground"
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
                     onClick={handleInstall}
                     disabled={addFlow.selected.size === 0}
                   >
                     Install ({addFlow.selected.size})
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -504,8 +498,7 @@ export const SkillsPanel = () => {
                             {skill.source}
                           </span>
                         </div>
-                        <button
-                          className="p-1.5 rounded-md transition-colors disabled:opacity-50 text-muted-foreground"
+                        <Button
                           onClick={() => handleRemove(skill)}
                           disabled={removingSkill === skill.name}
                           title="Remove skill"
@@ -524,7 +517,7 @@ export const SkillsPanel = () => {
                               strokeWidth={1.5}
                             />
                           )}
-                        </button>
+                        </Button>
                       </div>
                     ))}
                   </div>

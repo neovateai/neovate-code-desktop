@@ -1,17 +1,18 @@
-import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ArrowLeftIcon,
-  SettingsIcon,
+  Book02Icon,
   CloudIcon,
-  PaintBrushIcon,
-  MessageIcon,
-  MagicWandIcon,
+  HelpCircleIcon,
   KeyboardIcon,
+  MagicWandIcon,
+  MessageIcon,
+  PaintBrushIcon,
+  RulerIcon,
+  SettingsIcon,
 } from '@hugeicons/core-free-icons';
-import { useStore } from '../../store';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { cn } from '../../lib/utils';
-import type { SettingsMenuId } from './SettingsPage';
+import { type SettingsMenuId, useStore } from '../../store';
 
 interface MenuItem {
   id: SettingsMenuId;
@@ -20,12 +21,13 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
-  { id: 'chat', label: 'Chat', icon: MessageIcon },
-  { id: 'appearance', label: 'Appearance', icon: PaintBrushIcon },
-  { id: 'keybindings', label: 'Keybindings', icon: KeyboardIcon },
+  { id: 'general', label: 'General', icon: SettingsIcon },
   { id: 'providers', label: 'Providers', icon: CloudIcon },
+  { id: 'chat', label: 'Chat', icon: MessageIcon },
+  { id: 'rules', label: 'Rules', icon: Book02Icon },
   { id: 'skills', label: 'Skills', icon: MagicWandIcon },
+  { id: 'keybindings', label: 'Keybindings', icon: KeyboardIcon },
+  { id: 'about', label: 'About', icon: HelpCircleIcon },
 ];
 
 export const SettingsMenu = ({
@@ -47,7 +49,7 @@ export const SettingsMenu = ({
     >
       {/* Back to app button */}
       <button
-        className="flex items-center text-muted-foreground gap-3 ml-2 px-4 py-3 text-sm transition-colors cursor-pointer hover:text-foreground hover:bg-accent border-b border-border"
+        className="flex items-center text-muted-foreground gap-3 ml-2 px-4 py-3 text-sm transition-colors cursor-pointer hover:text-foreground border-b border-border"
         style={{
           // @ts-expect-error - Electron specific CSS property
           WebkitAppRegion: 'no-drag',
