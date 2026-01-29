@@ -25,6 +25,9 @@
       "style": {
         "useNodejsImportProtocol": "off"
       },
+      "correctness": {
+        "useExhaustiveDependencies": "off"
+      },
       "a11y": "off"
     }
   },

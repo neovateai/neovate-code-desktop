@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { minimatch } from 'minimatch';
 import type { Plugin } from '@neovate/code';
+import { bridgeServer } from '../code-server/bridge';
 
 export const fsPlugin: Plugin = {
   name: 'fs',
@@ -13,6 +14,18 @@ export const fsPlugin: Plugin = {
         return {
           success: true,
           data: { tree: getFileTree(data?.cwd) },
+        };
+      },
+      'editor.open': async (data: { cwd: string; filePath: string }) => {
+        /** TODO: 先放这里，后面看是不是提取到另一个插件中 */
+        const { cwd = '', filePath = '' } = data || {};
+        bridgeServer.send(
+          { operationType: 'editor.open', params: { filePath } },
+          cwd,
+        );
+        return {
+          success: true,
+          data: {},
         };
       },
     } as ReturnType<NonNullable<Plugin['nodeBridgeHandler']>>;
