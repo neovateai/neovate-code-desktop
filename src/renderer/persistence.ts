@@ -1,6 +1,6 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
-import { PERSISTENCE_DEBOUNCE_MS } from './constants';
+import { DEFAULT_LANGUAGE, PERSISTENCE_DEBOUNCE_MS } from './constants';
 import { DEFAULT_KEYBINDINGS } from './lib/keybindings';
 import { logger } from './lib/logger';
 import type {
@@ -118,7 +118,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       developerMode: state.developerMode ?? false,
       keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
       runOnStartup: state.runOnStartup ?? false,
-      language: state.language ?? 'en',
+      language: state.language ?? DEFAULT_LANGUAGE,
     };
   };
 

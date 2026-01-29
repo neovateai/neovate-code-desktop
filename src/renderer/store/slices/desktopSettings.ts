@@ -8,7 +8,7 @@ import {
 export type ThemeValue = 'light' | 'dark' | 'system';
 export type SendMessageWith = 'enter' | 'cmdEnter';
 export type KeybindingsConfig = Record<KeybindingAction, string>;
-export type LanguageValue = 'en' | 'zh' | 'ja' | 'ko' | 'es' | 'fr';
+export type LanguageValue = 'en-US' | 'zh-CN';
 
 export interface DesktopSettingsSliceState {
   theme: ThemeValue;
@@ -45,7 +45,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   keybindings: { ...DEFAULT_KEYBINDINGS },
   developerMode: false,
   runOnStartup: false,
-  language: 'en',
+  language: 'en-US',
 };
 
 export const createDesktopSettingsSlice: StateCreator<

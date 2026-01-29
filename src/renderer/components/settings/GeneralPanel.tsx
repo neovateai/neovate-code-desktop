@@ -116,14 +116,7 @@ export const GeneralPanel = () => {
           <ToggleOptions
             value={language}
             onChange={setLanguage}
-            options={[
-              { value: 'en', label: 'English' },
-              { value: 'zh', label: '中文' },
-              { value: 'ja', label: '日本語' },
-              { value: 'ko', label: '한국어' },
-              { value: 'es', label: 'Español' },
-              { value: 'fr', label: 'Français' },
-            ]}
+            options={[{ value: 'en-US', label: 'English' }]}
           />
         </SettingsRow>
 

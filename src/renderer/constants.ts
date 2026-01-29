@@ -59,3 +59,8 @@ export const DEFAULT_PANEL_EXPAND_SIZE = 20;
 // Storage Keys
 // =============================================================================
 export const STORAGE_KEY_APP_LAYOUT = 'neovate-app-layout';
+
+// =============================================================================
+// Defaults
+// =============================================================================
+export const DEFAULT_LANGUAGE = 'en-US';
