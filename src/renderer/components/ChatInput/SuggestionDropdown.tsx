@@ -42,7 +42,7 @@ export function SuggestionDropdown({
   const visibleItems = items.slice(startIndex, startIndex + maxVisible);
 
   return (
-    <div className="absolute bottom-full left-0 mb-1 w-full max-w-lg rounded-lg shadow-lg overflow-hidden z-50 bg-muted border border-border">
+    <div className="absolute bottom-full left-0 mb-1 w-full max-w-lg rounded-lg shadow-lg overflow-hidden z-50 bg-background border border-border">
       <ScrollArea className="max-h-64">
         <ul className="py-1">
           {visibleItems.map((item, index) => {
@@ -103,19 +103,19 @@ export function SuggestionDropdown({
           })}
         </ul>
       </ScrollArea>
-      <div className="px-3 py-1.5 text-xs border-t border-border text-muted-foreground flex justify-between">
+      <div className="px-3 py-1.5 text-xs border-t border-border bg-background text-muted-foreground sticky flex justify-between">
         <span>
-          <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
+          <kbd className="px-1.5 py-1 rounded bg-muted text-xs font-mono">
             ↑↓
           </kbd>{' '}
           navigate
         </span>
         <span>
-          <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
+          <kbd className="px-1.5 py-1 rounded bg-muted text-xs font-mono">
             Tab
           </kbd>{' '}
           or{' '}
-          <kbd className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/5">
+          <kbd className="px-1.5 py-1 rounded bg-muted text-xs font-mono">
             Enter
           </kbd>{' '}
           select
