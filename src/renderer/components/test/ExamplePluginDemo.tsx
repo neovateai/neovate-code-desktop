@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useStore } from '../store';
+import { useStore } from '../../store';
 
 export function ExamplePluginDemo() {
   const [name, setName] = useState('');

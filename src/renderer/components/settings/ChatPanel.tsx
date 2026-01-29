@@ -9,7 +9,7 @@ import {
 } from '../ui/select';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
-import { ModelSelect } from './ModelSelect';
+import { ModelSelector } from '../ModelSelector';
 import type { SendMessageWith } from '../../store/slices/desktopSettings';
 
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
@@ -101,8 +101,6 @@ export const ChatPanel = () => {
   const sendMessageWith = useStore((state) => state.sendMessageWith);
   const setSendMessageWith = useStore((state) => state.setSendMessageWith);
 
-  const model = getGlobalConfigValue<string>('model');
-  const smallModel = getGlobalConfigValue<string>('smallModel');
   const language = getGlobalConfigValue<string>('language', 'English');
 
   // Notification config: false = 'off', true = 'default', string = custom sound
@@ -146,16 +144,6 @@ export const ChatPanel = () => {
     setSendMessageWith(value);
   };
 
-  const handleModelChange = async (newModel: string) => {
-    if (isConfigSaving) return;
-    await setGlobalConfig('model', newModel);
-  };
-
-  const handleSmallModelChange = async (newModel: string) => {
-    if (isConfigSaving) return;
-    await setGlobalConfig('smallModel', newModel);
-  };
-
   const handleApprovalModeChange = async (newMode: ApprovalMode) => {
     if (newMode === approvalMode || isConfigSaving) return;
     await setGlobalConfig('approvalMode', newMode);
@@ -182,11 +170,7 @@ export const ChatPanel = () => {
       <div className="space-y-0">
         {/* Model */}
         <SettingsRow title="Model" description="Select the primary AI model">
-          <ModelSelect
-            value={model}
-            onChange={handleModelChange}
-            disabled={isConfigSaving}
-          />
+          <ModelSelector type="global" disabled={isConfigSaving} />
         </SettingsRow>
 
         {/* Small Model */}
@@ -194,9 +178,9 @@ export const ChatPanel = () => {
           title="Small Model"
           description="Model for lightweight tasks"
         >
-          <ModelSelect
-            value={smallModel}
-            onChange={handleSmallModelChange}
+          <ModelSelector
+            type="global"
+            configKey="smallModel"
             disabled={isConfigSaving}
           />
         </SettingsRow>

@@ -158,6 +158,9 @@ interface CoreActions {
   showForkModal: () => void;
   hideForkModal: () => void;
   fork: (targetMessageUuid: string) => void;
+
+  // Clipboard actions
+  copyPathToClipboard: (path: string) => Promise<void>;
 }
 
 // Combined store type
@@ -997,6 +1000,24 @@ const useStore = create<Store>()((set, get, api) => ({
   ...createUISlice(set, get, api),
   ...createOnboardingSlice(set, get, api),
   ...createDesktopSettingsSlice(set, get, api),
+
+  // ==================== Clipboard Actions ====================
+  copyPathToClipboard: async (path: string) => {
+    try {
+      await navigator.clipboard.writeText(path);
+      toastManager.add({
+        type: 'success',
+        title: 'Path copied',
+        description: path,
+      });
+    } catch (error) {
+      toastManager.add({
+        type: 'error',
+        title: 'Failed to copy path',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  },
 }));
 
 export { useStore };

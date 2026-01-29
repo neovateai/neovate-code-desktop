@@ -1,6 +1,3 @@
-// export { useWorkspaceContext } from '../components/WorkspacePanel';
-// export { useWorkspaceChangesContext } from '../components/WorkspaceChanges';
-// export { useTerminalContext } from '../components/Terminal';
 export { useStoreConnection } from './useStoreConnection';
 
 // ChatInput hooks
@@ -16,3 +13,4 @@ export {
   type ImagePasteResult,
 } from './useImagePasteManager';
 export { useDebounce } from './useDebounce';
+export { useGlobalKeybindings } from './useGlobalKeybindings';

@@ -443,7 +443,7 @@ WorkspacePanel.Header = function Header() {
       >
         {workspace.repoPath.split('/').pop()}
       </h2>
-      <OpenAppButton cwd={workspace.worktreePath} request={request} />
+      <OpenAppButton cwd={workspace.worktreePath} />
     </div>
   );
 };

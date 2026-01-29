@@ -89,7 +89,7 @@ import {
   AutocompleteList,
   AutocompleteItem,
   AutocompleteEmpty,
-} from './ui';
+} from '../ui';
 import {
   UserIcon,
   SearchIcon,

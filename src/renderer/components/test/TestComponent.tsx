@@ -1,11 +1,10 @@
-// @ts-nocheck
 import { useEffect, useRef } from 'react';
-import { useStore } from './store';
-import { Button } from './components/ui/button';
+import { useStore } from '../../store';
+import { Button } from '../../components/ui/button';
 import { TestMessages } from './TestMessages';
-import { TestUIComponents } from './components/TestUIComponents';
-import { TestHugeIcons } from './components/test/TestHugeIcons';
-import { ExamplePluginDemo } from './components/ExamplePluginDemo';
+import { TestUIComponents } from './TestUIComponents';
+import { TestHugeIcons } from './TestHugeIcons';
+import { ExamplePluginDemo } from './ExamplePluginDemo';
 
 const TestComponent = () => {
   const isVisible = useStore((state) => state.isTestComponentVisible);

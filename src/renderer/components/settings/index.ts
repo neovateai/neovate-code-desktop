@@ -7,4 +7,3 @@ export { KeybindingsPanel } from './KeybindingsPanel';
 export { ProvidersPanel } from './ProvidersPanel';
 export { MCPPanel } from './MCPPanel';
 export { SkillsPanel } from './SkillsPanel';
-export { ModelSelect } from './ModelSelect';
