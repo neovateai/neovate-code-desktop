@@ -1,18 +1,18 @@
-import { useRef, useEffect, useCallback } from 'react';
-import { Terminal as XTerm, type ITheme } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
 import { SerializeAddon } from '@xterm/addon-serialize';
+import { useCallback, useEffect, useRef } from 'react';
+import { type ITheme, Terminal as XTerm } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
+import {
+  TERMINAL_MAX_SCROLLBACK_LINES,
+  TERMINAL_SAVE_COOLDOWN_MS,
+  TERMINAL_SAVE_DEBOUNCE_MS,
+} from '../../../constants';
 import { ipcMainCaller } from '../../../lib/ipc';
 import { logger } from '../../../lib/logger';
 import {
-  TERMINAL_SAVE_DEBOUNCE_MS,
-  TERMINAL_SAVE_COOLDOWN_MS,
-  TERMINAL_MAX_SCROLLBACK_LINES,
-} from '../../../constants';
-import {
-  useContentPanelContext,
   type TerminalInstance,
+  useContentPanelContext,
 } from '../ContentPanelProvider';
 import type { TerminalTab } from '../types';
 
@@ -138,7 +138,7 @@ function stripTrailingEmptyPrompt(buffer: string): string {
       const looksLikePromptContext =
         cleanLine.includes('via ') || // starship/powerlevel10k
         cleanLine.includes(' on ') || // git branch indicators
-        /^[~\/]/.test(cleanLine) || // starts with path
+        /^[~/]/.test(cleanLine) || // starts with path
         /^\[.*\]$/.test(cleanLine); // bracketed info like [master]
 
       if (!looksLikePromptContext) {

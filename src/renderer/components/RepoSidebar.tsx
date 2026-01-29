@@ -1,30 +1,30 @@
-import { useState, useEffect, memo, type MouseEvent } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  FolderIcon,
-  GitBranchIcon,
-  PlusSignIcon,
-  DeleteIcon,
-  InformationCircleIcon,
   CalendarIcon,
   ClockIcon,
-  DatabaseIcon,
   CloudIcon,
   Comment01Icon,
+  DatabaseIcon,
+  DeleteIcon,
+  FolderIcon,
+  GitBranchIcon,
   HelpCircleIcon,
+  InformationCircleIcon,
+  PlusSignIcon,
 } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { type MouseEvent, memo, useEffect, useState } from 'react';
 import type { RepoData } from '../client/types/entities';
-import { useStore } from '../store';
 import { cn } from '../lib/utils';
-import { Spinner } from './ui/spinner';
-import { ScrollArea } from './ui/scroll-area';
+import { useStore } from '../store';
 import {
   ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuPopup,
   ContextMenuItem,
+  ContextMenuPopup,
+  ContextMenuTrigger,
 } from './ui/context-menu';
+import { ScrollArea } from './ui/scroll-area';
+import { Spinner } from './ui/spinner';
 
 // Helper function to format relative time in short format (e.g., "4m", "2h")
 function formatRelativeTime(timestamp: number): string {
@@ -39,38 +39,39 @@ function formatRelativeTime(timestamp: number): string {
 }
 
 const DEFAULT_SESSION_LIMIT = 5;
+
 import {
   Accordion,
   AccordionItem,
-  AccordionTrigger,
   AccordionPanel,
+  AccordionTrigger,
 } from './ui/accordion';
 import {
-  Dialog,
-  DialogPopup,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from './ui/dialog';
-import {
   AlertDialog,
-  AlertDialogPopup,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogClose,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogClose,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
 } from './ui/alert-dialog';
+import { Button } from './ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from './ui/dialog';
 import {
   Empty,
-  EmptyMedia,
-  EmptyHeader,
-  EmptyTitle,
   EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
 } from './ui/empty';
-import { Button } from './ui/button';
 
 export const RepoSidebar = ({
   repos,

@@ -1,18 +1,18 @@
 import fs from 'node:fs/promises';
 import net from 'node:net';
 import path from 'node:path';
-import portfinder from 'portfinder';
 import { app } from 'electron';
+import portfinder from 'portfinder';
 import { isDev } from '../env';
+import { examplePlugin } from '../plugins/example';
+import { fsPlugin } from './../plugins/fs';
 import {
   POLL_INTERVAL_MS,
   PORT_RANGE_END,
   PORT_RANGE_START,
   STARTUP_TIMEOUT_MS,
 } from './constants';
-import type { ServerInstance, NeovatePlugin } from './types';
-import { examplePlugin } from '../plugins/example';
-import { fsPlugin } from './../plugins/fs';
+import type { NeovatePlugin, ServerInstance } from './types';
 
 async function waitForTcpReady(
   hostname: string,

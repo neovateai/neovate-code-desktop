@@ -1,22 +1,22 @@
 import {
   createContext,
+  type ReactNode,
+  type RefObject,
   useCallback,
   useContext,
   useRef,
   useState,
-  type ReactNode,
-  type RefObject,
 } from 'react';
 import {
-  usePanelRef,
-  useGroupRef,
+  type GroupImperativeHandle,
   type Layout,
   type PanelImperativeHandle,
-  type GroupImperativeHandle,
+  useGroupRef,
+  usePanelRef,
 } from 'react-resizable-panels';
 import {
-  DEFAULT_PANEL_EXPAND_SIZE,
   CONTENT_PANEL_MIN_SIZE,
+  DEFAULT_PANEL_EXPAND_SIZE,
 } from '../../constants';
 
 export const AppLayoutPanelId = {

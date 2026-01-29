@@ -1,14 +1,14 @@
 import { execSync } from 'node:child_process';
+import { bridgeServer } from './bridge';
 import { CODE_SERVER_PORT, DATA_DIR, EXTENSIONS_DIR } from './constants';
 import {
-  isCodeServerInstalled,
   downloadCodeServer,
+  isCodeServerInstalled,
   type ProgressCallback,
 } from './download';
+import { installExtension } from './installer';
 import { overrideCodeServerSettings } from './settings';
 import { codeServerStarter } from './starter';
-import { installExtension } from './installer';
-import { bridgeServer } from './bridge';
 
 export class CodeServerStartError extends Error {
   constructor(
@@ -110,7 +110,7 @@ class CodeServerManager {
     try {
       // code server extension bridge server
       await bridgeServer.start();
-      // preset extension  '/Users/congju/Desktop/proj/test/ncm/neovate-code-extension/neovate-code-extension-0.0.1.vsix',
+      // preset extension
       await installExtension();
     } catch (e) {
       console.warn(`Extension Service failed`, e);
@@ -165,4 +165,4 @@ class CodeServerManager {
 export const codeServerManager = new CodeServerManager();
 
 // Re-export types
-export type { ProgressCallback, DownloadProgress } from './download';
+export type { DownloadProgress, ProgressCallback } from './download';

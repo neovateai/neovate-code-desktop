@@ -1,12 +1,12 @@
-import { useState } from 'react';
 import Markdown from 'marked-react';
-import { cn } from '../../../lib/utils';
+import { useState } from 'react';
 import type {
-  ToolUsePart,
   ToolResultPart,
+  ToolUsePart,
 } from '../../../client/types/message';
+import { cn } from '../../../lib/utils';
 import type { AgentResultDisplay } from '../../../store/slices/session';
-import { formatDuration, formatTokens, extractResultText } from './utils';
+import { extractResultText, formatDuration, formatTokens } from './utils';
 
 interface TaskCompletedProps {
   toolUse: ToolUsePart;

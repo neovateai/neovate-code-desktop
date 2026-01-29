@@ -1,7 +1,7 @@
+import { AlertCircleIcon, Loader2Icon, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Loader2Icon, AlertCircleIcon, XIcon } from 'lucide-react';
-import { useStore } from '../store';
 import { cn } from '../lib/utils';
+import { useStore } from '../store';
 
 interface ActivityIndicatorProps {
   sessionId: string | null;

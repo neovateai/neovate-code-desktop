@@ -1,10 +1,10 @@
 import { useStore } from '../../store';
-import { OnboardingProgress } from './OnboardingProgress';
 import { OnboardingFooter } from './OnboardingFooter';
-import { ImportProjectsStep } from './steps/ImportProjectsStep';
-import { ProviderLoginStep } from './steps/ProviderLoginStep';
-import { ModelConfigStep } from './steps/ModelConfigStep';
+import { OnboardingProgress } from './OnboardingProgress';
 import { GeneralConfigStep } from './steps/GeneralConfigStep';
+import { ImportProjectsStep } from './steps/ImportProjectsStep';
+import { ModelConfigStep } from './steps/ModelConfigStep';
+import { ProviderLoginStep } from './steps/ProviderLoginStep';
 import { SelectProjectStep } from './steps/SelectProjectStep';
 
 const STEP_TITLES: Record<string, string> = {

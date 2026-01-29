@@ -4,8 +4,9 @@ import {
   exposeAsMainHandlers,
   getRendererCaller,
 } from '../../shared/lib/ipc/main';
-import type { IPCRendererHandlers } from '../ipc';
 import type { UpdaterState } from '../../shared/types/updater';
+import type { IPCRendererHandlers } from '../ipc';
+
 class UpdaterService {
   static CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 

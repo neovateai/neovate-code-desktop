@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '../../../store';
-import { Spinner } from '../../ui/spinner';
-import { Checkbox } from '../../ui/checkbox';
 import { Button } from '../../ui/button';
+import { Checkbox } from '../../ui/checkbox';
+import { Spinner } from '../../ui/spinner';
 
 interface Project {
   path: string;

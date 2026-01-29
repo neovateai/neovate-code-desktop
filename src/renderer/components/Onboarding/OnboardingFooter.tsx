@@ -1,4 +1,4 @@
-import { useStore, type OnboardingStep } from '../../store';
+import { type OnboardingStep, useStore } from '../../store';
 import { Button } from '../ui/button';
 
 const STEPS: OnboardingStep[] = [

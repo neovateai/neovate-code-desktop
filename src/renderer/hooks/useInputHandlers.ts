@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toastManager } from '../components/ui/toast';
+import { DOUBLE_PRESS_TIMEOUT_MS, LARGE_PASTE_THRESHOLD } from '../constants';
 import { logger } from '../lib/logger';
-import { LARGE_PASTE_THRESHOLD, DOUBLE_PRESS_TIMEOUT_MS } from '../constants';
 import type {
   HandlerInput,
   HandlerMethod,

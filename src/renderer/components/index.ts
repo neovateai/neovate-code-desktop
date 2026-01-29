@@ -1,14 +1,12 @@
-export { RepoSidebar } from './RepoSidebar';
-export { WorkspacePanel } from './WorkspacePanel';
-export { Terminal } from './Terminal';
-
 // Enhanced ChatInput with full feature set
 export {
   ChatInput,
-  SuggestionDropdown,
   ImagePreview,
+  SuggestionDropdown,
 } from './ChatInput';
-
+export { RepoSidebar } from './RepoSidebar';
+export { Terminal } from './Terminal';
 // Test components
-export { SystemInfo, DirectoryList } from './test';
+export { DirectoryList, SystemInfo } from './test';
 export { TestUIComponents } from './test/TestUIComponents';
+export { WorkspacePanel } from './WorkspacePanel';

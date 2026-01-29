@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
+import { DEFAULT_KEYBINDINGS, matchesBinding } from '../lib/keybindings';
 import { useStore } from '../store';
-import { matchesBinding, DEFAULT_KEYBINDINGS } from '../lib/keybindings';
 
 /**
  * Global keybinding handler for app-wide shortcuts.

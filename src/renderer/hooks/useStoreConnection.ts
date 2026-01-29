@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useStore } from '../store';
 import { ipcMainCaller } from '../lib/ipc';
+import { useStore } from '../store';
 
 interface ServerError {
   code: string;

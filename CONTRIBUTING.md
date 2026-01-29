@@ -16,6 +16,12 @@ $ npm run dev
 
 Then you should see the desktop app running in your browser.
 
+Before you commit, you need to run the `ready` script to check if the code is ready to be committed.
+
+```bash
+$ npm run ready
+```
+
 ![](https://pic.sorrycc.com/proxy/1768919602086-390844259.png)
 
 ## Local Development with Custom @neovate/code

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { readdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
+import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const UI_DIR = join(import.meta.dir, '../src/renderer/components/ui');

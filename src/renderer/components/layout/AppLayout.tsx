@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 import {
   Group,
@@ -6,14 +5,15 @@ import {
   Separator,
   useDefaultLayout,
 } from 'react-resizable-panels';
+import { cn } from '@/lib/utils';
 import {
-  STORAGE_KEY_APP_LAYOUT,
   CHAT_PANEL_MIN_SIZE,
   CONTENT_PANEL_MIN_SIZE,
-  PRIMARY_SIDEBAR_MIN_SIZE,
   PRIMARY_SIDEBAR_DEFAULT_SIZE,
-  SECONDARY_SIDEBAR_MIN_SIZE,
+  PRIMARY_SIDEBAR_MIN_SIZE,
   SECONDARY_SIDEBAR_MAX_SIZE,
+  SECONDARY_SIDEBAR_MIN_SIZE,
+  STORAGE_KEY_APP_LAYOUT,
 } from '../../constants';
 import {
   AppLayoutPanelId,

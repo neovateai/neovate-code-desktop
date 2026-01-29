@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LETTER_ANIMATION_DELAY_MS, FOCUS_DELAY_MS } from '../constants';
+import { FOCUS_DELAY_MS, LETTER_ANIMATION_DELAY_MS } from '../constants';
 
 export function AppLoading() {
   const fullText = 'Neovate';

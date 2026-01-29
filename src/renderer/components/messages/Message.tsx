@@ -1,8 +1,8 @@
 import { Component, type ReactNode } from 'react';
-import type { MessageRenderProps } from './types';
-import { shouldHideMessage, isToolResultMessage } from './messageHelpers';
-import { UserMessage } from './UserMessage';
 import { AssistantMessage } from './AssistantMessage';
+import { isToolResultMessage, shouldHideMessage } from './messageHelpers';
+import type { MessageRenderProps } from './types';
+import { UserMessage } from './UserMessage';
 
 /**
  * Error boundary for message rendering

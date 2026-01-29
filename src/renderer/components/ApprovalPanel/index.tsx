@@ -1,9 +1,9 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from '../../store';
 import type {
+  ApprovalCategory,
   ApprovalModalState,
   ApprovalResult,
-  ApprovalCategory,
   ToolUse,
 } from '../../store/slices/session';
 import { DiffViewer } from '../messages/DiffViewer';

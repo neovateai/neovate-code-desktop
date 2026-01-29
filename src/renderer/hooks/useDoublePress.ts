@@ -1,6 +1,6 @@
-import { useRef, useCallback } from 'react';
-import { logger } from '../lib/logger';
+import { useCallback, useRef } from 'react';
 import { DOUBLE_PRESS_TIMEOUT_MS } from '../constants';
+import { logger } from '../lib/logger';
 
 export function useDoublePress(
   onDouble: () => void,

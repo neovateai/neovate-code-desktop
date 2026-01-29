@@ -1,13 +1,12 @@
+export { SecondarySidebar } from '../SecondarySidebar';
+export { ActivityBar } from './ActivityBar';
 export {
   AppLayout,
-  AppLayoutTitleBar,
-  AppLayoutPrimarySidebar,
+  AppLayoutActivityBar,
   AppLayoutChatPanel,
   AppLayoutContentPanel,
+  AppLayoutPrimarySidebar,
   AppLayoutSecondarySidebar,
-  AppLayoutActivityBar,
+  AppLayoutTitleBar,
 } from './AppLayout';
-
 export { useAppLayoutPanels } from './AppLayoutProvider';
-export { ActivityBar } from './ActivityBar';
-export { SecondarySidebar } from '../SecondarySidebar';

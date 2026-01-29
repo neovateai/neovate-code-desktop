@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
-import path from 'node:path';
 import https from 'node:https';
-import { createGunzip } from 'node:zlib';
+import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
+import { createGunzip } from 'node:zlib';
 import { extract } from 'tar';
 import {
+  CODE_SERVER_DIR,
   getArtifactUrl,
   getCodeServerBinaryPath,
-  CODE_SERVER_DIR,
 } from './constants';
 
 export class CodeServerDownloadError extends Error {

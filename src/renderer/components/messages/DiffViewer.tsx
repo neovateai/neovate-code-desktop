@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import { MultiFileDiff } from '@pierre/diffs/react';
+import { useMemo } from 'react';
 import type { DiffViewerProps } from './types';
 
 /**

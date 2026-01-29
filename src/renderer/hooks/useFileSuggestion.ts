@@ -1,13 +1,13 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useListNavigation } from './useListNavigation';
-import { useDebounce } from './useDebounce';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FILE_SEARCH_MAX_RESULTS, INPUT_DEBOUNCE_MS } from '../constants';
 import { findAtTokenAtCursor } from '../lib/tokenUtils';
-import { INPUT_DEBOUNCE_MS, FILE_SEARCH_MAX_RESULTS } from '../constants';
 import type {
   HandlerInput,
   HandlerMethod,
   HandlerOutput,
 } from '../nodeBridge.types';
+import { useDebounce } from './useDebounce';
+import { useListNavigation } from './useListNavigation';
 
 type TriggerType = 'at' | 'tab' | null;
 
