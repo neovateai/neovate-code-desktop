@@ -79,10 +79,7 @@ function ActivityBarButton({
       variant="ghost"
       onClick={onClick}
       title={title}
-      className={cn(
-        'hover:bg-[color-mix(in_oklab,var(--background),white_20%)]',
-        active && 'bg-[color-mix(in_oklab,var(--background),white_40%)]',
-      )}
+      className={cn('hover:bg-accent', active && 'bg-accent')}
     >
       <HugeiconsIcon icon={icon} size={20} strokeWidth={1.5} />
     </Button>

@@ -104,7 +104,7 @@
 }
 
 .markdown-content a {
-  color: #0070f3;
+  @apply text-primary;
   text-decoration: none;
 }
 
