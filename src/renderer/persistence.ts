@@ -189,7 +189,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       developerMode = false,
       keybindings = { ...DEFAULT_KEYBINDINGS },
       runOnStartup = false,
-      language = 'en',
+      language = DEFAULT_LANGUAGE,
     } = persistedState;
 
     // Validate selections exist in loaded entities
