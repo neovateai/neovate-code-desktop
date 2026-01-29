@@ -1,5 +1,5 @@
 import { useStore } from '../../../store';
-import { ModelSelect } from '../../settings/ModelSelect';
+import { ModelSelector } from '../../ModelSelector';
 import { Spinner } from '../../ui/spinner';
 
 interface SettingsRowProps {
@@ -37,21 +37,6 @@ export const ModelConfigStep = () => {
   const globalConfig = useStore((state) => state.globalConfig);
   const isConfigLoading = useStore((state) => state.isConfigLoading);
   const isConfigSaving = useStore((state) => state.isConfigSaving);
-  const getGlobalConfigValue = useStore((state) => state.getGlobalConfigValue);
-  const setGlobalConfig = useStore((state) => state.setGlobalConfig);
-
-  const model = getGlobalConfigValue<string>('model');
-  const smallModel = getGlobalConfigValue<string>('smallModel');
-
-  const handleModelChange = async (newModel: string) => {
-    if (isConfigSaving) return;
-    await setGlobalConfig('model', newModel);
-  };
-
-  const handleSmallModelChange = async (newModel: string) => {
-    if (isConfigSaving) return;
-    await setGlobalConfig('smallModel', newModel);
-  };
 
   if (isConfigLoading || globalConfig === null) {
     return (
@@ -71,20 +56,16 @@ export const ModelConfigStep = () => {
         title="Primary Model"
         description="Main model for coding tasks and conversations"
       >
-        <ModelSelect
-          value={model}
-          onChange={handleModelChange}
-          disabled={isConfigSaving}
-        />
+        <ModelSelector type="global" disabled={isConfigSaving} />
       </SettingsRow>
 
       <SettingsRow
         title="Small Model"
         description="Faster model for lightweight tasks like summaries"
       >
-        <ModelSelect
-          value={smallModel}
-          onChange={handleSmallModelChange}
+        <ModelSelector
+          type="global"
+          configKey="smallModel"
           disabled={isConfigSaving}
         />
       </SettingsRow>

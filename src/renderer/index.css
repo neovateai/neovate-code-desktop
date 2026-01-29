@@ -19,7 +19,7 @@
   --text-muted: #d4d4d8;
   --brand-primary: #3b82f6;
   /* Interactive states */
-  --bg-hover: #f5f5f5;
+  --bg-hover: #f0f0f0;
   --bg-active: #e5e5e5;
   --border-focus: #3b82f6;
   --border-hover: #d4d4d8;
@@ -98,6 +98,26 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Custom semantic colors */
+  --color-bg-base: var(--bg-base);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-elevated: var(--border-elevated);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+  --color-brand-primary: var(--brand-primary);
+
+  /* Interactive states */
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
+  --color-border-focus: var(--border-focus);
+  --color-border-hover: var(--border-hover);
 }
 
 .dark {
@@ -180,6 +200,7 @@
     100% {
       opacity: 1;
     }
+
     50% {
       opacity: 0;
     }
@@ -189,9 +210,11 @@
     0% {
       transform: scale(1);
     }
+
     50% {
       transform: scale(1.02);
     }
+
     100% {
       transform: scale(1);
     }

@@ -1,6 +1,5 @@
 import {
   BrainIcon,
-  ChipIcon,
   ComputerTerminal01Icon,
   NoteEditIcon,
   NoteIcon,
@@ -16,7 +15,6 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
-  useState,
 } from 'react';
 import { useInputHandlers } from '../../hooks/useInputHandlers';
 import type { SlashCommand } from '../../hooks/useSlashCommands';
@@ -26,28 +24,10 @@ import type {
   HandlerOutput,
 } from '../../nodeBridge.types';
 import { useStore } from '../../store';
-import type { SessionProcessingState } from '../../store';
 import { Button, Textarea, Tooltip, TooltipPopup, TooltipTrigger } from '../ui';
+import { ModelSelector } from '../ModelSelector';
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
-
-// Provider type from the API
-interface Provider {
-  id: string;
-  name: string;
-  doc?: string;
-  env?: string[];
-  apiEnv?: string[];
-  validEnvs: string[];
-  hasApiKey: boolean;
-}
-
-// Model type from the API
-interface Model {
-  name: string;
-  modelId: string;
-  value: string;
-}
 
 interface ChatInputProps {
   onSubmit: (value: string, images?: string[]) => void;
@@ -86,7 +66,6 @@ export const ChatInput = memo(
       placeholder = 'Type your message...',
       disabled = false,
       isProcessing = false,
-      modelName,
       sessionId = null,
       workspaceId = null,
       cwd,
@@ -99,13 +78,12 @@ export const ChatInput = memo(
 
     // Get store methods
     const sendMessageWith = useStore((state) => state.sendMessageWith);
-    const getSessionProcessing = useStore(
-      (state) => state.getSessionProcessing,
-    );
     const developerMode = useStore((state) => state.developerMode);
 
-    // Get processing state for current session (for debug info)
-    const processingState = sessionId ? getSessionProcessing(sessionId) : null;
+    // Subscribe directly to sessionProcessing state for proper reactivity
+    const processingState = useStore((state) =>
+      sessionId ? state.sessionProcessing[sessionId] : null,
+    );
 
     // Expose focus method to parent via ref
     useImperativeHandle(
@@ -154,166 +132,12 @@ export const ChatInput = memo(
 
     const { planMode, thinking, togglePlanMode, toggleThinking } = inputState;
 
-    // State for session config model (fetched from session)
-    const [sessionConfigModel, setSessionConfigModel] = useState<string | null>(
-      null,
-    );
-
-    // Fetch session config model when sessionId changes
-    useEffect(() => {
-      if (!sessionId || !cwd || !request) {
-        setSessionConfigModel(null);
-        return;
-      }
-
-      const fetchSessionConfigModel = async () => {
-        try {
-          const response = await request('session.config.get', {
-            cwd,
-            sessionId,
-            key: 'model',
-          });
-          if (response.success && response.data.value) {
-            setSessionConfigModel(response.data.value);
-          } else {
-            setSessionConfigModel(null);
-          }
-        } catch {
-          setSessionConfigModel(null);
-        }
-      };
-
-      fetchSessionConfigModel();
-    }, [sessionId, cwd, request]);
-
-    // Reset provider/model selector state when sessionId changes
-    useEffect(() => {
-      setProviders([]);
-      setModels([]);
-      setProviderValue(null);
-      setModelValue(null);
-    }, [sessionId]);
-
-    // Determine effective model: session config model takes priority over passed modelName
-    const effectiveModelName = sessionConfigModel || modelName;
-
-    // Parse effectiveModelName into provider and model
-    const [currentProvider, currentModel] = useMemo(() => {
-      if (!effectiveModelName) return ['', ''];
-      const parts = effectiveModelName.split('/');
-      if (parts.length >= 2) {
-        return [parts[0], parts.slice(1).join('/')];
-      }
-      return ['', effectiveModelName];
-    }, [effectiveModelName]);
-
-    // Provider and model selector state
-    const [providers, setProviders] = useState<Provider[]>([]);
-    const [models, setModels] = useState<Model[]>([]);
-    const [isLoadingProviders, setIsLoadingProviders] = useState(false);
-    const [isLoadingModels, setIsLoadingModels] = useState(false);
-    const [providerValue, setProviderValue] = useState<string | null>(null);
-    const [modelValue, setModelValue] = useState<string | null>(null);
-
-    // Fetch providers when provider selector opens
-    const handleProviderOpen = useCallback(async () => {
-      if (!request || !cwd || isLoadingProviders) return;
-
-      setIsLoadingProviders(true);
-      try {
-        const response = await request('providers.list', { cwd });
-        if (response.success) {
-          // Filter to only show providers with valid configuration
-          const validProviders = response.data.providers.filter(
-            (p: Provider) => p.validEnvs.length > 0 || p.hasApiKey,
-          );
-          setProviders(validProviders);
-        }
-      } catch {
-        // Ignore errors
-      } finally {
-        setIsLoadingProviders(false);
-      }
-    }, [request, cwd, isLoadingProviders]);
-
-    // Fetch models for the current provider when model selector opens
-    // Returns the fetched models so caller can use them
-    const handleModelOpen = useCallback(
-      async (providerId?: string): Promise<Model[]> => {
-        if (!request || !cwd || isLoadingModels) return [];
-
-        const targetProvider = providerId || currentProvider;
-        if (!targetProvider) return [];
-
-        setIsLoadingModels(true);
-        try {
-          const response = await request('models.list', { cwd });
-          if (response.success) {
-            const providerModels =
-              response.data.groupedModels.find(
-                (g: { providerId: string }) => g.providerId === targetProvider,
-              )?.models || [];
-            setModels(providerModels);
-            return providerModels;
-          }
-        } catch {
-          // Ignore errors
-        } finally {
-          setIsLoadingModels(false);
-        }
-        return [];
-      },
-      [request, cwd, currentProvider, isLoadingModels],
-    );
-
-    // Handle provider change
-    const handleProviderChange = useCallback(
-      async (newProvider: string) => {
-        if (!request || !cwd || !sessionId || newProvider === currentProvider)
-          return;
-
-        // Fetch models for the new provider
-        const fetchedModels = await handleModelOpen(newProvider);
-
-        // Auto-select the first model and update session config
-        if (fetchedModels.length > 0) {
-          const firstModel = fetchedModels[0];
-          const fullModelValue = `${newProvider}/${firstModel.modelId}`;
-
-          setModelValue(firstModel.modelId);
-
-          try {
-            await request('session.config.set', {
-              cwd,
-              sessionId,
-              key: 'model',
-              value: fullModelValue,
-            });
-          } catch {
-            // Ignore errors
-          }
-        }
-      },
-      [request, cwd, sessionId, currentProvider, handleModelOpen],
-    );
-
-    // Handle model change
+    // Handle model change - update thinking state based on new model
     const handleModelChange = useCallback(
       async (newModel: string) => {
         if (!request || !cwd || !sessionId) return;
 
-        // Determine which provider to use
-        const provider = providerValue || currentProvider;
-        const fullModelValue = `${provider}/${newModel}`;
-
         try {
-          await request('session.config.set', {
-            cwd,
-            sessionId,
-            key: 'model',
-            value: fullModelValue,
-          });
-
           // Fetch model info to update thinking state
           const modelInfoResponse = await request('session.getModel', {
             cwd,
@@ -340,15 +164,7 @@ export const ChatInput = memo(
           setThinking(null);
         }
       },
-      [
-        request,
-        cwd,
-        sessionId,
-        providerValue,
-        currentProvider,
-        setThinkingEnabled,
-        setThinking,
-      ],
+      [request, cwd, sessionId, setThinkingEnabled, setThinking],
     );
 
     const { value } = inputState.state;
@@ -546,82 +362,14 @@ export const ChatInput = memo(
           >
             {/* Left side tools */}
             <div className="flex items-center gap-1">
-              {/* Provider and Model selectors */}
-              {effectiveModelName && request && cwd && sessionId && (
-                <div className="flex items-center gap-0.5">
-                  <HugeiconsIcon
-                    icon={ChipIcon}
-                    size={14}
-                    style={{ color: 'var(--text-secondary)' }}
-                    className="mr-1"
-                  />
-                  {/* Provider selector - native select */}
-                  <select
-                    value={providerValue || currentProvider}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setProviderValue(value);
-                      handleProviderChange(value);
-                    }}
-                    onFocus={() => {
-                      handleProviderOpen();
-                    }}
-                    className="text-xs font-medium bg-transparent border-0 outline-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5"
-                    style={{ color: 'var(--text-secondary)' }}
-                    title="Select provider"
-                  >
-                    {isLoadingProviders ? (
-                      <option disabled>Loading...</option>
-                    ) : providers.length === 0 ? (
-                      <option value={currentProvider}>{currentProvider}</option>
-                    ) : (
-                      [...providers]
-                        .sort((a, b) => a.id.localeCompare(b.id))
-                        .map((provider) => (
-                          <option key={provider.id} value={provider.id}>
-                            {provider.id}
-                          </option>
-                        ))
-                    )}
-                  </select>
-
-                  <span
-                    className="text-xs"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
-                    /
-                  </span>
-
-                  {/* Model selector - native select */}
-                  <select
-                    value={modelValue || currentModel}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setModelValue(value);
-                      handleModelChange(value);
-                    }}
-                    onFocus={() => {
-                      handleModelOpen(providerValue || undefined);
-                    }}
-                    className="text-xs font-medium bg-transparent border-0 outline-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 max-w-[150px]"
-                    style={{ color: 'var(--text-secondary)' }}
-                    title="Select model"
-                  >
-                    {isLoadingModels ? (
-                      <option disabled>Loading...</option>
-                    ) : models.length === 0 ? (
-                      <option value={currentModel}>{currentModel}</option>
-                    ) : (
-                      [...models]
-                        .sort((a, b) => a.modelId.localeCompare(b.modelId))
-                        .map((model) => (
-                          <option key={model.modelId} value={model.modelId}>
-                            {model.modelId}
-                          </option>
-                        ))
-                    )}
-                  </select>
-                </div>
+              {/* Model Selector */}
+              {cwd && sessionId && (
+                <ModelSelector
+                  type="session"
+                  cwd={cwd}
+                  sessionId={sessionId}
+                  onModelChange={handleModelChange}
+                />
               )}
 
               {/* Plan/Brainstorm Mode Toggle */}

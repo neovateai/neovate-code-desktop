@@ -158,6 +158,9 @@ interface CoreActions {
   showForkModal: () => void;
   hideForkModal: () => void;
   fork: (targetMessageUuid: string) => void;
+
+  // Clipboard actions
+  copyPathToClipboard: (path: string) => Promise<void>;
 }
 
 // Combined store type
@@ -810,7 +813,7 @@ const useStore = create<Store>()((set, get, api) => ({
   },
 
   updateSessions: async (workspaceId: string) => {
-    const { request, workspaces, sessions, setSessions } = get();
+    const { request, workspaces, setSessions } = get();
 
     const workspace = workspaces[workspaceId];
     if (!workspace) {
@@ -829,8 +832,9 @@ const useStore = create<Store>()((set, get, api) => ({
           created: new Date(s.created).getTime(),
         }));
 
-        // Preserve local-only sessions (messageCount === 0 and not in backend)
-        const currentSessions = sessions[workspaceId] || [];
+        // Read sessions AFTER async completes to avoid race condition
+        // (e.g., createSession may have added a local session during the fetch)
+        const currentSessions = get().sessions[workspaceId] || [];
         const backendSessionIds = new Set(
           backendSessions.map((s: { sessionId: string }) => s.sessionId),
         );
@@ -996,6 +1000,24 @@ const useStore = create<Store>()((set, get, api) => ({
   ...createUISlice(set, get, api),
   ...createOnboardingSlice(set, get, api),
   ...createDesktopSettingsSlice(set, get, api),
+
+  // ==================== Clipboard Actions ====================
+  copyPathToClipboard: async (path: string) => {
+    try {
+      await navigator.clipboard.writeText(path);
+      toastManager.add({
+        type: 'success',
+        title: 'Path copied',
+        description: path,
+      });
+    } catch (error) {
+      toastManager.add({
+        type: 'error',
+        title: 'Failed to copy path',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  },
 }));
 
 export { useStore };

@@ -49,7 +49,7 @@ const ThemeOption = ({
 }: ThemeOptionProps) => {
   return (
     <button
-      className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+      className="px-3 py-1.5 text-sm rounded-md transition-colors"
       style={{
         backgroundColor: isActive ? 'var(--bg-base)' : 'transparent',
         color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { cn } from '../../lib/utils';
 import {
   ViewIcon,
   ViewOffIcon,
@@ -670,7 +671,7 @@ export const ProvidersPanel = () => {
         style={{
           border: '1px solid var(--border-subtle)',
           minHeight: '400px',
-          maxHeight: 'calc(100vh - 110px)',
+          maxHeight: 'calc(100vh - 140px)',
         }}
       >
         {/* Provider List */}
@@ -702,29 +703,13 @@ export const ProvidersPanel = () => {
             {filteredProviders.map((provider) => (
               <button
                 key={provider.id}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group"
-                style={{
-                  backgroundColor:
-                    selectedProviderId === provider.id
-                      ? 'var(--accent)'
-                      : 'transparent',
-                  color:
-                    selectedProviderId === provider.id
-                      ? 'var(--text-primary)'
-                      : 'var(--text-secondary)',
-                }}
+                className={cn(
+                  'w-full flex items-center text-text-secondary gap-2 px-3 py-2 text-sm text-left transition-colors group',
+                  selectedProviderId === provider.id
+                    ? 'bg-accent text-primary'
+                    : 'text-text-secondary',
+                )}
                 onClick={() => setSelectedProviderId(provider.id)}
-                onMouseEnter={(e) => {
-                  if (selectedProviderId !== provider.id) {
-                    e.currentTarget.style.backgroundColor =
-                      'var(--bg-base-hover)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedProviderId !== provider.id) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
               >
                 <span className="flex-1 truncate">{provider.name}</span>
                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -921,18 +906,9 @@ export const ProvidersPanel = () => {
                             <button
                               key={model.modelId}
                               onClick={() => handleTestModel(model.value)}
-                              className="w-full px-3 py-2 text-sm text-left transition-colors"
+                              className="w-full px-3 py-2 text-sm text-left transition-colors hover:bg-bg-hover"
                               style={{
                                 color: 'var(--text-primary)',
-                                backgroundColor: 'transparent',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  'var(--bg-base-hover)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  'transparent';
                               }}
                             >
                               {model.name || model.modelId}

@@ -9,7 +9,7 @@ Neovate Code Desktop is an Electron-based desktop application for the Neovate AI
 - Runtime: Node.js (Electron Main Process)
 - Frontend: React 19, TypeScript, Vite
 - State Management: Zustand
-- Styling: Tailwind CSS 4
+- Styling: Tailwind CSS v4
 - Testing: Vitest
 - Build: Electron Builder
 

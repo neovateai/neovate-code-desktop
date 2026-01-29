@@ -1,12 +1,11 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Agentation } from 'agentation';
 import { useStore } from './store';
-import { useStoreConnection } from './hooks';
+import { useStoreConnection, useGlobalKeybindings } from './hooks';
 import { RepoSidebar } from './components/RepoSidebar';
 import { WorkspacePanel } from './components/WorkspacePanel';
-// import { WorkspaceChanges } from './components/WorkspaceChanges';
 import { ContentPanel } from './components/ContentPanel';
-import TestComponent from './TestComponent';
+import TestComponent from './components/test/TestComponent';
 import { SettingsPage } from './components/settings';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
 import { UpdaterToast } from './components/UpdaterToast';
@@ -24,9 +23,8 @@ import {
   SecondarySidebar,
 } from './components/layout';
 import { AppLayoutPanelGroup } from './components/layout/AppLayout';
-import { TitleBar } from './components/app/TitleBar';
+import { TitleBar } from './components/layout/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
-import { matchesBinding } from './lib/keybindings';
 
 function App() {
   const { connectionState, serverError, retry, exit } = useStoreConnection();
@@ -78,53 +76,8 @@ function App() {
     };
   }, [setShowSettings, setTheme, theme]);
 
-  // Listen for Cmd+N to create new chat
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const {
-        keybindings,
-        selectedWorkspaceId,
-        showSettings,
-        onboardingVisible,
-        createOrSelectEmptySession,
-        selectPrevSession,
-        selectNextSession,
-      } = useStore.getState();
-
-      // Don't handle shortcuts when in settings or onboarding
-      if (showSettings || onboardingVisible) return;
-
-      // New Chat
-      if (matchesBinding(e, keybindings.newChat)) {
-        e.preventDefault();
-
-        if (selectedWorkspaceId) {
-          createOrSelectEmptySession();
-
-          // Dispatch focus event for ChatInput to pick up
-          window.dispatchEvent(new CustomEvent('chat-input:focus'));
-        }
-        return;
-      }
-
-      // Previous Session
-      if (matchesBinding(e, keybindings.prevSession)) {
-        e.preventDefault();
-        selectPrevSession();
-        return;
-      }
-
-      // Next Session
-      if (matchesBinding(e, keybindings.nextSession)) {
-        e.preventDefault();
-        selectNextSession();
-        return;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  // Global keybindings (New Chat, Prev/Next Session, Copy Path)
+  useGlobalKeybindings();
 
   // Apply dark/light mode based on theme setting
   useEffect(() => {

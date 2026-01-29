@@ -9,5 +9,5 @@ export {
 } from './AppLayout';
 
 export { useAppLayoutPanels } from './AppLayoutProvider';
-export { ActivityBar } from '../app/ActivityBar';
+export { ActivityBar } from './ActivityBar';
 export { SecondarySidebar } from '../SecondarySidebar';

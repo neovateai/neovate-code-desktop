@@ -1,5 +1,5 @@
 import { createNeovateServer } from './create';
-import type { ServerInstance } from './types';
+import type { NeovatePlugin, ServerInstance } from './types';
 
 /**
  * Singleton manager for the Neovate server instance
@@ -8,6 +8,15 @@ import type { ServerInstance } from './types';
 class NeovateServerManager {
   private instance: ServerInstance | null = null;
   private creationPromise: Promise<ServerInstance> | null = null;
+  private plugins?: NeovatePlugin[];
+
+  /**
+   * Set plugins to be used when creating the server
+   * Must be called before getOrCreate() to take effect
+   */
+  setPlugins(plugins?: NeovatePlugin[]): void {
+    this.plugins = plugins;
+  }
 
   /**
    * Get or create the Neovate server instance
@@ -25,7 +34,7 @@ class NeovateServerManager {
     }
 
     // Start new creation
-    this.creationPromise = createNeovateServer()
+    this.creationPromise = createNeovateServer(this.plugins)
       .then((instance) => {
         this.instance = instance;
         this.creationPromise = null;
