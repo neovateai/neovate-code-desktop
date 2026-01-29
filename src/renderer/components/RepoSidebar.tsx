@@ -238,7 +238,10 @@ export const RepoSidebar = ({
     <div className="h-full flex flex-col">
       {/* <RepoSidebar.Header /> */}
 
-      <ScrollArea className="flex-1 p-2 pt-0">
+      <ScrollArea
+        className="flex-1 p-2 pt-0 **:data-[slot=scroll-area-scrollbar]:hidden"
+        scrollFade
+      >
         {repos.length === 0 ? (
           <Empty>
             <EmptyMedia variant="icon">
@@ -264,7 +267,7 @@ export const RepoSidebar = ({
           >
             {repos.map((repo) => (
               <AccordionItem key={repo.path} value={repo.path}>
-                <AccordionTrigger className="px-3 py-2 hover:bg-opacity-50">
+                <AccordionTrigger className="px-3 py-2">
                   <div className="flex items-center gap-2 flex-1">
                     <HugeiconsIcon
                       icon={FolderIcon}
@@ -273,7 +276,7 @@ export const RepoSidebar = ({
                     />
                     <span className="font-medium text-sm">{repo.name}</span>
                     <span
-                      className="ml-auto p-1 rounded hover:bg-opacity-70 text-muted-foreground"
+                      className="ml-auto p-1 rounded"
                       onClick={(e) => handleRepoInfoClick(repo, e)}
                     >
                       <HugeiconsIcon
@@ -309,7 +312,7 @@ export const RepoSidebar = ({
                           <div>
                             {/* Create session button */}
                             <button
-                              className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left text-muted-foreground bg-transparent hover:bg-accent hover:text-foreground"
+                              className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left text-muted-foreground hover:bg-accent hover:text-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 selectWorkspace(workspaceId);
@@ -350,13 +353,9 @@ export const RepoSidebar = ({
                                     className={cn(
                                       'flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors',
                                       isSessionSelected
-                                        ? 'bg-background'
-                                        : 'bg-transparent hover:bg-accent',
-                                      isFailed
-                                        ? 'text-destructive'
-                                        : isSessionSelected
-                                          ? 'text-foreground'
-                                          : 'text-muted-foreground',
+                                        ? 'bg-accent text-foreground'
+                                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                                      isFailed && 'text-destructive-foreground',
                                     )}
                                     onClick={() => {
                                       selectWorkspace(workspaceId);
@@ -370,7 +369,7 @@ export const RepoSidebar = ({
                                         icon={HelpCircleIcon}
                                         size={14}
                                         strokeWidth={1.5}
-                                        style={{ color: '#f59e0b' }}
+                                        className="text-warning-foreground"
                                       />
                                     ) : (
                                       <HugeiconsIcon

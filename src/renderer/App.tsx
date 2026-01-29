@@ -188,7 +188,7 @@ function App() {
     <>
       {/* Settings Page - hidden with CSS when not active */}
       <div
-        className="h-dvh flex flex-col"
+        className="h-full flex flex-col"
         style={{ display: showSettings ? 'flex' : 'none' }}
       >
         <SettingsPage />
@@ -197,7 +197,7 @@ function App() {
       {/* Main App - hidden with CSS when settings is shown */}
       <AppLayout>
         <div
-          className="flex flex-col h-dvh bg-sidebar"
+          className="h-full flex flex-col"
           style={{ display: showSettings ? 'none' : 'flex' }}
         >
           {/* Custom Title Bar */}
