@@ -165,7 +165,7 @@ function PanelSeparator({ className }: { className?: string }) {
         'before:absolute before:inset-y-0 before:w-0.5 before:left-0.75',
         'before:bg-transparent before:transition-colors',
         'before:mask-[linear-gradient(to_bottom,transparent,black_35%,black_65%,transparent)]',
-        'data-[separator=hover]:before:bg-[#93c5fd] data-[separator=active]:before:bg-[#3b82f6]',
+        'data-[separator=hover]:before:bg-primary/50 data-[separator=active]:before:bg-primary',
         className,
       )}
     />
