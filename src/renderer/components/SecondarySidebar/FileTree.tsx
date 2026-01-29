@@ -177,7 +177,7 @@ export function FileTree() {
     setSelectedKey(item.relPath);
     if (!item.isFolder) {
       console.log('OPEN FILE', item);
-      // TODO: open file api
+      request<any>('editor.open', { cwd, filePath: item.fullPath });
     }
   };
 

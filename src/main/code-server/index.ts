@@ -7,6 +7,8 @@ import {
 } from './download';
 import { overrideCodeServerSettings } from './settings';
 import { codeServerStarter } from './starter';
+import { installExtension } from './installer';
+import { bridgeServer } from './bridge';
 
 export class CodeServerStartError extends Error {
   constructor(
@@ -105,8 +107,17 @@ class CodeServerManager {
 
     // 3. Kill any existing process on the port
     killProcessOnPort(CODE_SERVER_PORT);
+    try {
+      // code server extension bridge server
+      await bridgeServer.start();
+      // preset extension  '/Users/congju/Desktop/proj/test/ncm/neovate-code-extension/neovate-code-extension-0.0.1.vsix',
+      await installExtension();
+    } catch (e) {
+      console.warn(`Extension Service failed`, e);
+    }
 
     try {
+      // start code server
       await codeServerStarter({
         port: CODE_SERVER_PORT,
         extDir: EXTENSIONS_DIR,

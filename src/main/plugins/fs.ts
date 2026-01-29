@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { minimatch } from 'minimatch';
 import type { Plugin } from '@neovate/code';
+import { bridgeServer } from '../code-server/bridge';
 
 export const fsPlugin: Plugin = {
   name: 'fs',
@@ -13,6 +14,18 @@ export const fsPlugin: Plugin = {
         return {
           success: true,
           data: { tree: getFileTree(data?.cwd) },
+        };
+      },
+      'editor.open': async (data: { cwd: string; filePath: string }) => {
+        /** TODO: 先放这里，后面看是不是提取到另一个插件中 */
+        const { cwd = '', filePath = '' } = data || {};
+        bridgeServer.send(
+          { operationType: 'editor.open', params: { filePath } },
+          cwd,
+        );
+        return {
+          success: true,
+          data: {},
         };
       },
     } as ReturnType<NonNullable<Plugin['nodeBridgeHandler']>>;
@@ -44,19 +57,22 @@ function getExcludePatterns(): string[] {
   return [...new Set(allPatterns)];
 }
 
-function getFileTree(root: string): FileTreeNode[] {
+function getFileTree(parent: string, root?: string): FileTreeNode[] {
   let includePatterns: string[] = [];
+  const actualRoot = root || parent;
 
   const excludePatterns = getExcludePatterns();
 
-  const dirFilePath = root;
+  const dirFilePath = parent;
   let tree: FileTreeNode[] = [];
   const files = fs.readdirSync(dirFilePath);
 
   files.forEach((file) => {
     const filePath = path.join(dirFilePath, file);
     const stats = fs.statSync(filePath);
-    const relativePath = path.relative(root, filePath);
+    const relativePath = path
+      .relative(actualRoot, filePath)
+      .replace(/\\/g, '/');
 
     const isExcluded = excludePatterns.some((pattern) =>
       minimatch(relativePath, pattern),
@@ -80,7 +96,7 @@ function getFileTree(root: string): FileTreeNode[] {
       if (!isIncluded) return;
       node.languageId = file.split('.').pop();
     } else {
-      node.children = getFileTree(filePath);
+      node.children = getFileTree(filePath, actualRoot);
     }
 
     if (node.isFolder && node.children?.length === 0) {
