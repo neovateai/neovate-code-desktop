@@ -1,18 +1,13 @@
 import {
-  CalendarIcon,
-  ClockIcon,
-  CloudIcon,
   Comment01Icon,
-  DatabaseIcon,
-  DeleteIcon,
   FolderIcon,
-  GitBranchIcon,
   HelpCircleIcon,
   InformationCircleIcon,
   PlusSignIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { Trash2 } from 'lucide-react';
 import { type MouseEvent, memo, useEffect, useState } from 'react';
 import type { RepoData } from '../client/types/entities';
 import { cn } from '../lib/utils';
@@ -56,15 +51,7 @@ import {
   AlertDialogTitle,
 } from './ui/alert-dialog';
 import { Button } from './ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogTitle,
-} from './ui/dialog';
+
 import {
   Empty,
   EmptyDescription,
@@ -104,7 +91,6 @@ export const RepoSidebar = ({
   const sessionProcessing = useStore((state) => state.sessionProcessing);
   const messages = useStore((state) => state.messages);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [selectedRepoForDialog, setSelectedRepoForDialog] =
     useState<RepoData | null>(null);
@@ -119,12 +105,7 @@ export const RepoSidebar = ({
 
   const handleRepoInfoClick = (repo: RepoData, e: MouseEvent) => {
     e.stopPropagation();
-    setAlertDialogOpen(false); // Ensure alert is closed
     setSelectedRepoForDialog(repo);
-    setDialogOpen(true);
-  };
-
-  const handleDeleteRepo = () => {
     setAlertDialogOpen(true);
   };
 
@@ -132,7 +113,6 @@ export const RepoSidebar = ({
     if (selectedRepoForDialog) {
       deleteRepo(selectedRepoForDialog.path);
       setAlertDialogOpen(false);
-      setDialogOpen(false);
       setSelectedRepoForDialog(null);
     }
   };
@@ -268,7 +248,7 @@ export const RepoSidebar = ({
           >
             {repos.map((repo) => (
               <AccordionItem key={repo.path} value={repo.path}>
-                <AccordionTrigger className="px-3 py-2">
+                <AccordionTrigger className="px-3 py-2 group">
                   <div className="flex items-center gap-2 flex-1">
                     <HugeiconsIcon
                       icon={FolderIcon}
@@ -277,14 +257,10 @@ export const RepoSidebar = ({
                     />
                     <span className="font-medium text-sm">{repo.name}</span>
                     <span
-                      className="ml-auto p-1 rounded"
+                      className="ml-auto p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => handleRepoInfoClick(repo, e)}
                     >
-                      <HugeiconsIcon
-                        icon={InformationCircleIcon}
-                        size={16}
-                        strokeWidth={1.5}
-                      />
+                      <Trash2 size={16} strokeWidth={1.5} />
                     </span>
                   </div>
                 </AccordionTrigger>
@@ -325,7 +301,7 @@ export const RepoSidebar = ({
                                 size={14}
                                 strokeWidth={1.5}
                               />
-                              <span className="text-xs font-medium">
+                              <span className="text-sm font-medium">
                                 New Chat
                               </span>
                             </button>
@@ -381,7 +357,7 @@ export const RepoSidebar = ({
                                     )}
                                     {isEditing ? (
                                       <input
-                                        className="flex-1 text-xs bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
+                                        className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
                                         value={editingValue}
                                         onChange={(e) =>
                                           setEditingValue(e.target.value)
@@ -407,11 +383,11 @@ export const RepoSidebar = ({
                                         onFocus={(e) => e.target.select()}
                                       />
                                     ) : (
-                                      <span className="flex-1 text-xs truncate">
+                                      <span className="flex-1 text-sm truncate">
                                         {displaySummary}
                                       </span>
                                     )}
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-sm text-muted-foreground">
                                       {formatRelativeTime(session.modified)}
                                     </span>
                                   </ContextMenuTrigger>
@@ -445,7 +421,7 @@ export const RepoSidebar = ({
                             {/* Show more/less toggle */}
                             {hiddenCount > 0 && (
                               <button
-                                className="px-3 py-1 text-xs cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                                className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleSessionGroupExpanded(expandKey);
@@ -472,73 +448,13 @@ export const RepoSidebar = ({
         <RepoSidebar.Footer />
       </div>
 
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setAlertDialogOpen(false);
-        }}
-      >
-        <DialogPopup>
-          <DialogHeader>
-            <DialogTitle>Repository Information</DialogTitle>
-            <DialogDescription>{selectedRepoForDialog?.name}</DialogDescription>
-          </DialogHeader>
-
-          <div className="px-6 space-y-3 text-sm">
-            <InfoRow
-              icon={FolderIcon}
-              label="Path"
-              value={selectedRepoForDialog?.path || ''}
-            />
-            <InfoRow
-              icon={GitBranchIcon}
-              label="Workspaces"
-              value={`${
-                selectedRepoForDialog?.workspaceIds.length || 0
-              } worktrees`}
-            />
-            <InfoRow
-              icon={CloudIcon}
-              label="Remote URL"
-              value="https://github.com/user/repo.git"
-            />
-            <InfoRow icon={ClockIcon} label="Last Commit" value="2 hours ago" />
-            <InfoRow
-              icon={DatabaseIcon}
-              label="Repository Size"
-              value="12.5 MB"
-            />
-            <InfoRow
-              icon={CalendarIcon}
-              label="Created"
-              value={new Date().toLocaleDateString()}
-            />
-          </div>
-
-          <DialogFooter>
-            <DialogClose>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteRepo}
-              className="gap-2"
-            >
-              <HugeiconsIcon icon={DeleteIcon} size={16} strokeWidth={1.5} />
-              Delete Repository
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </Dialog>
-
       <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
         <AlertDialogPopup>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Repository?</AlertDialogTitle>
+            <AlertDialogTitle>Remove Repository?</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedRepoForDialog &&
-                `This will permanently delete '${selectedRepoForDialog.name}' and its ${selectedRepoForDialog.workspaceIds.length} workspace(s). This action cannot be undone.`}
+                `This will remove '${selectedRepoForDialog.name}' from the sidebar. The repository and its workspaces will remain on disk.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -550,8 +466,8 @@ export const RepoSidebar = ({
               onClick={handleConfirmDelete}
               className="gap-2"
             >
-              <HugeiconsIcon icon={DeleteIcon} size={16} strokeWidth={1.5} />
-              Delete
+              <Trash2 size={16} strokeWidth={1.5} />
+              Remove
             </Button>
           </AlertDialogFooter>
         </AlertDialogPopup>
@@ -562,8 +478,8 @@ export const RepoSidebar = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{sessionToDelete?.summary}". This
-              action cannot be undone.
+              This will delete "{sessionToDelete?.summary}". This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -575,7 +491,7 @@ export const RepoSidebar = ({
               onClick={handleConfirmDeleteSession}
               className="gap-2"
             >
-              <HugeiconsIcon icon={DeleteIcon} size={16} strokeWidth={1.5} />
+              <Trash2 size={16} strokeWidth={1.5} />
               Delete
             </Button>
           </AlertDialogFooter>
@@ -584,33 +500,6 @@ export const RepoSidebar = ({
     </div>
   );
 };
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: any;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <HugeiconsIcon
-        icon={icon}
-        size={16}
-        strokeWidth={1.5}
-        className="text-muted-foreground mt-0.5"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="text-xs font-medium mb-0.5 text-muted-foreground">
-          {label}
-        </div>
-        <div className="text-sm break-all text-foreground">{value}</div>
-      </div>
-    </div>
-  );
-}
 
 RepoSidebar.Header = memo(function Header() {
   return null;
