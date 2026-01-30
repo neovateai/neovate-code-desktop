@@ -7,7 +7,7 @@
 import { defu } from 'defu';
 
 /**
- * Plugin definition: name + enforce + partial hooks implementation
+ * Plugin definition: name + enforce + partial hooks +  implementation
  */
 export type DefinePlugin<H> = {
   name: string;

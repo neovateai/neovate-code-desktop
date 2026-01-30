@@ -5,6 +5,8 @@ import { Button } from '../ui/button';
 import { useStore } from '../../store';
 import { Spinner } from '../ui/spinner';
 import { ipcMainCaller } from '../../lib/ipc';
+import { useRendererApp } from '../../core';
+import { localeOptions, type Locales } from '../../core/i18n';
 
 interface SettingsRowProps {
   title: string;
@@ -28,6 +30,7 @@ const SettingsRow = ({ title, description, children }: SettingsRowProps) => {
 
 export const PreferencesPanel = () => {
   const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false);
+  const app = useRendererApp();
 
   const globalConfig = useStore((state) => state.globalConfig);
   const isConfigLoading = useStore((state) => state.isConfigLoading);
@@ -35,6 +38,13 @@ export const PreferencesPanel = () => {
   const setDeveloperMode = useStore((state) => state.setDeveloperMode);
   const runOnStartup = useStore((state) => state.runOnStartup);
   const setRunOnStartup = useStore((state) => state.setRunOnStartup);
+  const uiLocale = useStore((state) => state.uiLocale);
+  const setUiLocale = useStore((state) => state.setUiLocale);
+
+  const handleLocaleChange = (locale: Locales) => {
+    setUiLocale(locale);
+    app.i18nManager.applyUILocale(locale);
+  };
 
   const handleSendFeedback = () => {
     window.electron?.openExternal(
@@ -73,6 +83,29 @@ export const PreferencesPanel = () => {
       </h1>
 
       <div className="space-y-0">
+        {/* Language */}
+        <SettingsRow
+          title="Language"
+          description="Choose your preferred language"
+        >
+          <select
+            value={uiLocale ?? 'en'}
+            onChange={(e) => handleLocaleChange(e.target.value as Locales)}
+            className="rounded-md border px-3 py-1.5 text-sm"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderColor: 'var(--border-subtle)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {localeOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </SettingsRow>
+
         {/* Feedback */}
         <SettingsRow
           title="Feedback"

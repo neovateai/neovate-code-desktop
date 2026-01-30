@@ -8,6 +8,7 @@ import type {
   SendMessageWith,
   KeybindingsConfig,
 } from './store/slices/desktopSettings';
+import type { Locales } from './core/i18n';
 import { DEFAULT_KEYBINDINGS } from './lib/keybindings';
 
 // Settings active tab type
@@ -46,6 +47,7 @@ interface PersistedState {
   developerMode: boolean;
   keybindings: KeybindingsConfig;
   runOnStartup: boolean;
+  uiLocale: Locales | null;
 }
 
 // Debounce helper
@@ -116,6 +118,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       developerMode: state.developerMode ?? false,
       keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
       runOnStartup: state.runOnStartup ?? false,
+      uiLocale: state.uiLocale ?? null,
     };
   };
 
@@ -188,6 +191,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       developerMode = false,
       keybindings = { ...DEFAULT_KEYBINDINGS },
       runOnStartup = false,
+      uiLocale = null,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -250,6 +254,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         developerMode,
         keybindings,
         runOnStartup,
+        uiLocale,
       },
       false,
     );

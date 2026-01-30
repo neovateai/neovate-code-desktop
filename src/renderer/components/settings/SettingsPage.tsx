@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { SettingsMenu } from './SettingsMenu';
 import { PreferencesPanel } from './PreferencesPanel';
 import { ProvidersPanel } from './ProvidersPanel';

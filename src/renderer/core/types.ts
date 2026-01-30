@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type { DefinePlugin } from './plugin-manager';
 import type { useStore } from '../store';
 import type { RendererApp } from './app';
+import type { LazyNamespaceConfig } from './i18n';
 
 /**
  * Plugin execution context with app instance
@@ -24,9 +25,17 @@ export interface RendererPluginHooks {
 }
 
 /**
+ * Plugin i18n configuration for lazy-loaded namespaces.
+ * Uses LazyNamespaceConfig from core i18n module.
+ */
+export type RendererPluginI18nConfig = LazyNamespaceConfig;
+
+/**
  * Renderer plugin type
  */
-export type RendererPlugin = DefinePlugin<RendererPluginHooks>;
+export type RendererPlugin = DefinePlugin<RendererPluginHooks> & {
+  i18n?: RendererPluginI18nConfig;
+};
 
 /**
  * Configuration for a window type

@@ -3,6 +3,7 @@ import {
   DEFAULT_KEYBINDINGS,
   type KeybindingAction,
 } from '../../lib/keybindings';
+import { type Locales } from '../../core/i18n';
 
 // Types
 export type ThemeValue = 'light' | 'dark' | 'system';
@@ -17,6 +18,7 @@ export interface DesktopSettingsSliceState {
   keybindings: KeybindingsConfig;
   developerMode: boolean;
   runOnStartup: boolean;
+  uiLocale: Locales | null; // null = auto-detect from system
 }
 
 export interface DesktopSettingsSliceActions {
@@ -28,6 +30,7 @@ export interface DesktopSettingsSliceActions {
   resetKeybindings: () => void;
   setDeveloperMode: (enabled: boolean) => void;
   setRunOnStartup: (enabled: boolean) => void;
+  setUiLocale: (locale: Locales | null) => void;
 }
 
 export type DesktopSettingsSlice = DesktopSettingsSliceState &
@@ -42,6 +45,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   keybindings: { ...DEFAULT_KEYBINDINGS },
   developerMode: false,
   runOnStartup: false,
+  uiLocale: null,
 };
 
 export const createDesktopSettingsSlice: StateCreator<
@@ -89,5 +93,9 @@ export const createDesktopSettingsSlice: StateCreator<
 
   setRunOnStartup: (runOnStartup: boolean) => {
     set({ runOnStartup });
+  },
+
+  setUiLocale: (uiLocale: Locales | null) => {
+    set({ uiLocale });
   },
 });
