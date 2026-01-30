@@ -314,7 +314,7 @@ function AddTabButton() {
       {isOpen && (
         <div
           ref={menuRef}
-          className="absolute top-full left-0 mt-1 py-1 rounded-md shadow-lg z-50 bg-muted border border-border min-w-[120px]"
+          className="absolute top-full left-0 mt-1 py-1 rounded-md shadow-lg z-50 bg-popover border border-border min-w-[120px]"
         >
           {TAB_TYPE_OPTIONS.map((option) => {
             const disabled = isTypeDisabled(option.type);
