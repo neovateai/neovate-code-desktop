@@ -1,3 +1,8 @@
 {
-  "test.hello": "Hello World"
+  "test.hello": "Hello World",
+  "settings.theme": "Theme",
+  "settings.theme.description": "Select your preferred color scheme",
+  "settings.theme.light": "Light",
+  "settings.theme.dark": "Dark",
+  "settings.theme.system": "System"
 }

@@ -7,8 +7,8 @@ import { DEFAULT_LOCALE, normalizeLocale, type Locales } from './locales';
 
 export type I18nStore = {
   getState: () => {
-    uiLocale: Locales | null;
-    setUiLocale: (locale: Locales) => void;
+    locale: Locales;
+    setLocale: (locale: Locales) => void;
   };
 };
 
@@ -40,7 +40,7 @@ export class I18nManager {
     const { store } = options;
 
     // Get saved locale from store if available
-    const savedLocale = store?.getState().uiLocale;
+    const savedLocale = store?.getState().locale;
 
     await this.instance.init({
       resources: {
@@ -66,10 +66,10 @@ export class I18nManager {
       },
     });
 
-    // If no preference was saved, save detected language to store
+    // If no preference was saved, save detected locale to store
     if (store && !savedLocale) {
-      const detectedLang = normalizeLocale(this.instance.language);
-      store.getState().setUiLocale(detectedLang);
+      const detectedLocale = normalizeLocale(this.instance.language);
+      store.getState().setLocale(detectedLocale);
     }
   }
 

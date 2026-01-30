@@ -1,11 +1,11 @@
 import { SettingsIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useTranslation } from 'react-i18next';
+import { useRendererApp } from '../../core';
+import { localeOptions, type Locales } from '../../core/i18n';
 import { ipcMainCaller } from '../../lib/ipc';
 import { useStore } from '../../store';
-import type {
-  LanguageValue,
-  ThemeValue,
-} from '../../store/slices/desktopSettings';
+import type { ThemeValue } from '../../store/slices/desktopSettings';
 import { Input } from '../ui/input';
 import { Spinner } from '../ui/spinner';
 import { Switch } from '../ui/switch';
@@ -13,6 +13,9 @@ import { ToggleOptions } from '../ui/toggle-options';
 import { SettingsRow } from './components/SettingRow';
 
 export const GeneralPanel = () => {
+  const { t } = useTranslation();
+  const app = useRendererApp();
+
   const theme = useStore((state) => state.theme);
   const setTheme = useStore((state) => state.setTheme);
   const terminalFontSize = useStore((state) => state.terminalFontSize);
@@ -26,12 +29,17 @@ export const GeneralPanel = () => {
   const setDeveloperMode = useStore((state) => state.setDeveloperMode);
   const runOnStartup = useStore((state) => state.runOnStartup);
   const setRunOnStartup = useStore((state) => state.setRunOnStartup);
-  const language = useStore((state) => state.language);
-  const setLanguage = useStore((state) => state.setLanguage);
+  const locale = useStore((state) => state.locale);
+  const setLocale = useStore((state) => state.setLocale);
 
   const handleThemeChange = (newTheme: ThemeValue) => {
     if (newTheme === theme) return;
     setTheme(newTheme);
+  };
+
+  const handleLocaleChange = (newLocale: Locales) => {
+    setLocale(newLocale);
+    app.i18nManager.applyUILocale(newLocale);
   };
 
   const handleRunOnStartupChange = async (enabled: boolean) => {
@@ -57,16 +65,16 @@ export const GeneralPanel = () => {
       <div className="space-y-0">
         {/* Theme */}
         <SettingsRow
-          title="Theme"
-          description="Select your preferred color scheme"
+          title={t('settings.theme')}
+          description={t('settings.theme.description')}
         >
           <ToggleOptions
             value={theme}
             onChange={handleThemeChange}
             options={[
-              { value: 'light', label: 'Light' },
-              { value: 'dark', label: 'Dark' },
-              { value: 'system', label: 'System' },
+              { value: 'light', label: t('settings.theme.light') },
+              { value: 'dark', label: t('settings.theme.dark') },
+              { value: 'system', label: t('settings.theme.system') },
             ]}
           />
         </SettingsRow>
@@ -114,9 +122,9 @@ export const GeneralPanel = () => {
           description="Select your preferred language for the interface"
         >
           <ToggleOptions
-            value={language}
-            onChange={setLanguage}
-            options={[{ value: 'en-US', label: 'English' }]}
+            value={locale}
+            onChange={handleLocaleChange}
+            options={localeOptions}
           />
         </SettingsRow>
 

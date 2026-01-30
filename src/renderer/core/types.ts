@@ -31,11 +31,19 @@ export interface RendererPluginHooks {
 export type RendererPluginI18nConfig = LazyNamespaceConfig;
 
 /**
+ * Renderer plugin config interface
+ */
+export interface RendererPluginConfig {
+  i18n?: RendererPluginI18nConfig;
+}
+
+/**
  * Renderer plugin type
  */
-export type RendererPlugin = DefinePlugin<RendererPluginHooks> & {
-  i18n?: RendererPluginI18nConfig;
-};
+export type RendererPlugin = DefinePlugin<
+  RendererPluginHooks,
+  RendererPluginConfig
+>;
 
 /**
  * Configuration for a window type

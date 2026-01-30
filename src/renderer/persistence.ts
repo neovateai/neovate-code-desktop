@@ -1,11 +1,11 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
-import { DEFAULT_LANGUAGE, PERSISTENCE_DEBOUNCE_MS } from './constants';
+import { DEFAULT_LOCALE, PERSISTENCE_DEBOUNCE_MS } from './constants';
+import type { Locales } from './core/i18n';
 import { DEFAULT_KEYBINDINGS } from './lib/keybindings';
 import { logger } from './lib/logger';
 import type {
   KeybindingsConfig,
-  LanguageValue,
   SendMessageWith,
   ThemeValue,
 } from './store/slices/desktopSettings';
@@ -47,7 +47,7 @@ interface PersistedState {
   developerMode: boolean;
   keybindings: KeybindingsConfig;
   runOnStartup: boolean;
-  language: LanguageValue;
+  locale: Locales;
 }
 
 // Debounce helper
@@ -118,7 +118,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       developerMode: state.developerMode ?? false,
       keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
       runOnStartup: state.runOnStartup ?? false,
-      language: state.language ?? DEFAULT_LANGUAGE,
+      locale: state.locale ?? DEFAULT_LOCALE,
     };
   };
 
@@ -189,7 +189,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       developerMode = false,
       keybindings = { ...DEFAULT_KEYBINDINGS },
       runOnStartup = false,
-      language = DEFAULT_LANGUAGE,
+      locale = DEFAULT_LOCALE,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -252,7 +252,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         developerMode,
         keybindings,
         runOnStartup,
-        language,
+        locale,
       },
       false,
     );

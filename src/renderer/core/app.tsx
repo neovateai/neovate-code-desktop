@@ -10,6 +10,7 @@ import { I18nManager } from './i18n/manager';
 import { PluginManager } from './plugin-manager';
 import type {
   RendererPlugin,
+  RendererPluginConfig,
   RendererPluginHooks,
   WindowConfig,
 } from './types';
@@ -34,7 +35,10 @@ export interface RendererAppOptions {
 
 export class RendererApp {
   private windows: WindowConfig[];
-  private pluginManager: PluginManager<RendererPluginHooks>;
+  private pluginManager: PluginManager<
+    RendererPluginHooks,
+    RendererPluginConfig
+  >;
   readonly i18nManager: I18nManager;
 
   constructor(options?: RendererAppOptions) {
@@ -47,9 +51,7 @@ export class RendererApp {
     const windowConfig = this.matchWindowBySearchParams();
 
     // Collect i18n configs from plugins (App collects, I18nManager consumes)
-    const lazyNamespaceConfigs = (
-      this.pluginManager.getPlugins() as readonly RendererPlugin[]
-    ).flatMap((plugin) => (plugin.i18n ? [plugin.i18n] : []));
+    const lazyNamespaceConfigs = this.pluginManager.collect('i18n');
 
     // Sub window: render matched component directly
     if (windowConfig) {
