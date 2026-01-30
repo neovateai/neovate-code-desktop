@@ -18,12 +18,14 @@ import {
 } from 'react';
 import { useInputHandlers } from '../../hooks/useInputHandlers';
 import type { SlashCommand } from '../../hooks/useSlashCommands';
+import { cn } from '../../lib/utils';
 import type {
   HandlerInput,
   HandlerMethod,
   HandlerOutput,
 } from '../../nodeBridge.types';
 import { useStore } from '../../store';
+import { ModelSelector } from '../ModelSelector';
 import {
   Button,
   InputGroup,
@@ -33,8 +35,6 @@ import {
   TooltipPopup,
   TooltipTrigger,
 } from '../ui';
-import { cn } from '../../lib/utils';
-import { ModelSelector } from '../ModelSelector';
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
 

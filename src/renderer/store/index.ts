@@ -1,65 +1,64 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { WebSocketTransport } from '../client/transport/WebSocketTransport';
 import { MessageBus } from '../client/messaging/MessageBus';
-import { countTokens } from '../lib/tokenUtils';
-import { logger } from '../lib/logger';
+import { WebSocketTransport } from '../client/transport/WebSocketTransport';
+import type { NormalizedMessage } from '../client/types/message';
 import { toastManager } from '../components/ui/toast';
 import {
   DEFAULT_WEBSOCKET_URL,
-  WEBSOCKET_RECONNECT_INTERVAL_MS,
-  WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
   FORK_MODAL_DELAY_MS,
+  WEBSOCKET_MAX_RECONNECT_INTERVAL_MS,
+  WEBSOCKET_RECONNECT_INTERVAL_MS,
 } from '../constants';
-import type { NormalizedMessage } from '../client/types/message';
+import { logger } from '../lib/logger';
+import { countTokens } from '../lib/tokenUtils';
 import type {
-  HandlerMethod,
   HandlerInput,
+  HandlerMethod,
   HandlerOutput,
 } from '../nodeBridge.types';
+import { localJSXCommands } from '../slash-commands';
 import {
+  type CommandEntry,
   isSlashCommand,
   parseSlashCommand,
-  type CommandEntry,
 } from '../slash-commands/types';
-import { localJSXCommands } from '../slash-commands';
-
-// Import slices
-import { createUISlice, type UISlice } from './slices/ui';
-import { createEntitiesSlice, type EntitiesSlice } from './slices/entities';
-import {
-  createSessionSlice,
-  type SessionSlice,
-  type PlanMode,
-  type ThinkingLevel,
-  type SessionProcessingState,
-  type SessionInputState,
-  defaultSessionInputState,
-  defaultSessionProcessingState,
-} from './slices/session';
-import { createConfigSlice, type ConfigSlice } from './slices/config';
-import {
-  createOnboardingSlice,
-  type OnboardingSlice,
-  type OnboardingStep,
-  defaultOnboardingState,
-} from './slices/onboarding';
+import { type ConfigSlice, createConfigSlice } from './slices/config';
 import {
   createDesktopSettingsSlice,
   type DesktopSettingsSlice,
   type DesktopSettingsSliceState,
 } from './slices/desktopSettings';
+import { createEntitiesSlice, type EntitiesSlice } from './slices/entities';
+import {
+  createOnboardingSlice,
+  defaultOnboardingState,
+  type OnboardingSlice,
+  type OnboardingStep,
+} from './slices/onboarding';
+import {
+  createSessionSlice,
+  defaultSessionInputState,
+  defaultSessionProcessingState,
+  type PlanMode,
+  type SessionInputState,
+  type SessionProcessingState,
+  type SessionSlice,
+  type ThinkingLevel,
+} from './slices/session';
+// Import slices
+import { createUISlice, type UISlice } from './slices/ui';
 
+export type { OnboardingStep } from './slices/onboarding';
 // Re-export types from slices
 export type {
-  PlanMode,
-  ThinkingLevel,
-  SessionProcessingState,
-  SessionInputState,
   InputMode,
+  PlanMode,
+  SessionInputState,
+  SessionProcessingState,
+  ThinkingLevel,
 } from './slices/session';
 export { defaultSessionInputState, getInputMode } from './slices/session';
-export type { OnboardingStep } from './slices/onboarding';
 
 // Connection state types
 interface ConnectionState {
@@ -77,20 +76,24 @@ interface ConnectionState {
   serverUrl: string | null;
 }
 
+export type SettingsMenuId =
+  | 'chat'
+  | 'rules'
+  | 'about'
+  | 'keybindings'
+  | 'providers'
+  | 'mcp'
+  | 'skills'
+  | 'general'
+  | 'preferences';
+
 // UI Selection state
 interface UISelectionState {
   selectedRepoPath: string | null;
   selectedWorkspaceId: string | null;
   selectedSessionId: string | null;
   showSettings: boolean;
-  settingsActiveTab:
-    | 'preferences'
-    | 'chat'
-    | 'appearance'
-    | 'keybindings'
-    | 'providers'
-    | 'mcp'
-    | 'skills';
+  settingsActiveTab: SettingsMenuId;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
@@ -132,16 +135,7 @@ interface CoreActions {
   selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
   setShowSettings: (show: boolean) => void;
-  setSettingsActiveTab: (
-    tab:
-      | 'preferences'
-      | 'chat'
-      | 'appearance'
-      | 'keybindings'
-      | 'providers'
-      | 'mcp'
-      | 'skills',
-  ) => void;
+  setSettingsActiveTab: (tab: SettingsMenuId) => void;
   setOpenRepoAccordions: (ids: string[]) => void;
   toggleSessionGroupExpanded: (workspaceId: string) => void;
   setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => void;
@@ -1028,10 +1022,10 @@ const useStore = create<Store>()(
 export { useStore };
 export type { Store, UISlice };
 
+export type { ConfigSliceState } from './slices/config';
 // Export state types for selectors
 export type { EntitiesSliceState } from './slices/entities';
 export type { SessionSliceState } from './slices/session';
-export type { ConfigSliceState } from './slices/config';
 
 // Combined state type for selectors
 export type StoreState = CoreState &

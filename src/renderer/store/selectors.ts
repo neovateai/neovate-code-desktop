@@ -1,4 +1,4 @@
-import { StoreState } from './index';
+import type { StoreState } from './index';
 
 // Computed selectors for the store
 export const getWorkspacesForRepo = (state: StoreState, repoPath: string) => {

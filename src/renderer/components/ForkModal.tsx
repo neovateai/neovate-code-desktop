@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { cn } from '@/lib/utils';
 import type { NormalizedMessage } from '../client/types/message';
 import { logger } from '../lib/logger';
 import {
   Dialog,
-  DialogPopup,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
 } from './ui/dialog';
-import { cn } from '@/lib/utils';
 
 interface ForkModalProps {
   open: boolean;

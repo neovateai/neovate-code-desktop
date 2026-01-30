@@ -1,12 +1,12 @@
-import { useMemo, useCallback, type ReactNode } from 'react';
-import Markdown from 'marked-react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { BrainIcon } from '@hugeicons/core-free-icons';
-import { cn } from '../../lib/utils';
+import { HugeiconsIcon } from '@hugeicons/react';
+import Markdown from 'marked-react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import type { NormalizedMessage } from '../../client/types/message';
+import { cn } from '../../lib/utils';
 import {
-  extractTextParts,
   extractReasoningParts,
+  extractTextParts,
   extractToolUseParts,
   pairToolsWithResults,
 } from './messageHelpers';

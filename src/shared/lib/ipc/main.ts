@@ -1,7 +1,8 @@
 // Main process IPC utilities for typesafe communication
 /** biome-ignore-all lint/suspicious/noExplicitAny: use any */
-import { ipcMain } from 'electron';
+
 import crypto from 'node:crypto';
+import { ipcMain } from 'electron';
 import type {
   AnyFunction,
   CreateMainHandlerFn,

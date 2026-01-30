@@ -1,8 +1,8 @@
 import { ComputerTerminal01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { cn } from '../../lib/utils';
 import type { NormalizedMessage } from '../../client/types/message';
-import { getMessageText, extractImageParts } from './messageHelpers';
+import { cn } from '../../lib/utils';
+import { extractImageParts, getMessageText } from './messageHelpers';
 
 interface UserMessageProps {
   message: NormalizedMessage;

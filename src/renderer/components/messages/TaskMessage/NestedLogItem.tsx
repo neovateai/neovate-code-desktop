@@ -1,6 +1,6 @@
 import { cn } from '../../../lib/utils';
 import type { LogItem } from './utils';
-import { truncate, formatToolArgs, extractResultText } from './utils';
+import { extractResultText, formatToolArgs, truncate } from './utils';
 
 interface NestedLogItemProps {
   item: LogItem;

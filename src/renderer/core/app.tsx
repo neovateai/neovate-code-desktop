@@ -1,4 +1,4 @@
-import { createContext, lazy, StrictMode, Suspense, useContext } from 'react';
+import { StrictMode, createContext, lazy, Suspense, useContext } from 'react';
 import ReactDOM from 'react-dom/client';
 import { ErrorBoundary } from 'react-error-boundary';
 import { I18nextProvider } from 'react-i18next';

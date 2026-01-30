@@ -3,14 +3,14 @@ import { createMainHandler } from '../../shared/lib/ipc/main';
 import { codeServerManager } from '../code-server';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
-import { updaterService } from '../updater';
 import {
-  saveTerminalState,
-  loadTerminalState,
   deleteTerminalState,
   getPtyCwd,
+  loadTerminalState,
   type PersistedTerminalState,
+  saveTerminalState,
 } from '../terminal-state';
+import { updaterService } from '../updater';
 
 export const ipcMainHandlers = {
   neovateServer: {
@@ -111,6 +111,10 @@ export const ipcMainHandlers = {
         });
       },
     ),
+
+    getVersion: createMainHandler<void, { version: string }>(async () => {
+      return { version: app.getVersion() };
+    }),
   },
 };
 

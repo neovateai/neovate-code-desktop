@@ -1,8 +1,8 @@
 import type { StateCreator } from 'zustand';
 import type {
   RepoData,
-  WorkspaceData,
   SessionData,
+  WorkspaceData,
 } from '../../client/types/entities';
 import type { NormalizedMessage } from '../../client/types/message';
 import { randomUUID } from '../../utils/uuid';

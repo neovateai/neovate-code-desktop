@@ -3,12 +3,12 @@ import {
   DEFAULT_KEYBINDINGS,
   type KeybindingAction,
 } from '../../lib/keybindings';
-import { type Locales } from '../../core/i18n';
 
 // Types
 export type ThemeValue = 'light' | 'dark' | 'system';
 export type SendMessageWith = 'enter' | 'cmdEnter';
 export type KeybindingsConfig = Record<KeybindingAction, string>;
+export type LanguageValue = 'en-US' | 'zh-CN';
 
 export interface DesktopSettingsSliceState {
   theme: ThemeValue;
@@ -18,7 +18,7 @@ export interface DesktopSettingsSliceState {
   keybindings: KeybindingsConfig;
   developerMode: boolean;
   runOnStartup: boolean;
-  uiLocale: Locales | null; // null = auto-detect from system
+  language: LanguageValue;
 }
 
 export interface DesktopSettingsSliceActions {
@@ -30,7 +30,7 @@ export interface DesktopSettingsSliceActions {
   resetKeybindings: () => void;
   setDeveloperMode: (enabled: boolean) => void;
   setRunOnStartup: (enabled: boolean) => void;
-  setUiLocale: (locale: Locales | null) => void;
+  setLanguage: (language: LanguageValue) => void;
 }
 
 export type DesktopSettingsSlice = DesktopSettingsSliceState &
@@ -45,7 +45,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   keybindings: { ...DEFAULT_KEYBINDINGS },
   developerMode: false,
   runOnStartup: false,
-  uiLocale: null,
+  language: 'en-US',
 };
 
 export const createDesktopSettingsSlice: StateCreator<
@@ -95,7 +95,7 @@ export const createDesktopSettingsSlice: StateCreator<
     set({ runOnStartup });
   },
 
-  setUiLocale: (uiLocale: Locales | null) => {
-    set({ uiLocale });
+  setLanguage: (language: LanguageValue) => {
+    set({ language });
   },
 });

@@ -1,13 +1,13 @@
 import { useStore } from '../../../store';
-import { Spinner } from '../../ui/spinner';
+import type { ThemeValue } from '../../../store/slices/desktopSettings';
 import {
   Select,
+  SelectItem,
+  SelectPopup,
   SelectTrigger,
   SelectValue,
-  SelectPopup,
-  SelectItem,
 } from '../../ui/select';
-import type { ThemeValue } from '../../../store/slices/desktopSettings';
+import { Spinner } from '../../ui/spinner';
 
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
 

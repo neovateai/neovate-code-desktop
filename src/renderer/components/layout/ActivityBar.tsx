@@ -1,15 +1,15 @@
-import { memo } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
+  ComputerTerminal01Icon,
   FolderIcon,
   GitBranchIcon,
-  ComputerTerminal01Icon,
 } from '@hugeicons/core-free-icons';
-import { useStore } from '../../store';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { memo } from 'react';
 import { cn } from '../../lib/utils';
+import { useStore } from '../../store';
+import type { SecondarySidebarTab } from '../../store/slices/ui';
 import { Button, Separator } from '../ui';
 import { useAppLayoutPanels } from './AppLayoutProvider';
-import type { SecondarySidebarTab } from '../../store/slices/ui';
 
 export const ActivityBar = function ActivityBar() {
   const {

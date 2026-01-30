@@ -1,15 +1,15 @@
+import type { SerializeAddon } from '@xterm/addon-serialize';
 import {
   createContext,
-  useContext,
-  useRef,
-  useMemo,
   type ReactNode,
+  useContext,
+  useMemo,
+  useRef,
 } from 'react';
-import { Terminal as XTerm } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import { SerializeAddon } from '@xterm/addon-serialize';
-import { useContentTabs, type UseContentTabsReturn } from './useContentTabs';
+import type { Terminal as XTerm } from 'xterm';
+import type { FitAddon } from 'xterm-addon-fit';
 import type { ContentTab } from './types';
+import { type UseContentTabsReturn, useContentTabs } from './useContentTabs';
 
 // Terminal runtime instance (not serialized)
 export interface TerminalInstance {
@@ -146,4 +146,4 @@ export function ContentPanelProvider({
 }
 
 // Re-export for convenience
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';

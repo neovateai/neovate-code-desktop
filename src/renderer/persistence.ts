@@ -1,15 +1,15 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
-import { PERSISTENCE_DEBOUNCE_MS } from './constants';
-import { logger } from './lib/logger';
-import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
-import type {
-  ThemeValue,
-  SendMessageWith,
-  KeybindingsConfig,
-} from './store/slices/desktopSettings';
-import type { Locales } from './core/i18n';
+import { DEFAULT_LANGUAGE, PERSISTENCE_DEBOUNCE_MS } from './constants';
 import { DEFAULT_KEYBINDINGS } from './lib/keybindings';
+import { logger } from './lib/logger';
+import type {
+  KeybindingsConfig,
+  LanguageValue,
+  SendMessageWith,
+  ThemeValue,
+} from './store/slices/desktopSettings';
+import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
 
 // Settings active tab type
 type SettingsActiveTab =
@@ -47,7 +47,7 @@ interface PersistedState {
   developerMode: boolean;
   keybindings: KeybindingsConfig;
   runOnStartup: boolean;
-  uiLocale: Locales | null;
+  language: LanguageValue;
 }
 
 // Debounce helper
@@ -118,7 +118,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       developerMode: state.developerMode ?? false,
       keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
       runOnStartup: state.runOnStartup ?? false,
-      uiLocale: state.uiLocale ?? null,
+      language: state.language ?? DEFAULT_LANGUAGE,
     };
   };
 
@@ -126,7 +126,6 @@ export function setupPersistence(store: StoreApi<any>): void {
   const debouncedSave = debounce(async () => {
     try {
       const persistableState = getPersistableState();
-      // @ts-ignore
       await window.electron.saveStore(persistableState);
     } catch (error) {
       console.error('Failed to save store:', error);
@@ -156,7 +155,6 @@ export function setupPersistence(store: StoreApi<any>): void {
  */
 export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
   try {
-    // @ts-ignore
     const persistedState = await window.electron.loadStore();
 
     // No persisted state - fresh start
@@ -191,13 +189,13 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       developerMode = false,
       keybindings = { ...DEFAULT_KEYBINDINGS },
       runOnStartup = false,
-      uiLocale = null,
+      language = DEFAULT_LANGUAGE,
     } = persistedState;
 
     // Validate selections exist in loaded entities
     let validatedRepoPath = selectedRepoPath;
     let validatedWorkspaceId = selectedWorkspaceId;
-    let validatedSessionId = selectedSessionId;
+    const validatedSessionId = selectedSessionId;
 
     // Check if selected repo exists
     if (validatedRepoPath && !repos[validatedRepoPath]) {
@@ -254,7 +252,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         developerMode,
         keybindings,
         runOnStartup,
-        uiLocale,
+        language,
       },
       false,
     );

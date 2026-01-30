@@ -1,10 +1,10 @@
 import type {
-  NormalizedMessage,
-  ToolUsePart,
-  ToolResultPart,
-  TextPart,
   ImagePart,
+  NormalizedMessage,
   ReasoningPart,
+  TextPart,
+  ToolResultPart,
+  ToolUsePart,
 } from '../../client/types/message';
 import type { SplitMessages, ToolPair } from './types';
 

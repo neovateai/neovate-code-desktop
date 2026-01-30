@@ -1,5 +1,13 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -24,6 +32,9 @@
       "recommended": true,
       "style": {
         "useNodejsImportProtocol": "off"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": "off"
       },
       "a11y": "off"
     }

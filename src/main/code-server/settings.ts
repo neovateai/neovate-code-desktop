@@ -34,6 +34,8 @@ const OVERRIDE_SETTINGS = {
   // 'editor.folding': false,
   /** 隐藏编辑器小地图 */
   'editor.minimap.enabled': false,
+  /** 自动主题 */
+  'window.autoDetectColorScheme': true,
   // 'workbench.editor.showTabs': 'multiple',
   // 'workbench.editor.editorActionsLocation': 'hidden',
   // 'breadcrumbs.enabled': false,

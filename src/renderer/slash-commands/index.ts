@@ -1,7 +1,7 @@
-import type { LocalJSXCommand } from './types';
 import { clearCommand } from './clear';
-import { resumeCommand } from './resume';
 import { loginCommand } from './login';
+import { resumeCommand } from './resume';
+import type { LocalJSXCommand } from './types';
 
 export const localJSXCommands: LocalJSXCommand[] = [
   clearCommand,

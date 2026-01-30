@@ -1,23 +1,15 @@
 import { useEffect } from 'react';
-import { SettingsMenu } from './SettingsMenu';
-import { PreferencesPanel } from './PreferencesPanel';
-import { ProvidersPanel } from './ProvidersPanel';
-import { MCPPanel } from './MCPPanel';
-import { AppearancePanel } from './AppearancePanel';
-import { ChatPanel } from './ChatPanel';
-import { SkillsPanel } from './SkillsPanel';
-import { KeybindingsPanel } from './KeybindingsPanel';
-import { useStore } from '../../store';
 import { matchesBinding } from '../../lib/keybindings';
-
-export type SettingsMenuId =
-  | 'preferences'
-  | 'chat'
-  | 'appearance'
-  | 'keybindings'
-  | 'providers'
-  | 'mcp'
-  | 'skills';
+import { useStore } from '../../store';
+import { AboutPanel } from './AboutPanel';
+import { ChatPanel } from './ChatPanel';
+import { GeneralPanel } from './GeneralPanel';
+import { KeybindingsPanel } from './KeybindingsPanel';
+import { MCPPanel } from './MCPPanel';
+import { ProvidersPanel } from './ProvidersPanel';
+import { RulesPanel } from './RulesPanel';
+import { SettingsMenu } from './SettingsMenu';
+import { SkillsPanel } from './SkillsPanel';
 
 export const SettingsPage = () => {
   const activeMenu = useStore((state) => state.settingsActiveTab);
@@ -53,13 +45,14 @@ export const SettingsPage = () => {
           }}
         />
         <div className=" px-8 pb-8">
-          {activeMenu === 'preferences' && <PreferencesPanel />}
           {activeMenu === 'chat' && <ChatPanel />}
-          {activeMenu === 'appearance' && <AppearancePanel />}
+          {activeMenu === 'rules' && <RulesPanel />}
+          {activeMenu === 'general' && <GeneralPanel />}
           {activeMenu === 'keybindings' && <KeybindingsPanel />}
           {activeMenu === 'providers' && <ProvidersPanel />}
           {activeMenu === 'mcp' && <MCPPanel />}
           {activeMenu === 'skills' && <SkillsPanel />}
+          {activeMenu === 'about' && <AboutPanel />}
         </div>
       </div>
     </div>

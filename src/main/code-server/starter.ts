@@ -22,10 +22,19 @@ export async function codeServerStarter(opts: {
       auth: 'none',
       'extensions-dir': extDir,
       'user-data-dir': dataDir,
+      'disable-update-check': true,
+      'disable-workspace-trust': true,
+      'disable-telemetry': true,
     };
+
     const mergedArgs = await setDefaults(functionArgs);
-    return wrapper.start(mergedArgs);
+    await wrapper.start(mergedArgs);
+    return await delay(1000); // FIXME: 插件关闭侧边栏有延迟，先这样处理，后面可能用魔改产物的方式强制屏蔽
   } catch (e) {
-    console.error(`Code Server Starter Failed: ${e}`);
+    console.log(`Code Server Starter Failed: ${e}`);
   }
+}
+
+function delay(ms: number = 1000): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

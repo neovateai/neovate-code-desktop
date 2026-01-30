@@ -1,5 +1,5 @@
-import { Message } from '../../components/messages/Message';
 import type { NormalizedMessage } from '../../client/types/message';
+import { Message } from '../../components/messages/Message';
 
 // Helper to generate UUIDs
 let uuidCounter = 0;

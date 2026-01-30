@@ -1,71 +1,21 @@
-import { HugeiconsIcon } from '@hugeicons/react';
 import { MessageIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { useStore } from '../../store';
+import type { SendMessageWith } from '../../store/slices/desktopSettings';
+import { ModelSelector } from '../ModelSelector';
 import {
   Select,
+  SelectItem,
+  SelectPopup,
   SelectTrigger,
   SelectValue,
-  SelectPopup,
-  SelectItem,
 } from '../ui/select';
-import { useStore } from '../../store';
-import { cn } from '../../lib/utils';
 import { Spinner } from '../ui/spinner';
-import { ModelSelector } from '../ModelSelector';
-import type { SendMessageWith } from '../../store/slices/desktopSettings';
+import { ToggleOptions } from '../ui/toggle-options';
+import { SettingsRow } from './components/SettingRow';
 
 type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
 type NotificationValue = 'off' | 'default' | string;
-
-interface SettingsRowProps {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}
-
-const SettingsRow = ({ title, description, children }: SettingsRowProps) => {
-  return (
-    <div className="flex items-center justify-between py-4 border-b border-border">
-      <div className="flex-1 pr-4">
-        <div className="text-sm font-medium text-foreground">{title}</div>
-        <div className="text-sm mt-0.5 text-muted-foreground">
-          {description}
-        </div>
-      </div>
-      <div className="flex-shrink-0">{children}</div>
-    </div>
-  );
-};
-
-interface ToggleOptionProps {
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-}
-
-const ToggleOption = ({
-  label,
-  isActive,
-  onClick,
-  disabled,
-}: ToggleOptionProps) => {
-  return (
-    <button
-      className={cn(
-        'px-3 py-1.5 text-sm font-medium rounded-md transition-colors border',
-        isActive
-          ? 'bg-background text-foreground border-border'
-          : 'bg-transparent text-muted-foreground border-transparent hover:bg-accent',
-        disabled && 'opacity-50 cursor-not-allowed',
-        !disabled && 'cursor-pointer',
-      )}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {label}
-    </button>
-  );
-};
 
 export const ChatPanel = () => {
   const globalConfig = useStore((state) => state.globalConfig);
@@ -161,7 +111,10 @@ export const ChatPanel = () => {
         </SettingsRow>
 
         {/* Language */}
-        <SettingsRow title="Language" description="Preferred response language">
+        <SettingsRow
+          title="Agent Language"
+          description="Preferred response language"
+        >
           <Select
             value={language}
             onValueChange={(val) => handleLanguageChange(val as string)}
@@ -250,18 +203,15 @@ export const ChatPanel = () => {
           title="Send Message"
           description="Keyboard shortcut to send messages"
         >
-          <div className="flex gap-1 p-1 rounded-lg bg-muted">
-            <ToggleOption
-              label="Enter"
-              isActive={sendMessageWith === 'enter'}
-              onClick={() => handleSendMessageWithChange('enter')}
-            />
-            <ToggleOption
-              label="⌘+Enter"
-              isActive={sendMessageWith === 'cmdEnter'}
-              onClick={() => handleSendMessageWithChange('cmdEnter')}
-            />
-          </div>
+          <ToggleOptions
+            value={sendMessageWith}
+            onChange={handleSendMessageWithChange}
+            options={[
+              { value: 'enter', label: 'Enter' },
+              { value: 'cmdEnter', label: '⌘+Enter' },
+            ]}
+            disabled={isConfigSaving}
+          />
         </SettingsRow>
       </div>
     </div>

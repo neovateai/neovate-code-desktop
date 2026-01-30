@@ -1,5 +1,4 @@
-import type { IPCMainHandlers } from '../../main/ipc';
-import type { IPCRendererHandlers } from '../../main/ipc';
+import type { IPCMainHandlers, IPCRendererHandlers } from '../../main/ipc';
 import {
   createMainCaller,
   createRendererHandler,

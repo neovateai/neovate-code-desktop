@@ -1,11 +1,11 @@
 import type {
-  ToolUsePart,
   ToolResultPart,
+  ToolUsePart,
 } from '../../../client/types/message';
 import { useStore } from '../../../store';
-import { TaskStarting } from './TaskStarting';
-import { TaskInProgress } from './TaskInProgress';
 import { TaskCompleted } from './TaskCompleted';
+import { TaskInProgress } from './TaskInProgress';
+import { TaskStarting } from './TaskStarting';
 
 interface TaskMessageProps {
   toolUse: ToolUsePart;
