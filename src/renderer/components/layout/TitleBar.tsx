@@ -1,4 +1,5 @@
 import {
+  ArrowDown01Icon,
   PanelLeftIcon,
   PanelRightIcon,
   PlusSignIcon,
@@ -9,6 +10,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useStore } from '../../store';
 import { AddRepoMenu } from '../AddRepoMenu';
+import { ProjectSelectorDropdown } from '../ProjectSelectorDropdown';
 import { Button } from '../ui/button';
 import { Separator as UISeparator } from '../ui/separator';
 import { useAppLayoutPanels } from './AppLayoutProvider';
@@ -21,6 +23,11 @@ export function TitleBar() {
     toggleSecondarySidebar,
   } = useAppLayoutPanels();
   const setShowSettings = useStore((s) => s.setShowSettings);
+  const multiProjectSupport = useStore((s) => s.multiProjectSupport);
+  const repos = useStore((s) => s.repos);
+  const selectedRepoPath = useStore((s) => s.selectedRepoPath);
+
+  const selectedRepo = selectedRepoPath ? repos[selectedRepoPath] : null;
 
   return (
     <>
@@ -41,14 +48,32 @@ export function TitleBar() {
           title={isPrimarySidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'}
         />
         <AddRepoMenu>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            title="Add repository"
-          >
-            <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} />
-          </Button>
+          {multiProjectSupport ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title="Add repository"
+            >
+              <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              className="h-8 px-2 text-sm font-medium"
+              title={selectedRepo ? selectedRepo.name : 'Select project'}
+            >
+              <span className="max-w-60 truncate">
+                {selectedRepo ? selectedRepo.name : 'No project'}
+              </span>
+              <HugeiconsIcon
+                icon={ArrowDown01Icon}
+                size={16}
+                strokeWidth={1.5}
+                className="ml-1"
+              />
+            </Button>
+          )}
         </AddRepoMenu>
       </div>
 

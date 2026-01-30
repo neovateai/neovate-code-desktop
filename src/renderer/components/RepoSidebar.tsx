@@ -60,17 +60,7 @@ import {
   EmptyTitle,
 } from './ui/empty';
 
-export const RepoSidebar = ({
-  repos,
-  selectedWorkspaceId,
-  onSelectWorkspace,
-}: {
-  repos: RepoData[];
-  selectedRepoPath: string | null;
-  selectedWorkspaceId: string | null;
-  onSelectRepo: (path: string | null) => void;
-  onSelectWorkspace: (id: string | null) => void;
-}) => {
+export const RepoSidebar = () => {
   const openRepos = useStore((state) => state.openRepoAccordions);
   const setOpenRepoAccordions = useStore(
     (state) => state.setOpenRepoAccordions,
@@ -90,6 +80,10 @@ export const RepoSidebar = ({
   );
   const sessionProcessing = useStore((state) => state.sessionProcessing);
   const messages = useStore((state) => state.messages);
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const repos = useStore((state) => state.repos);
+  const selectedRepoPath = useStore((state) => state.selectedRepoPath);
+  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
 
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [selectedRepoForDialog, setSelectedRepoForDialog] =
@@ -215,6 +209,8 @@ export const RepoSidebar = ({
     setSessionToDelete(null);
   };
 
+  const repoList = Object.values(repos);
+
   return (
     <div className="h-full flex flex-col">
       {/* <RepoSidebar.Header /> */}
@@ -223,7 +219,7 @@ export const RepoSidebar = ({
         className="flex-1 p-2 pt-0 **:data-[slot=scroll-area-scrollbar]:hidden"
         scrollFade
       >
-        {repos.length === 0 ? (
+        {repoList.length === 0 ? (
           <Empty>
             <EmptyMedia variant="icon">
               <HugeiconsIcon
@@ -246,34 +242,40 @@ export const RepoSidebar = ({
             onValueChange={setOpenRepoAccordions}
             multiple
           >
-            {repos.map((repo) => (
+            {(multiProjectSupport
+              ? repoList
+              : repoList.filter((repo) => repo.path === selectedRepoPath)
+            ).map((repo) => (
               <AccordionItem key={repo.path} value={repo.path}>
-                <AccordionTrigger className="px-3 py-2 group">
-                  <div className="flex items-center gap-2 flex-1">
-                    <HugeiconsIcon
-                      icon={FolderIcon}
-                      size={18}
-                      strokeWidth={1.5}
-                    />
-                    <span className="font-medium text-sm">{repo.name}</span>
-                    <span
-                      className="ml-auto p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => handleRepoInfoClick(repo, e)}
-                    >
-                      <Trash2 size={16} strokeWidth={1.5} />
-                    </span>
-                  </div>
-                </AccordionTrigger>
+                {multiProjectSupport && (
+                  <AccordionTrigger className="px-3 py-2 group">
+                    <div className="flex items-center gap-2 flex-1">
+                      <HugeiconsIcon
+                        icon={FolderIcon}
+                        size={18}
+                        strokeWidth={1.5}
+                      />
+                      <span className="font-medium text-sm">{repo.name}</span>
+                      <span
+                        className="ml-auto p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => handleRepoInfoClick(repo, e)}
+                      >
+                        <Trash2 size={16} strokeWidth={1.5} />
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                )}
 
-                <AccordionPanel>
+                <AccordionPanel className={!multiProjectSupport ? 'pt-0' : ''}>
                   <div className="space-y-1">
-                    {repo.workspaceIds.slice(0, 1).map((workspaceId) => {
+                    {repo.workspaceIds.map((workspaceId) => {
                       const workspace = workspaces[workspaceId];
                       if (!workspace) return null;
 
                       // Get sessions for this workspace, sorted by modified (newest first)
                       const workspaceSessions = (sessions[workspaceId] || [])
                         .slice()
+                        .filter((item) => item.messageCount > 0)
                         .sort((a, b) => b.modified - a.modified);
                       const expandKey = `${workspaceId}`;
                       const isExpanded = expandedSessions[expandKey] ?? false;
@@ -288,33 +290,51 @@ export const RepoSidebar = ({
                           {/* Session list */}
                           <div>
                             {/* Create session button */}
-                            <button
-                              className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left text-muted-foreground hover:bg-accent hover:text-foreground"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                selectWorkspace(workspaceId);
-                                createOrSelectEmptySession(workspaceId);
-                              }}
-                            >
-                              <HugeiconsIcon
-                                icon={PlusSignIcon}
-                                size={14}
-                                strokeWidth={1.5}
-                              />
-                              <span className="text-sm font-medium">
-                                New Chat
-                              </span>
-                            </button>
+                            {multiProjectSupport ? (
+                              <button
+                                className={cn(
+                                  'flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left mb-1 text-muted-foreground hover:bg-accent hover:text-foreground',
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  selectWorkspace(workspaceId);
+                                  createOrSelectEmptySession(workspaceId);
+                                }}
+                              >
+                                <HugeiconsIcon
+                                  icon={PlusSignIcon}
+                                  size={14}
+                                  strokeWidth={1.5}
+                                />
+                                <span className="text-sm">New Chat</span>
+                              </button>
+                            ) : (
+                              <Button
+                                className="mb-3 mt-2 w-full"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  selectWorkspace(workspaceId);
+                                  createOrSelectEmptySession(workspaceId);
+                                }}
+                              >
+                                <HugeiconsIcon
+                                  icon={PlusSignIcon}
+                                  size={14}
+                                  strokeWidth={1.5}
+                                />
+                                <span>New Chat</span>
+                              </Button>
+                            )}
 
                             {visibleSessions.map((session) => {
                               const isSessionSelected =
                                 selectedSessionId === session.sessionId;
                               const isEditing =
                                 editingSessionId === session.sessionId;
-                              const displaySummary =
-                                session.summary && session.summary.length > 20
-                                  ? `${session.summary.slice(0, 20)}…`
-                                  : session.summary || 'New Chat';
+                              const displaySummary = session.summary
+                                ? session.summary
+                                : 'New Chat';
 
                               const processing = sessionProcessing[
                                 session.sessionId
@@ -328,7 +348,7 @@ export const RepoSidebar = ({
                                 <ContextMenu key={session.sessionId}>
                                   <ContextMenuTrigger
                                     className={cn(
-                                      'flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors',
+                                      'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors',
                                       isSessionSelected
                                         ? 'bg-accent text-foreground'
                                         : 'text-muted-foreground hover:bg-accent hover:text-foreground',
