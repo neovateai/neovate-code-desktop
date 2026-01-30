@@ -58,7 +58,7 @@ export const ModelSelector = ({
   const [currentModel, setCurrentModel] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
 
-  const itemRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+  const itemRefs = useRef<Map<number, HTMLElement>>(new Map());
 
   // Fetch current model based on type with fallback chain: session -> project -> global
   const fetchCurrentModel = useCallback(async () => {
@@ -119,6 +119,7 @@ export const ModelSelector = ({
     setIsLoading(true);
     try {
       const res = await request('models.list', { cwd: cwd || '/tmp' });
+      console.log('models.list', res);
       if (res.data?.groupedModels) {
         setGroupedModels(res.data.groupedModels);
       }
@@ -349,7 +350,7 @@ export const ModelSelector = ({
                     const isFocused = focusedIndex === flatIndex;
 
                     return (
-                      <button
+                      <div
                         key={model.value}
                         ref={(el) => {
                           if (el) {
@@ -358,7 +359,6 @@ export const ModelSelector = ({
                             itemRefs.current.delete(flatIndex);
                           }
                         }}
-                        type="button"
                         onClick={() => handleSelectModel(model.value)}
                         onMouseEnter={() => setFocusedIndex(flatIndex)}
                         className={cn(
@@ -372,7 +372,7 @@ export const ModelSelector = ({
                         <span className="truncate">
                           {model.name || model.modelId}
                         </span>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
