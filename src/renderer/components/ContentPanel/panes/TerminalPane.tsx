@@ -271,24 +271,12 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
 
   // Initialize terminal
   useEffect(() => {
-    logger.debug(
-      '[ContentPanel:TerminalPane] Init effect - isActive:',
-      isActive,
-      'tabId:',
-      tab.id,
-      'hasContainer:',
-      !!containerRef.current,
-    );
-
     if (!isActive || !containerRef.current) {
       return;
     }
 
     // If already initialized, just fit and focus
     if (initializedRef.current && terminalInstances.has(tab.id)) {
-      logger.debug(
-        '[ContentPanel:TerminalPane] Already initialized, fitting and focusing',
-      );
       const instance = terminalInstances.get(tab.id);
       instance?.fitAddon.fit();
       instance?.xterm.focus();
@@ -297,30 +285,33 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
 
     const container = containerRef.current;
     let disposed = false;
-    let mountTimeout: ReturnType<typeof setTimeout> | null = null;
+    let dimensionObserver: ResizeObserver | null = null;
 
     const initialize = async () => {
       if (disposed) return;
 
-      // Wait for container to have dimensions
+      // Wait for container to have dimensions via ResizeObserver
       if (container.clientWidth === 0 || container.clientHeight === 0) {
-        logger.debug(
-          '[ContentPanel:TerminalPane] Container has no dimensions, waiting...',
-        );
-        mountTimeout = setTimeout(initialize, 50);
+        dimensionObserver = new ResizeObserver((entries) => {
+          const entry = entries[0];
+          if (
+            entry &&
+            entry.contentRect.width > 0 &&
+            entry.contentRect.height > 0
+          ) {
+            dimensionObserver?.disconnect();
+            dimensionObserver = null;
+            if (!disposed) {
+              initialize();
+            }
+          }
+        });
+        dimensionObserver.observe(container);
         return;
       }
 
-      logger.debug(
-        '[ContentPanel:TerminalPane] Container dimensions:',
-        container.clientWidth,
-        'x',
-        container.clientHeight,
-      );
-
       try {
         const { xterm, fitAddon, serializeAddon } = createXTermInstance(isDark);
-        logger.debug('[ContentPanel:TerminalPane] XTerm instance created');
 
         xterm.open(container);
         fitAddon.fit();
@@ -490,6 +481,33 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
 
         initializedRef.current = true;
 
+        // Set up ResizeObserver for panel resize handling
+        let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+        const resizeObserver = new ResizeObserver(() => {
+          if (resizeTimeout) clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            if (container.clientWidth > 0 && container.clientHeight > 0) {
+              fitAddon.fit();
+              if (instance.ptyId && xterm.cols > 0 && xterm.rows > 0) {
+                ipcMainCaller.terminal.resize({
+                  ptyId: instance.ptyId,
+                  cols: xterm.cols,
+                  rows: xterm.rows,
+                });
+              }
+            }
+          }, 50);
+        });
+        resizeObserver.observe(container);
+
+        // Store cleanup for ResizeObserver
+        const originalCleanup = instance.cleanup;
+        instance.cleanup = () => {
+          if (resizeTimeout) clearTimeout(resizeTimeout);
+          resizeObserver.disconnect();
+          originalCleanup?.();
+        };
+
         // Start cooldown timer - don't save until after initial PTY output
         saveAllowedRef.current = false;
         setTimeout(() => {
@@ -515,7 +533,7 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
 
     return () => {
       disposed = true;
-      if (mountTimeout) clearTimeout(mountTimeout);
+      if (dimensionObserver) dimensionObserver.disconnect();
     };
   }, [
     isActive,
@@ -527,45 +545,6 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
     scheduleSave,
     saveTerminalState,
   ]);
-
-  // Handle resize
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const instance = terminalInstances.get(tab.id);
-    if (!instance?.xterm || !instance?.fitAddon) return;
-
-    const container = containerRef.current;
-    const { xterm, fitAddon } = instance;
-
-    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-    const resizeObserver = new ResizeObserver(() => {
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        if (
-          initializedRef.current &&
-          container.clientWidth > 0 &&
-          container.clientHeight > 0
-        ) {
-          fitAddon.fit();
-          if (instance.ptyId && xterm.cols > 0 && xterm.rows > 0) {
-            ipcMainCaller.terminal.resize({
-              ptyId: instance.ptyId,
-              cols: xterm.cols,
-              rows: xterm.rows,
-            });
-          }
-        }
-      }, 50);
-    });
-
-    resizeObserver.observe(container);
-
-    return () => {
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-      resizeObserver.disconnect();
-    };
-  }, [tab.id, terminalInstances]);
 
   // Save state on tab switch (when becoming inactive)
   useEffect(() => {
