@@ -149,11 +149,15 @@ async function main(): Promise<void> {
   }
 
   if (args.dryRun) {
-    console.log(`\nTotal: ${totalChanges} imports in ${changedFiles.length} files`);
+    console.log(
+      `\nTotal: ${totalChanges} imports in ${changedFiles.length} files`,
+    );
     console.log('\nRun without --dry-run to apply changes.');
   } else {
     await project.save();
-    console.log(`Refactored ${totalChanges} imports in ${changedFiles.length} files:`);
+    console.log(
+      `Refactored ${totalChanges} imports in ${changedFiles.length} files:`,
+    );
     changedFiles.forEach((f) => console.log(`  - ${f}`));
   }
 }
