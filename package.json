@@ -105,5 +105,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css}": "biome format --write"
+  },
+  "optionalDependencies": {
+    "@biomejs/cli-linux-x64": "2.3.13"
   }
 }
