@@ -1,7 +1,7 @@
 import { HelpCircleIcon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
-import { ipcMainCaller } from '@/lib/ipc';
+import { ipcMainCaller } from '../../lib/ipc';
 import type { UpdaterState } from '../../../shared/types/updater';
 import { Button } from '../ui/button';
 import { Spinner } from '../ui/spinner';

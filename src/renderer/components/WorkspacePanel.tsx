@@ -8,14 +8,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from './ui/button';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
+} from './ui/empty';
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';

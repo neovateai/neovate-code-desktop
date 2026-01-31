@@ -2,7 +2,7 @@ import { ChevronRight, FolderIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
 
-import { useStore } from '@/store';
+import { useStore } from '../../store';
 
 import './index.css';
 
