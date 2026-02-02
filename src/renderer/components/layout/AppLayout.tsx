@@ -1,3 +1,4 @@
+import { cn } from '../../lib/utils';
 import type { ReactNode } from 'react';
 import {
   Group,
@@ -5,7 +6,6 @@ import {
   Separator,
   useDefaultLayout,
 } from 'react-resizable-panels';
-import { cn } from '@/lib/utils';
 import {
   CHAT_PANEL_MIN_SIZE,
   CONTENT_PANEL_MIN_SIZE,

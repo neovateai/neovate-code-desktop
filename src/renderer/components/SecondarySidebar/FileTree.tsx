@@ -2,7 +2,7 @@ import { ChevronRight, FolderIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
 
-import { useStore } from '@/store';
+import { useStore } from '../../store';
 
 import './index.css';
 
@@ -104,7 +104,7 @@ function TreeNode({
           <FileLangIcon path={item.fullPath} />
         )}
 
-        <span className="truncate text-foreground ml-1">
+        <span className="truncate text-foreground ml-1" title={item.fullPath}>
           {filename}
           {item.editStatus === 'rename' && (
             <span className="ml-1 text-xs text-muted-foreground">
@@ -139,6 +139,7 @@ export function FileTree() {
   const [treeData, setTreeData] = useState<IFileTreeItem[]>([]);
 
   const { request } = useStore();
+  const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
 
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
@@ -177,7 +178,11 @@ export function FileTree() {
     setSelectedKey(item.relPath);
     if (!item.isFolder) {
       console.log('OPEN FILE', item);
-      request<any>('editor.open', { cwd, filePath: item.fullPath });
+      setPendingTabRequest({
+        uri: item.fullPath,
+        repoPath: cwd || '',
+        type: 'editor',
+      });
     }
   };
 

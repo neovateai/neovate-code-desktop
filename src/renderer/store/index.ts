@@ -96,6 +96,14 @@ interface UISelectionState {
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
   isTestComponentVisible: boolean;
+  /** 用于控制tab激活行为, Tabs 消费使用 */
+  pendingTabRequest: {
+    uri: string;
+    repoPath: string;
+    type: 'editor' | 'browser';
+  } | null;
+  /** tab 激活后的子uri行为 */
+  pendingTabUri: { type: 'editor' | 'browser'; uri: string } | null;
 }
 
 // Fork modal state
@@ -139,6 +147,11 @@ interface CoreActions {
   toggleSessionGroupExpanded: (workspaceId: string) => void;
   setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => void;
   setTestComponentVisible: (visible: boolean) => void;
+  setPendingTabRequest: (opts: {
+    type: 'editor' | 'browser';
+    repoPath: string;
+    uri: string;
+  }) => void;
 
   // Session control actions
   updateSessions: (workspaceId: string) => Promise<void>;
@@ -187,6 +200,8 @@ const useStore = create<Store>()((set, get, api) => ({
   openRepoAccordions: [],
   expandedSessionGroups: {},
   isTestComponentVisible: false,
+  pendingTabRequest: null,
+  pendingTabUri: null,
 
   // Initial fork modal state
   forkModalVisible: false,
@@ -795,6 +810,16 @@ const useStore = create<Store>()((set, get, api) => ({
 
   setTestComponentVisible: (visible: boolean) => {
     set({ isTestComponentVisible: visible });
+  },
+
+  setPendingTabRequest: (opts: {
+    uri: string;
+    repoPath: string;
+    type: 'editor' | 'browser';
+  }) => {
+    set({
+      pendingTabRequest: opts,
+    });
   },
 
   updateSessions: async (workspaceId: string) => {

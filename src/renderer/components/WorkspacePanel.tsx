@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyDescription,
@@ -29,6 +28,7 @@ import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
 import { splitMessages } from './messages/messageHelpers';
+import { Button } from './ui/button';
 
 // Define the context type
 interface WorkspaceContextType {

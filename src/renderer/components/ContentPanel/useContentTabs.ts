@@ -97,7 +97,14 @@ export function useContentTabs({
       return persisted;
     }
     const defaultTab = createDefaultTerminalTab();
-    return { tabs: [defaultTab], activeTabId: defaultTab.id };
+    const editorTab = {
+      id: generateTabId(),
+      type: 'editor' as const,
+      name: 'Editor',
+      filePath: '',
+      isDirty: false,
+    };
+    return { tabs: [defaultTab, editorTab], activeTabId: defaultTab.id };
   });
 
   const { tabs, activeTabId } = state;
