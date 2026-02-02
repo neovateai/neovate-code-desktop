@@ -6,18 +6,16 @@ import { Popover, PopoverPopup, PopoverTrigger } from './ui/popover';
 import { ScrollArea } from './ui/scroll-area';
 import { Spinner } from './ui/spinner';
 
-interface GroupedModel {
-  provider: string;
-  providerId: string;
-  models: Array<{ name: string; modelId: string; value: string }>;
-}
-
-interface FlatModel {
+interface Model {
   name: string;
   modelId: string;
   value: string;
+}
+
+interface GroupedModel {
   provider: string;
   providerId: string;
+  models: Model[];
 }
 
 interface Provider {
@@ -28,23 +26,22 @@ interface Provider {
 }
 
 interface ModelSelectorProps {
-  /** Scope of the model configuration */
   type: 'global' | 'project' | 'session';
-
-  /** Config key to read/write - defaults to 'model' */
   configKey?: 'model' | 'smallModel';
-
-  /** Working directory - required for project/session types */
   cwd?: string;
-
-  /** Session ID - required for session type */
   sessionId?: string;
-
-  /** Optional: disable the selector */
   disabled?: boolean;
-
-  /** Optional: callback when model changes */
   onModelChange?: (model: string) => void;
+}
+
+interface ModelItemProps {
+  model: Model;
+  providerId: string;
+  isSelected: boolean;
+  isFocused: boolean;
+  onSelect: (value: string) => void;
+  onFocus: () => void;
+  itemRef: (el: HTMLElement | null) => void;
 }
 
 const isProviderActive = (provider: Provider): boolean => {
@@ -52,6 +49,30 @@ const isProviderActive = (provider: Provider): boolean => {
     provider.hasApiKey || (provider.validEnvs && provider.validEnvs.length > 0)
   );
 };
+
+const ModelItem = ({
+  model,
+  isSelected,
+  isFocused,
+  onSelect,
+  onFocus,
+  itemRef,
+}: ModelItemProps) => (
+  <div
+    ref={itemRef}
+    onClick={() => onSelect(model.value)}
+    onMouseEnter={onFocus}
+    className={cn(
+      'flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors text-foreground',
+      (isFocused || isSelected) && 'bg-accent',
+    )}
+  >
+    <span className="w-4 flex-shrink-0 text-foreground">
+      {isSelected && <CheckIcon size={14} />}
+    </span>
+    <span className="truncate">{model.name || model.modelId}</span>
+  </div>
+);
 
 export const ModelSelector = ({
   type,
@@ -78,8 +99,6 @@ export const ModelSelector = ({
   const fetchCurrentModel = useCallback(async () => {
     if (state !== 'connected') return;
 
-    const LOG_PREFIX = '[ModelSelector]';
-
     const getGlobalConfig = () =>
       request('config.get', {
         cwd: cwd || '/tmp',
@@ -105,18 +124,14 @@ export const ModelSelector = ({
 
       for (const fetcher of fetchers) {
         const res = await fetcher();
-        const value = res?.data?.value;
-        console.log(LOG_PREFIX, `${type} fetching, got:`, value);
-
-        if (value) {
-          setCurrentModel(value);
+        if (res?.data?.value) {
+          setCurrentModel(res.data.value);
           return;
         }
       }
-
       setCurrentModel(null);
     } catch (error) {
-      console.error(LOG_PREFIX, 'Failed to fetch current model:', error);
+      console.error('[ModelSelector] Failed to fetch current model:', error);
     }
   }, [state, type, configKey, cwd, sessionId, request]);
 
@@ -189,7 +204,6 @@ export const ModelSelector = ({
             value: modelValue,
           });
         }
-
         setCurrentModel(modelValue);
         onModelChange?.(modelValue);
       } catch (error) {
@@ -207,94 +221,78 @@ export const ModelSelector = ({
     [saveModel],
   );
 
-  const activeProviderIds = useMemo(() => {
-    return new Set(providers.filter(isProviderActive).map((p) => p.id));
-  }, [providers]);
-
-  const activeGroupedModels = useMemo(() => {
-    return groupedModels.filter((group) =>
-      activeProviderIds.has(group.providerId),
+  const { displayGroups, flatModels, modelKeyToIndex } = useMemo(() => {
+    const activeIds = new Set(
+      providers.filter(isProviderActive).map((p) => p.id),
     );
-  }, [groupedModels, activeProviderIds]);
+    const activeGroups = groupedModels.filter((g) =>
+      activeIds.has(g.providerId),
+    );
 
-  const allAvailableModels = useMemo(() => {
-    const modelMap = new Map<
-      string,
-      { name: string; modelId: string; value: string; providerName: string }
-    >();
-    for (const group of activeGroupedModels) {
+    const modelLookup = new Map<string, Model & { providerName: string }>();
+    for (const group of activeGroups) {
       for (const model of group.models) {
-        modelMap.set(model.value, { ...model, providerName: group.provider });
+        modelLookup.set(model.value, {
+          ...model,
+          providerName: group.provider,
+        });
       }
     }
-    return modelMap;
-  }, [activeGroupedModels]);
 
-  const recentGroup = useMemo<GroupedModel | null>(() => {
     const recentValidModels = recentModels
       .map((value) => {
-        const model = allAvailableModels.get(value);
+        const model = modelLookup.get(value);
         if (!model) return null;
         return {
           ...model,
           name: `${model.providerName} / ${model.name || model.modelId}`,
         };
       })
-      .filter(
-        (
-          m,
-        ): m is {
-          name: string;
-          modelId: string;
-          value: string;
-          providerName: string;
-        } => !!m,
-      );
+      .filter((m): m is Model => !!m);
 
-    if (recentValidModels.length === 0) return null;
+    const recentGroup: GroupedModel | null =
+      recentValidModels.length > 0
+        ? {
+            provider: 'Recent',
+            providerId: '__recent__',
+            models: recentValidModels,
+          }
+        : null;
+
+    let groups = recentGroup ? [recentGroup, ...activeGroups] : activeGroups;
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      groups = groups
+        .map((group) => ({
+          ...group,
+          models: group.models.filter((model) => {
+            const name = model.name || model.modelId;
+            return (
+              name.toLowerCase().includes(query) ||
+              model.modelId.toLowerCase().includes(query) ||
+              model.value.toLowerCase().includes(query)
+            );
+          }),
+        }))
+        .filter((group) => group.models.length > 0);
+    }
+
+    const flat = groups.flatMap((group) =>
+      group.models.map((model) => ({ ...model, providerId: group.providerId })),
+    );
+
+    const keyToIndex = new Map<string, number>();
+    flat.forEach((model, index) => {
+      keyToIndex.set(`${model.providerId}-${model.value}`, index);
+    });
 
     return {
-      provider: 'Recent',
-      providerId: '__recent__',
-      models: recentValidModels,
+      displayGroups: groups,
+      flatModels: flat,
+      modelKeyToIndex: keyToIndex,
     };
-  }, [recentModels, allAvailableModels]);
-
-  const displayGroups = useMemo(() => {
-    const groups = recentGroup
-      ? [recentGroup, ...activeGroupedModels]
-      : activeGroupedModels;
-    return groups;
-  }, [recentGroup, activeGroupedModels]);
-
-  const filteredModels = useMemo(() => {
-    if (!searchQuery.trim()) return displayGroups;
-
-    const query = searchQuery.toLowerCase();
-    return displayGroups
-      .map((group) => ({
-        ...group,
-        models: group.models.filter((model) => {
-          const name = model.name || model.modelId;
-          return (
-            name.toLowerCase().includes(query) ||
-            model.modelId.toLowerCase().includes(query) ||
-            model.value.toLowerCase().includes(query)
-          );
-        }),
-      }))
-      .filter((group) => group.models.length > 0);
-  }, [displayGroups, searchQuery]);
-
-  const flatModels = useMemo<FlatModel[]>(() => {
-    return filteredModels.flatMap((group) =>
-      group.models.map((model) => ({
-        ...model,
-        provider: group.provider,
-        providerId: group.providerId,
-      })),
-    );
-  }, [filteredModels]);
+  }, [providers, groupedModels, recentModels, searchQuery]);
 
   useEffect(() => {
     setFocusedIndex(-1);
@@ -302,8 +300,7 @@ export const ModelSelector = ({
 
   useEffect(() => {
     if (focusedIndex >= 0) {
-      const element = itemRefs.current.get(focusedIndex);
-      element?.scrollIntoView({ block: 'nearest' });
+      itemRefs.current.get(focusedIndex)?.scrollIntoView({ block: 'nearest' });
     }
   }, [focusedIndex]);
 
@@ -338,24 +335,13 @@ export const ModelSelector = ({
     [flatModels, focusedIndex, handleSelectModel],
   );
 
-  const modelKeyToIndex = useMemo(() => {
-    const map = new Map<string, number>();
-    flatModels.forEach((model, index) => {
-      const key = `${model.providerId}-${model.value}`;
-      map.set(key, index);
-    });
-    return map;
-  }, [flatModels]);
-
-  const displayText = currentModel || 'Select model...';
-
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         disabled={disabled}
         className="inline-flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent bg-muted border border-border text-foreground min-w-48 max-w-64"
       >
-        <span className="truncate">{displayText}</span>
+        <span className="truncate">{currentModel || 'Select model...'}</span>
         <svg
           width="12"
           height="12"
@@ -399,12 +385,12 @@ export const ModelSelector = ({
               <div className="flex items-center justify-center py-8">
                 <Spinner className="h-5 w-5" />
               </div>
-            ) : filteredModels.length === 0 ? (
+            ) : displayGroups.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 No models found
               </div>
             ) : (
-              filteredModels.map((group) => (
+              displayGroups.map((group) => (
                 <div key={group.providerId}>
                   <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                     {group.providerId === '__recent__' && (
@@ -414,35 +400,26 @@ export const ModelSelector = ({
                   </div>
 
                   {group.models.map((model) => {
-                    const isSelected = currentModel === model.value;
                     const modelKey = `${group.providerId}-${model.value}`;
                     const flatIndex = modelKeyToIndex.get(modelKey) ?? -1;
-                    const isFocused = focusedIndex === flatIndex;
 
                     return (
-                      <div
-                        key={`${group.providerId}-${model.value}`}
-                        ref={(el) => {
+                      <ModelItem
+                        key={modelKey}
+                        model={model}
+                        providerId={group.providerId}
+                        isSelected={currentModel === model.value}
+                        isFocused={focusedIndex === flatIndex}
+                        onSelect={handleSelectModel}
+                        onFocus={() => setFocusedIndex(flatIndex)}
+                        itemRef={(el) => {
                           if (el) {
                             itemRefs.current.set(flatIndex, el);
                           } else {
                             itemRefs.current.delete(flatIndex);
                           }
                         }}
-                        onClick={() => handleSelectModel(model.value)}
-                        onMouseEnter={() => setFocusedIndex(flatIndex)}
-                        className={cn(
-                          'flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors text-foreground',
-                          (isFocused || isSelected) && 'bg-accent',
-                        )}
-                      >
-                        <span className="w-4 flex-shrink-0 text-foreground">
-                          {isSelected && <CheckIcon size={14} />}
-                        </span>
-                        <span className="truncate">
-                          {model.name || model.modelId}
-                        </span>
-                      </div>
+                      />
                     );
                   })}
                 </div>
