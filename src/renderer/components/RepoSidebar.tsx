@@ -2,13 +2,12 @@ import {
   Comment01Icon,
   FolderIcon,
   HelpCircleIcon,
-  InformationCircleIcon,
   PlusSignIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Trash2 } from 'lucide-react';
-import { type MouseEvent, memo, useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 import type { RepoData } from '../client/types/entities';
 import { cn } from '../lib/utils';
 import { useStore } from '../store';
@@ -22,21 +21,6 @@ import {
 } from './ui/context-menu';
 import { ScrollArea } from './ui/scroll-area';
 import { Spinner } from './ui/spinner';
-
-// Helper function to format relative time in short format (e.g., "4m", "2h")
-function formatRelativeTime(timestamp: number): string {
-  const distance = formatDistanceToNowStrict(timestamp, { addSuffix: false });
-  return distance
-    .replace(/ seconds?/, 's')
-    .replace(/ minutes?/, 'm')
-    .replace(/ hours?/, 'h')
-    .replace(/ days?/, 'd')
-    .replace(/ months?/, 'mo')
-    .replace(/ years?/, 'y');
-}
-
-const DEFAULT_SESSION_LIMIT = 5;
-
 import {
   AlertDialog,
   AlertDialogClose,
@@ -61,52 +45,43 @@ import {
   EmptyTitle,
 } from './ui/empty';
 
-export const RepoSidebar = () => {
-  const openRepos = useStore((state) => state.openRepoAccordions);
-  const setOpenRepoAccordions = useStore(
-    (state) => state.setOpenRepoAccordions,
-  );
-  const expandedSessions = useStore((state) => state.expandedSessionGroups);
-  const toggleSessionGroupExpanded = useStore(
-    (state) => state.toggleSessionGroupExpanded,
-  );
+function formatRelativeTime(timestamp: number): string {
+  const distance = formatDistanceToNowStrict(timestamp, { addSuffix: false });
+  return distance
+    .replace(/ seconds?/, 's')
+    .replace(/ minutes?/, 'm')
+    .replace(/ hours?/, 'h')
+    .replace(/ days?/, 'd')
+    .replace(/ months?/, 'mo')
+    .replace(/ years?/, 'y');
+}
+
+const DEFAULT_SESSION_LIMIT = 5;
+
+interface RepoSessionListProps {
+  repo: RepoData;
+}
+
+const RepoSessionList = ({ repo }: RepoSessionListProps) => {
   const workspaces = useStore((state) => state.workspaces);
   const sessions = useStore((state) => state.sessions);
+  const expandedSessions = useStore((state) => state.expandedSessionGroups);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const deleteRepo = useStore((state) => state.deleteRepo);
+  const sessionProcessing = useStore((state) => state.sessionProcessing);
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
   const createOrSelectEmptySession = useStore(
     (state) => state.createOrSelectEmptySession,
   );
-  const sessionProcessing = useStore((state) => state.sessionProcessing);
-  const messages = useStore((state) => state.messages);
-  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
-  const repos = useStore((state) => state.repos);
-  const selectedRepoPath = useStore((state) => state.selectedRepoPath);
-  // console.log('repos,selectedRepoPath', repos, selectedRepoPath);
-  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
+  const toggleSessionGroupExpanded = useStore(
+    (state) => state.toggleSessionGroupExpanded,
+  );
+  const updateSession = useStore((state) => state.updateSession);
+  const request = useStore((state) => state.request);
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
-  const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
-  const [sessionToDelete, setSessionToDelete] = useState<{
-    sessionId: string;
-    workspaceId: string;
-    summary: string;
-  } | null>(null);
-
-  const {
-    deleteDialogOpen: repoDeleteDialogOpen,
-    repoToDelete: repoToDeleteInfo,
-    handleDeleteRepoClick: handleRepoDeleteClick,
-    handleConfirmDelete: handleRepoConfirmDelete,
-    handleCancelDelete: handleRepoCancelDelete,
-  } = useRepoDelete();
-
-  const updateSession = useStore((state) => state.updateSession);
-  const removeSession = useStore((state) => state.removeSession);
-  const request = useStore((state) => state.request);
 
   const startRename = (sessionId: string, currentSummary: string) => {
     setEditingSessionId(sessionId);
@@ -118,10 +93,9 @@ export const RepoSidebar = () => {
     if (trimmed) {
       const workspace = workspaces[workspaceId];
       if (workspace) {
-        const cwd = workspace.worktreePath;
         try {
           await request('session.config.setSummary', {
-            cwd,
+            cwd: workspace.worktreePath,
             sessionId,
             summary: trimmed,
           });
@@ -138,17 +112,200 @@ export const RepoSidebar = () => {
     setEditingSessionId(null);
   };
 
-  const handleDeleteSessionClick = (
-    session: { sessionId: string; summary: string; messageCount: number },
-    workspaceId: string,
-  ) => {
-    setSessionToDelete({
-      sessionId: session.sessionId,
-      workspaceId,
-      summary: session.summary || 'New Chat',
-    });
-    setSessionAlertOpen(true);
-  };
+  return (
+    <div className="space-y-1">
+      {repo.workspaceIds.slice(0, 1).map((workspaceId) => {
+        const workspace = workspaces[workspaceId];
+        if (!workspace) return null;
+
+        const workspaceSessions = (sessions[workspaceId] || [])
+          .slice()
+          .filter((item) => item.messageCount > 0)
+          .sort((a, b) => b.modified - a.modified);
+        const expandKey = `${workspaceId}`;
+        const isExpanded = expandedSessions[expandKey] ?? false;
+        const visibleSessions = isExpanded
+          ? workspaceSessions
+          : workspaceSessions.slice(0, DEFAULT_SESSION_LIMIT);
+        const hiddenCount = workspaceSessions.length - DEFAULT_SESSION_LIMIT;
+
+        return (
+          <div key={workspaceId}>
+            <div>
+              {multiProjectSupport ? (
+                <button
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left mb-1 text-muted-foreground hover:bg-accent hover:text-foreground',
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectWorkspace(workspaceId);
+                    createOrSelectEmptySession(workspaceId);
+                  }}
+                >
+                  <HugeiconsIcon
+                    icon={PlusSignIcon}
+                    size={14}
+                    strokeWidth={1.5}
+                  />
+                  <span className="text-sm">New Chat</span>
+                </button>
+              ) : (
+                <Button
+                  className="mb-3 mt-2 w-full"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectWorkspace(workspaceId);
+                    createOrSelectEmptySession(workspaceId);
+                  }}
+                >
+                  <HugeiconsIcon
+                    icon={PlusSignIcon}
+                    size={14}
+                    strokeWidth={1.5}
+                  />
+                  <span>New Chat</span>
+                </Button>
+              )}
+
+              {visibleSessions.map((session) => {
+                const isSessionSelected =
+                  selectedSessionId === session.sessionId;
+                const isEditing = editingSessionId === session.sessionId;
+                const displaySummary = session.summary || 'New Chat';
+                const processing = sessionProcessing[session.sessionId] || {
+                  status: 'idle',
+                };
+                const isProcessing = processing.status === 'processing';
+                const isAwaitingApproval =
+                  processing.status === 'awaiting_approval';
+                const isFailed = processing.status === 'failed';
+
+                return (
+                  <ContextMenu key={session.sessionId}>
+                    <ContextMenuTrigger
+                      className={cn(
+                        'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors',
+                        isSessionSelected
+                          ? 'bg-accent text-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                        isFailed && 'text-destructive-foreground',
+                      )}
+                      onClick={() => {
+                        selectWorkspace(workspaceId);
+                        selectSession(session.sessionId);
+                      }}
+                    >
+                      {isProcessing ? (
+                        <Spinner className="size-3.5" />
+                      ) : isAwaitingApproval ? (
+                        <HugeiconsIcon
+                          icon={HelpCircleIcon}
+                          size={14}
+                          strokeWidth={1.5}
+                          className="text-warning-foreground"
+                        />
+                      ) : (
+                        <HugeiconsIcon
+                          icon={Comment01Icon}
+                          size={14}
+                          strokeWidth={1.5}
+                        />
+                      )}
+                      {isEditing ? (
+                        <input
+                          className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          onBlur={() =>
+                            saveRename(workspaceId, session.sessionId)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              saveRename(workspaceId, session.sessionId);
+                            } else if (e.key === 'Escape') {
+                              cancelRename();
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                          onFocus={(e) => e.target.select()}
+                        />
+                      ) : (
+                        <span className="flex-1 text-sm truncate">
+                          {displaySummary}
+                        </span>
+                      )}
+                      <span className="text-sm text-muted-foreground">
+                        {formatRelativeTime(session.modified)}
+                      </span>
+                    </ContextMenuTrigger>
+                    <ContextMenuPopup>
+                      <ContextMenuItem
+                        onClick={() =>
+                          startRename(session.sessionId, session.summary || '')
+                        }
+                      >
+                        Rename
+                      </ContextMenuItem>
+                      <ContextMenuItem className="text-red-500">
+                        Delete
+                      </ContextMenuItem>
+                    </ContextMenuPopup>
+                  </ContextMenu>
+                );
+              })}
+
+              {hiddenCount > 0 && (
+                <button
+                  className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSessionGroupExpanded(expandKey);
+                  }}
+                >
+                  {isExpanded ? 'Show less' : `Show ${hiddenCount} more`}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export const RepoSidebar = () => {
+  const openRepos = useStore((state) => state.openRepoAccordions);
+  const setOpenRepoAccordions = useStore(
+    (state) => state.setOpenRepoAccordions,
+  );
+  const workspaces = useStore((state) => state.workspaces);
+  const sessions = useStore((state) => state.sessions);
+  const selectedSessionId = useStore((state) => state.selectedSessionId);
+  const selectSession = useStore((state) => state.selectSession);
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const repos = useStore((state) => state.repos);
+  const selectedRepoPath = useStore((state) => state.selectedRepoPath);
+  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
+  const removeSession = useStore((state) => state.removeSession);
+  const request = useStore((state) => state.request);
+  const developerMode = useStore((state) => state.developerMode);
+
+  const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<{
+    sessionId: string;
+    workspaceId: string;
+    summary: string;
+  } | null>(null);
+
+  const {
+    deleteDialogOpen: repoDeleteDialogOpen,
+    repoToDelete: repoToDeleteInfo,
+    handleConfirmDelete: handleRepoConfirmDelete,
+    handleCancelDelete: handleRepoCancelDelete,
+  } = useRepoDelete();
 
   const handleConfirmDeleteSession = async () => {
     if (!sessionToDelete) return;
@@ -157,14 +314,12 @@ export const RepoSidebar = () => {
     const workspace = workspaces[workspaceId];
     if (!workspace) return;
 
-    // Find the session to check if it has messages
     const session = (sessions[workspaceId] || []).find(
       (s) => s.sessionId === sessionId,
     );
     const isLocalOnly = !session || session.messageCount === 0;
 
     try {
-      // Only call API if session has messages (persisted to backend)
       if (!isLocalOnly) {
         const result = await request('sessions.remove', {
           cwd: workspace.worktreePath,
@@ -179,20 +334,14 @@ export const RepoSidebar = () => {
         }
       }
 
-      // Remove from local store
       removeSession(workspaceId, sessionId);
 
-      // Auto-select next session if this was selected
       if (selectedSessionId === sessionId) {
         const remaining = (sessions[workspaceId] || [])
           .filter((s) => s.sessionId !== sessionId)
           .sort((a, b) => b.modified - a.modified);
 
-        if (remaining.length > 0) {
-          selectSession(remaining[0].sessionId);
-        } else {
-          selectSession(null);
-        }
+        selectSession(remaining.length > 0 ? remaining[0].sessionId : null);
       }
     } catch (error) {
       console.error('Failed to delete session:', error);
@@ -203,10 +352,25 @@ export const RepoSidebar = () => {
   };
 
   const repoList = Object.values(repos);
+  const displayRepos = multiProjectSupport
+    ? repoList
+    : repoList.filter((repo) => repo.path === selectedRepoPath);
 
   return (
     <div className="h-full flex flex-col">
-      {/* <RepoSidebar.Header /> */}
+      {developerMode && (
+        <div className="mb-2 mx-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
+          <div>selectedRepoPath: {selectedRepoPath || 'null'}</div>
+          <div>selectedWorkspaceId: {selectedWorkspaceId || 'null'}</div>
+          <div>selectedSessionId: {selectedSessionId || 'null'}</div>
+          <div>repos: {Object.keys(repos).join(', ') || 'none'}</div>
+          <div>
+            multiProjectSupport: {multiProjectSupport ? 'true' : 'false'}
+          </div>
+          <div>repoList count: {repoList.length}</div>
+          <div>filtered repos: {displayRepos.length}</div>
+        </div>
+      )}
 
       <ScrollArea
         className="flex-1 p-2 pt-0 **:data-[slot=scroll-area-scrollbar]:hidden"
@@ -229,237 +393,37 @@ export const RepoSidebar = () => {
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
-        ) : (
+        ) : multiProjectSupport ? (
           <Accordion
             value={openRepos}
             onValueChange={setOpenRepoAccordions}
             multiple
           >
-            {(multiProjectSupport
-              ? repoList
-              : repoList.filter((repo) => repo.path === selectedRepoPath)
-            ).map((repo) => (
+            {displayRepos.map((repo) => (
               <AccordionItem key={repo.path} value={repo.path}>
-                {multiProjectSupport && (
-                  <AccordionTrigger className="px-3 py-2 group w-full max-w-full">
-                    <div className="flex items-center gap-2 w-full min-w-0">
-                      <HugeiconsIcon
-                        icon={FolderIcon}
-                        size={18}
-                        strokeWidth={1.5}
-                        className="flex-shrink-0"
-                      />
-                      <div className="font-medium text-sm truncate w-full">
-                        {repo.name}
-                      </div>
-                      {/* <span
-                        className="absolute ml-auto p-1 rounded opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity"
-                        onClick={(e) =>
-                          handleRepoDeleteClick(e, repo.path, repo.name)
-                        }
-                      >
-                        <Trash2 size={14} strokeWidth={1.5} />
-                      </span> */}
+                <AccordionTrigger className="px-3 py-2 group w-full max-w-full">
+                  <div className="flex items-center gap-2 w-full min-w-0">
+                    <HugeiconsIcon
+                      icon={FolderIcon}
+                      size={18}
+                      strokeWidth={1.5}
+                      className="flex-shrink-0"
+                    />
+                    <div className="font-medium text-sm truncate w-full">
+                      {repo.name}
                     </div>
-                  </AccordionTrigger>
-                )}
-
-                <AccordionPanel className={!multiProjectSupport ? 'pt-0' : ''}>
-                  <div className="space-y-1">
-                    {/* why slice(0, 1), don't support git worktree based workspace now, may implement it later */}
-                    {repo.workspaceIds.slice(0, 1).map((workspaceId) => {
-                      const workspace = workspaces[workspaceId];
-                      if (!workspace) return null;
-
-                      // Get sessions for this workspace, sorted by modified (newest first)
-                      const workspaceSessions = (sessions[workspaceId] || [])
-                        .slice()
-                        .filter((item) => item.messageCount > 0)
-                        .sort((a, b) => b.modified - a.modified);
-                      const expandKey = `${workspaceId}`;
-                      const isExpanded = expandedSessions[expandKey] ?? false;
-                      const visibleSessions = isExpanded
-                        ? workspaceSessions
-                        : workspaceSessions.slice(0, DEFAULT_SESSION_LIMIT);
-                      const hiddenCount =
-                        workspaceSessions.length - DEFAULT_SESSION_LIMIT;
-
-                      return (
-                        <div key={workspaceId}>
-                          {/* Session list */}
-                          <div>
-                            {/* Create session button */}
-                            {multiProjectSupport ? (
-                              <button
-                                className={cn(
-                                  'flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left mb-1 text-muted-foreground hover:bg-accent hover:text-foreground',
-                                )}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  selectWorkspace(workspaceId);
-                                  createOrSelectEmptySession(workspaceId);
-                                }}
-                              >
-                                <HugeiconsIcon
-                                  icon={PlusSignIcon}
-                                  size={14}
-                                  strokeWidth={1.5}
-                                />
-                                <span className="text-sm">New Chat</span>
-                              </button>
-                            ) : (
-                              <Button
-                                className="mb-3 mt-2 w-full"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  selectWorkspace(workspaceId);
-                                  createOrSelectEmptySession(workspaceId);
-                                }}
-                              >
-                                <HugeiconsIcon
-                                  icon={PlusSignIcon}
-                                  size={14}
-                                  strokeWidth={1.5}
-                                />
-                                <span>New Chat</span>
-                              </Button>
-                            )}
-
-                            {visibleSessions.map((session) => {
-                              const isSessionSelected =
-                                selectedSessionId === session.sessionId;
-                              const isEditing =
-                                editingSessionId === session.sessionId;
-                              const displaySummary = session.summary
-                                ? session.summary
-                                : 'New Chat';
-
-                              const processing = sessionProcessing[
-                                session.sessionId
-                              ] || { status: 'idle' };
-                              const isProcessing =
-                                processing.status === 'processing';
-                              const isAwaitingApproval =
-                                processing.status === 'awaiting_approval';
-                              const isFailed = processing.status === 'failed';
-                              return (
-                                <ContextMenu key={session.sessionId}>
-                                  <ContextMenuTrigger
-                                    className={cn(
-                                      'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors',
-                                      isSessionSelected
-                                        ? 'bg-accent text-foreground'
-                                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                                      isFailed && 'text-destructive-foreground',
-                                    )}
-                                    onClick={() => {
-                                      selectWorkspace(workspaceId);
-                                      selectSession(session.sessionId);
-                                    }}
-                                  >
-                                    {isProcessing ? (
-                                      <Spinner className="size-3.5" />
-                                    ) : isAwaitingApproval ? (
-                                      <HugeiconsIcon
-                                        icon={HelpCircleIcon}
-                                        size={14}
-                                        strokeWidth={1.5}
-                                        className="text-warning-foreground"
-                                      />
-                                    ) : (
-                                      <HugeiconsIcon
-                                        icon={Comment01Icon}
-                                        size={14}
-                                        strokeWidth={1.5}
-                                      />
-                                    )}
-                                    {isEditing ? (
-                                      <input
-                                        className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
-                                        value={editingValue}
-                                        onChange={(e) =>
-                                          setEditingValue(e.target.value)
-                                        }
-                                        onBlur={() =>
-                                          saveRename(
-                                            workspaceId,
-                                            session.sessionId,
-                                          )
-                                        }
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            saveRename(
-                                              workspaceId,
-                                              session.sessionId,
-                                            );
-                                          } else if (e.key === 'Escape') {
-                                            cancelRename();
-                                          }
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                        autoFocus
-                                        onFocus={(e) => e.target.select()}
-                                      />
-                                    ) : (
-                                      <span className="flex-1 text-sm truncate">
-                                        {displaySummary}
-                                      </span>
-                                    )}
-                                    <span className="text-sm text-muted-foreground">
-                                      {formatRelativeTime(session.modified)}
-                                    </span>
-                                  </ContextMenuTrigger>
-                                  <ContextMenuPopup>
-                                    <ContextMenuItem
-                                      onClick={() =>
-                                        startRename(
-                                          session.sessionId,
-                                          session.summary || '',
-                                        )
-                                      }
-                                    >
-                                      Rename
-                                    </ContextMenuItem>
-                                    <ContextMenuItem
-                                      onClick={() =>
-                                        handleDeleteSessionClick(
-                                          session,
-                                          workspaceId,
-                                        )
-                                      }
-                                      className="text-red-500"
-                                    >
-                                      Delete
-                                    </ContextMenuItem>
-                                  </ContextMenuPopup>
-                                </ContextMenu>
-                              );
-                            })}
-
-                            {/* Show more/less toggle */}
-                            {hiddenCount > 0 && (
-                              <button
-                                className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleSessionGroupExpanded(expandKey);
-                                }}
-                              >
-                                {isExpanded
-                                  ? 'Show less'
-                                  : `Show ${hiddenCount} more`}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
+                </AccordionTrigger>
+                <AccordionPanel>
+                  <RepoSessionList repo={repo} />
                 </AccordionPanel>
               </AccordionItem>
             ))}
           </Accordion>
+        ) : (
+          displayRepos.map((repo) => (
+            <RepoSessionList key={repo.path} repo={repo} />
+          ))
         )}
       </ScrollArea>
 
