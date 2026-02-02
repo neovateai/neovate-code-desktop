@@ -2,6 +2,7 @@ import { SerializeAddon } from '@xterm/addon-serialize';
 import { useCallback, useEffect, useRef } from 'react';
 import { type ITheme, Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import 'xterm/css/xterm.css';
 import {
   TERMINAL_MAX_SCROLLBACK_LINES,
@@ -15,6 +16,7 @@ import {
   useContentPanelContext,
 } from '../ContentPanelProvider';
 import type { TerminalTab } from '../types';
+import { useStore } from '@/store';
 
 // XTerm theme configurations
 const darkTerminalTheme: ITheme = {
@@ -66,11 +68,17 @@ const lightTerminalTheme: ITheme = {
 };
 
 // Create a new xterm instance with configuration
-function createXTermInstance(isDark: boolean): {
+function createXTermInstance(
+  isDark: boolean,
+  events: {
+    onLink?: (uri: string) => void;
+  },
+): {
   xterm: XTerm;
   fitAddon: FitAddon;
   serializeAddon: SerializeAddon;
 } {
+  const { onLink } = events || {};
   const xterm = new XTerm({
     cursorBlink: true,
     cursorStyle: 'bar',
@@ -83,8 +91,15 @@ function createXTermInstance(isDark: boolean): {
 
   const fitAddon = new FitAddon();
   const serializeAddon = new SerializeAddon();
+
   xterm.loadAddon(fitAddon);
   xterm.loadAddon(serializeAddon);
+  xterm.loadAddon(
+    new WebLinksAddon((event, uri) => {
+      console.log('event', event, uri);
+      onLink?.(uri);
+    }),
+  ); // 链接识别
 
   return { xterm, fitAddon, serializeAddon };
 }
@@ -176,6 +191,8 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
   const initializedRef = useRef(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveAllowedRef = useRef(false); // Flag to prevent saving during initial PTY output
+
+  const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
 
   // Save terminal state (debounced)
   const saveTerminalState = useCallback(
@@ -319,7 +336,12 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
       );
 
       try {
-        const { xterm, fitAddon, serializeAddon } = createXTermInstance(isDark);
+        const { xterm, fitAddon, serializeAddon } = createXTermInstance(
+          isDark,
+          {
+            onLink,
+          },
+        );
         logger.debug('[ContentPanel:TerminalPane] XTerm instance created');
 
         xterm.open(container);
@@ -589,6 +611,15 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
       }
     };
   }, []);
+
+  const onLink = (uri: string) => {
+    console.log('Click Terminal link', uri);
+    if (!uri) {
+      return;
+    }
+    setPendingTabRequest({ type: 'browser', uri, repoPath });
+    useStore.setState({ webUrls: [uri] }); // TODO: 后续支持多连接，现在只控制一个
+  };
 
   return (
     <div
