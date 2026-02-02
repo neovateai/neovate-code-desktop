@@ -1,4 +1,4 @@
-import { CheckIcon, SearchIcon } from 'lucide-react';
+import { CheckIcon, ClockIcon, SearchIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../lib/utils';
 import { useStore } from '../store';
@@ -18,6 +18,13 @@ interface FlatModel {
   value: string;
   provider: string;
   providerId: string;
+}
+
+interface Provider {
+  id: string;
+  name: string;
+  hasApiKey: boolean;
+  validEnvs?: string[];
 }
 
 interface ModelSelectorProps {
@@ -40,6 +47,12 @@ interface ModelSelectorProps {
   onModelChange?: (model: string) => void;
 }
 
+const isProviderActive = (provider: Provider): boolean => {
+  return (
+    provider.hasApiKey || (provider.validEnvs && provider.validEnvs.length > 0)
+  );
+};
+
 export const ModelSelector = ({
   type,
   configKey = 'model',
@@ -55,12 +68,13 @@ export const ModelSelector = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [groupedModels, setGroupedModels] = useState<GroupedModel[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [recentModels, setRecentModels] = useState<string[]>([]);
   const [currentModel, setCurrentModel] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
 
   const itemRefs = useRef<Map<number, HTMLElement>>(new Map());
 
-  // Fetch current model based on type with fallback chain: session -> project -> global
   const fetchCurrentModel = useCallback(async () => {
     if (state !== 'connected') return;
 
@@ -82,7 +96,6 @@ export const ModelSelector = ({
         : null;
 
     try {
-      // Build fallback chain based on type
       const fetchers =
         type === 'session'
           ? [getSessionConfig, getProjectConfig, getGlobalConfig]
@@ -107,20 +120,28 @@ export const ModelSelector = ({
     }
   }, [state, type, configKey, cwd, sessionId, request]);
 
-  // Fetch current model on mount and when dependencies change
   useEffect(() => {
     fetchCurrentModel();
   }, [fetchCurrentModel]);
 
-  // Fetch models list when popup opens
   const fetchModels = useCallback(async () => {
     if (state !== 'connected') return;
 
     setIsLoading(true);
     try {
-      const res = await request('models.list', { cwd: cwd || '/tmp' });
-      if (res.data?.groupedModels) {
-        setGroupedModels(res.data.groupedModels);
+      const [modelsRes, providersRes] = await Promise.all([
+        request('models.list', { cwd: cwd || '/tmp' }),
+        request('providers.list', { cwd: cwd || '/tmp' }),
+      ]);
+
+      if (modelsRes.data?.groupedModels) {
+        setGroupedModels(modelsRes.data.groupedModels);
+      }
+      if (modelsRes.data?.recentModels) {
+        setRecentModels(modelsRes.data.recentModels);
+      }
+      if (providersRes.data?.providers) {
+        setProviders(providersRes.data.providers as Provider[]);
       }
     } catch (error) {
       console.error('Failed to fetch models:', error);
@@ -129,7 +150,6 @@ export const ModelSelector = ({
     }
   }, [state, cwd, request]);
 
-  // Handle popup open
   const handleOpenChange = useCallback(
     (open: boolean) => {
       setIsOpen(open);
@@ -142,7 +162,6 @@ export const ModelSelector = ({
     [fetchModels],
   );
 
-  // Save model based on type
   const saveModel = useCallback(
     async (modelValue: string) => {
       try {
@@ -162,7 +181,6 @@ export const ModelSelector = ({
             value: modelValue,
           });
         } else {
-          // session
           if (!cwd || !sessionId) return;
           await request('session.config.set', {
             cwd,
@@ -181,7 +199,6 @@ export const ModelSelector = ({
     [type, configKey, cwd, sessionId, request, onModelChange],
   );
 
-  // Handle model selection
   const handleSelectModel = useCallback(
     (modelValue: string) => {
       saveModel(modelValue);
@@ -190,12 +207,71 @@ export const ModelSelector = ({
     [saveModel],
   );
 
-  // Filter models based on search query
+  const activeProviderIds = useMemo(() => {
+    return new Set(providers.filter(isProviderActive).map((p) => p.id));
+  }, [providers]);
+
+  const activeGroupedModels = useMemo(() => {
+    return groupedModels.filter((group) =>
+      activeProviderIds.has(group.providerId),
+    );
+  }, [groupedModels, activeProviderIds]);
+
+  const allAvailableModels = useMemo(() => {
+    const modelMap = new Map<
+      string,
+      { name: string; modelId: string; value: string; providerName: string }
+    >();
+    for (const group of activeGroupedModels) {
+      for (const model of group.models) {
+        modelMap.set(model.value, { ...model, providerName: group.provider });
+      }
+    }
+    return modelMap;
+  }, [activeGroupedModels]);
+
+  const recentGroup = useMemo<GroupedModel | null>(() => {
+    const recentValidModels = recentModels
+      .map((value) => {
+        const model = allAvailableModels.get(value);
+        if (!model) return null;
+        return {
+          ...model,
+          name: `${model.providerName} / ${model.name || model.modelId}`,
+        };
+      })
+      .filter(
+        (
+          m,
+        ): m is {
+          name: string;
+          modelId: string;
+          value: string;
+          providerName: string;
+        } => !!m,
+      );
+
+    if (recentValidModels.length === 0) return null;
+
+    return {
+      provider: 'Recent',
+      providerId: '__recent__',
+      models: recentValidModels,
+    };
+  }, [recentModels, allAvailableModels]);
+
+  const displayGroups = useMemo(() => {
+    const groups = recentGroup
+      ? [recentGroup, ...activeGroupedModels]
+      : activeGroupedModels;
+    return groups;
+  }, [recentGroup, activeGroupedModels]);
+
   const filteredModels = useMemo(() => {
-    if (!searchQuery.trim()) return groupedModels;
+    if (!searchQuery.trim()) return displayGroups;
 
     const query = searchQuery.toLowerCase();
-    return groupedModels
+    return displayGroups
       .map((group) => ({
         ...group,
         models: group.models.filter((model) => {
@@ -208,9 +284,8 @@ export const ModelSelector = ({
         }),
       }))
       .filter((group) => group.models.length > 0);
-  }, [groupedModels, searchQuery]);
+  }, [displayGroups, searchQuery]);
 
-  // Flatten models for keyboard navigation
   const flatModels = useMemo<FlatModel[]>(() => {
     return filteredModels.flatMap((group) =>
       group.models.map((model) => ({
@@ -221,12 +296,10 @@ export const ModelSelector = ({
     );
   }, [filteredModels]);
 
-  // Reset focused index when search query changes
   useEffect(() => {
     setFocusedIndex(-1);
   }, [searchQuery]);
 
-  // Scroll focused item into view
   useEffect(() => {
     if (focusedIndex >= 0) {
       const element = itemRefs.current.get(focusedIndex);
@@ -234,7 +307,6 @@ export const ModelSelector = ({
     }
   }, [focusedIndex]);
 
-  // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (flatModels.length === 0) return;
@@ -266,16 +338,15 @@ export const ModelSelector = ({
     [flatModels, focusedIndex, handleSelectModel],
   );
 
-  // Build a map from model value to flat index for highlighting
-  const modelValueToIndex = useMemo(() => {
+  const modelKeyToIndex = useMemo(() => {
     const map = new Map<string, number>();
     flatModels.forEach((model, index) => {
-      map.set(model.value, index);
+      const key = `${model.providerId}-${model.value}`;
+      map.set(key, index);
     });
     return map;
   }, [flatModels]);
 
-  // Display text for trigger button
   const displayText = currentModel || 'Select model...';
 
   return (
@@ -309,7 +380,6 @@ export const ModelSelector = ({
         className="p-0"
         style={{ width: '280px' }}
       >
-        {/* Search Input */}
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
           <SearchIcon size={14} className="text-muted-foreground shrink-0" />
           <input
@@ -323,7 +393,6 @@ export const ModelSelector = ({
           />
         </div>
 
-        {/* Models List */}
         <ScrollArea className="max-h-[300px]">
           <div className="py-1">
             {isLoading ? (
@@ -337,20 +406,22 @@ export const ModelSelector = ({
             ) : (
               filteredModels.map((group) => (
                 <div key={group.providerId}>
-                  {/* Provider Group Label */}
-                  <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    {group.providerId === '__recent__' && (
+                      <ClockIcon size={12} />
+                    )}
                     {group.provider}
                   </div>
 
-                  {/* Model Items */}
                   {group.models.map((model) => {
                     const isSelected = currentModel === model.value;
-                    const flatIndex = modelValueToIndex.get(model.value) ?? -1;
+                    const modelKey = `${group.providerId}-${model.value}`;
+                    const flatIndex = modelKeyToIndex.get(modelKey) ?? -1;
                     const isFocused = focusedIndex === flatIndex;
 
                     return (
                       <div
-                        key={model.value}
+                        key={`${group.providerId}-${model.value}`}
                         ref={(el) => {
                           if (el) {
                             itemRefs.current.set(flatIndex, el);
