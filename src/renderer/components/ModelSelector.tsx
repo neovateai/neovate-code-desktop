@@ -10,6 +10,7 @@ interface Model {
   name: string;
   modelId: string;
   value: string;
+  providerName?: string;
 }
 
 interface GroupedModel {
@@ -45,9 +46,7 @@ interface ModelItemProps {
 }
 
 const isProviderActive = (provider: Provider): boolean => {
-  return (
-    provider.hasApiKey || (provider.validEnvs && provider.validEnvs.length > 0)
-  );
+  return provider.hasApiKey || (provider.validEnvs?.length ?? 0) > 0;
 };
 
 const ModelItem = ({
@@ -248,7 +247,7 @@ export const ModelSelector = ({
           name: `${model.providerName} / ${model.name || model.modelId}`,
         };
       })
-      .filter((m): m is Model => !!m);
+      .filter((m): m is Model & { providerName: string } => !!m);
 
     const recentGroup: GroupedModel | null =
       recentValidModels.length > 0
