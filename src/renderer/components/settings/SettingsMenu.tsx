@@ -71,7 +71,7 @@ export const SettingsMenu = ({
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors cursor-pointer rounded-[6px] mx-2',
                 isActive
-                  ? 'bg-background text-foreground'
+                  ? 'bg-background text-foreground border-l-2 border-t border-b border-border'
                   : 'text-muted-foreground hover:text-foreground',
               )}
               style={{
