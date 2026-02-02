@@ -120,7 +120,7 @@ const RepoSessionList = ({ repo }: RepoSessionListProps) => {
 
         const workspaceSessions = (sessions[workspaceId] || [])
           .slice()
-          .filter((item) => item.messageCount > 0)
+          // .filter((item) => item.messageCount > 0)
           .sort((a, b) => b.modified - a.modified);
         const expandKey = `${workspaceId}`;
         const isExpanded = expandedSessions[expandKey] ?? false;
