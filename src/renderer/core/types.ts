@@ -16,6 +16,12 @@ export interface PluginContext {
  */
 export interface RendererPluginHooks {
   /**
+   * Return i18n config to register lazy-loaded translations.
+   * Return void to skip registration.
+   */
+  configI18n(): LazyNamespaceConfig | void;
+
+  /**
    * Called after store hydration, before React render.
    */
   beforeRender(
@@ -25,16 +31,10 @@ export interface RendererPluginHooks {
 }
 
 /**
- * Plugin i18n configuration for lazy-loaded namespaces.
- * Uses LazyNamespaceConfig from core i18n module.
- */
-export type RendererPluginI18nConfig = LazyNamespaceConfig;
-
-/**
  * Renderer plugin config interface
  */
 export interface RendererPluginConfig {
-  i18n?: RendererPluginI18nConfig;
+  // Reserved for future static config properties
 }
 
 /**

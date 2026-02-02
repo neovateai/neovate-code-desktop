@@ -6,6 +6,7 @@ import { ToastProvider } from '../components/ui/toast';
 import { hydrateStore, setupPersistence } from '../persistence';
 import { useStore } from '../store';
 import { RenderErrorFallback } from './components/RenderErrorFallback';
+import type { LazyNamespaceConfig } from './i18n';
 import { I18nManager } from './i18n/manager';
 import { PluginManager } from './plugin-manager';
 import type {
@@ -50,8 +51,14 @@ export class RendererApp {
   async start(): Promise<void> {
     const windowConfig = this.matchWindowBySearchParams();
 
-    // Collect i18n configs from plugins (App collects, I18nManager consumes)
-    const lazyNamespaceConfigs = this.pluginManager.collect('i18n');
+    // Collect i18n configs from plugins
+    const i18nResults = await this.pluginManager.applyParallel(
+      'configI18n',
+      {},
+    );
+    const lazyNamespaceConfigs = i18nResults.filter(
+      (r): r is LazyNamespaceConfig => r != null,
+    );
 
     // Sub window: render matched component directly
     if (windowConfig) {
