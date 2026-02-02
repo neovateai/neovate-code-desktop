@@ -1,3 +1,4 @@
+import { MessageSquare } from 'lucide-react';
 import {
   createContext,
   memo,
@@ -8,14 +9,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Button } from './ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from './ui/empty';
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
@@ -28,7 +21,15 @@ import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
 import { splitMessages } from './messages/messageHelpers';
-import { OpenAppButton } from './OpenAppButton';
+import { Button } from './ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from './ui/empty';
+import { Tooltip, TooltipPopup, TooltipTrigger } from './ui/tooltip';
 
 // Define the context type
 interface WorkspaceContextType {
@@ -119,6 +120,9 @@ export const WorkspacePanel = ({
     : null;
 
   const updateSessions = useStore((state) => state.updateSessions);
+  const createOrSelectEmptySession = useStore(
+    (state) => state.createOrSelectEmptySession,
+  );
 
   // Get sessions and messages for the current workspace from store - memoized to avoid infinite loop
   const allSessions = useMemo(
@@ -349,6 +353,29 @@ export const WorkspacePanel = ({
     );
   }
 
+  if (!selectedSessionId) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MessageSquare className="size-6" />
+            </EmptyMedia>
+            <EmptyTitle>Start a New Chat</EmptyTitle>
+            <EmptyDescription>
+              Begin a conversation to start coding with AI
+            </EmptyDescription>
+          </EmptyHeader>
+          <Button
+            onClick={() => createOrSelectEmptySession(selectedWorkspaceId!)}
+          >
+            New Chat
+          </Button>
+        </Empty>
+      </div>
+    );
+  }
+
   return (
     <WorkspaceContext.Provider value={contextValue}>
       <div className="flex flex-col h-full">
@@ -425,15 +452,51 @@ export const WorkspacePanel = ({
 
 // Compound components
 WorkspacePanel.Header = function Header() {
-  const { workspace } = useWorkspaceContext();
-  const request = useStore((state) => state.request);
+  const { workspace, activeSession } = useWorkspaceContext();
+  const createOrSelectEmptySession = useStore(
+    (state) => state.createOrSelectEmptySession,
+  );
+  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
+  const selectWorkspace = useStore((state) => state.selectWorkspace);
+
+  const handleNewChat = () => {
+    if (selectedWorkspaceId) {
+      selectWorkspace(selectedWorkspaceId);
+      createOrSelectEmptySession(selectedWorkspaceId);
+    }
+  };
+
+  const displayTitle =
+    activeSession?.summary || workspace.repoPath.split('/').pop();
 
   return (
     <div className="flex items-center justify-between h-12 px-4">
-      <h2 className="text-base font-semibold text-foreground">
-        {workspace.repoPath.split('/').pop()}
-      </h2>
-      <OpenAppButton cwd={workspace.worktreePath} />
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <h2 className="text-base font-semibold text-foreground truncate pr-2 cursor-default">
+              {displayTitle}
+            </h2>
+          }
+        ></TooltipTrigger>
+        <TooltipPopup>{displayTitle}</TooltipPopup>
+      </Tooltip>
+      {/* <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleNewChat}
+        className="gap-2 shrink-0"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M8 3.33334V12.6667M3.33334 8H12.6667"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+        New Chat
+      </Button> */}
     </div>
   );
 };

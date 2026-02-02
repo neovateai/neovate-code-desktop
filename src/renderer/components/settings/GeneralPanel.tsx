@@ -28,6 +28,10 @@ export const GeneralPanel = () => {
   const setRunOnStartup = useStore((state) => state.setRunOnStartup);
   const language = useStore((state) => state.language);
   const setLanguage = useStore((state) => state.setLanguage);
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const setMultiProjectSupport = useStore(
+    (state) => state.setMultiProjectSupport,
+  );
 
   const handleThemeChange = (newTheme: ThemeValue) => {
     if (newTheme === theme) return;
@@ -55,6 +59,18 @@ export const GeneralPanel = () => {
       </h1>
 
       <div className="space-y-0">
+        {/* Language */}
+        <SettingsRow
+          title="Language"
+          description="Select your preferred language for the interface"
+        >
+          <ToggleOptions
+            value={language}
+            onChange={setLanguage}
+            options={[{ value: 'en-US', label: 'English' }]}
+          />
+        </SettingsRow>
+
         {/* Theme */}
         <SettingsRow
           title="Theme"
@@ -68,6 +84,28 @@ export const GeneralPanel = () => {
               { value: 'dark', label: 'Dark' },
               { value: 'system', label: 'System' },
             ]}
+          />
+        </SettingsRow>
+
+        {/* Run on Startup */}
+        <SettingsRow
+          title="Run on Startup"
+          description="Automatically launch the app when you log in"
+        >
+          <Switch
+            checked={runOnStartup}
+            onCheckedChange={handleRunOnStartupChange}
+          />
+        </SettingsRow>
+
+        {/* Multi-Project Support */}
+        <SettingsRow
+          title="Multi-Project Support"
+          description="Enable support for multiple project task lists"
+        >
+          <Switch
+            checked={multiProjectSupport}
+            onCheckedChange={setMultiProjectSupport}
           />
         </SettingsRow>
 
@@ -106,29 +144,6 @@ export const GeneralPanel = () => {
           description="Show debug info in chat input and other places"
         >
           <Switch checked={developerMode} onCheckedChange={setDeveloperMode} />
-        </SettingsRow>
-
-        {/* Language */}
-        <SettingsRow
-          title="Language"
-          description="Select your preferred language for the interface"
-        >
-          <ToggleOptions
-            value={language}
-            onChange={setLanguage}
-            options={[{ value: 'en-US', label: 'English' }]}
-          />
-        </SettingsRow>
-
-        {/* Run on Startup */}
-        <SettingsRow
-          title="Run on Startup"
-          description="Automatically launch the app when you log in"
-        >
-          <Switch
-            checked={runOnStartup}
-            onCheckedChange={handleRunOnStartupChange}
-          />
         </SettingsRow>
       </div>
     </div>

@@ -19,6 +19,8 @@ export function useGlobalKeybindings(): void {
         selectNextSession,
         workspaces,
         copyPathToClipboard,
+        multiProjectSupport,
+        setMultiProjectSupport,
       } = useStore.getState();
 
       // Don't handle shortcuts when in settings or onboarding
@@ -62,6 +64,19 @@ export function useGlobalKeybindings(): void {
         if (workspace) {
           copyPathToClipboard(workspace.worktreePath);
         }
+        return;
+      }
+
+      // Toggle Multi-Project Support
+      if (
+        matchesBinding(
+          e,
+          keybindings.toggleMultiProject ??
+            DEFAULT_KEYBINDINGS.toggleMultiProject,
+        )
+      ) {
+        e.preventDefault();
+        setMultiProjectSupport(!multiProjectSupport);
         return;
       }
     };

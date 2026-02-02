@@ -48,6 +48,7 @@ interface PersistedState {
   keybindings: KeybindingsConfig;
   runOnStartup: boolean;
   language: LanguageValue;
+  multiProjectSupport: boolean;
 }
 
 // Debounce helper
@@ -119,6 +120,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
       runOnStartup: state.runOnStartup ?? false,
       language: state.language ?? DEFAULT_LANGUAGE,
+      multiProjectSupport: state.multiProjectSupport ?? true,
     };
   };
 
@@ -190,6 +192,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       keybindings = { ...DEFAULT_KEYBINDINGS },
       runOnStartup = false,
       language = DEFAULT_LANGUAGE,
+      multiProjectSupport = true,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -253,6 +256,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         keybindings,
         runOnStartup,
         language,
+        multiProjectSupport,
       },
       false,
     );
