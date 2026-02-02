@@ -266,7 +266,8 @@ export const RepoSidebar = () => {
 
                 <AccordionPanel className={!multiProjectSupport ? 'pt-0' : ''}>
                   <div className="space-y-1">
-                    {repo.workspaceIds.map((workspaceId) => {
+                    {/* why slice(0, 1), don't support git worktree based workspace now, may implement it later */}
+                    {repo.workspaceIds.slice(0, 1).map((workspaceId) => {
                       const workspace = workspaces[workspaceId];
                       if (!workspace) return null;
 
