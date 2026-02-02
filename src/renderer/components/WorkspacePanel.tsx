@@ -1,3 +1,4 @@
+import { MessageSquare } from 'lucide-react';
 import {
   createContext,
   memo,
@@ -347,6 +348,29 @@ export const WorkspacePanel = ({
                 : 'Select a workspace from the sidebar to start coding'}
             </EmptyDescription>
           </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
+
+  if (!selectedSessionId) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MessageSquare className="size-6" />
+            </EmptyMedia>
+            <EmptyTitle>Start a New Chat</EmptyTitle>
+            <EmptyDescription>
+              Begin a conversation to start coding with AI
+            </EmptyDescription>
+          </EmptyHeader>
+          <Button
+            onClick={() => createOrSelectEmptySession(selectedWorkspaceId!)}
+          >
+            New Chat
+          </Button>
         </Empty>
       </div>
     );
