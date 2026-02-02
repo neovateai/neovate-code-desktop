@@ -410,7 +410,7 @@ const useStore = create<Store>()((set, get, api) => ({
     } = get();
 
     let sessionId = selectedSessionId;
-    let model: string | undefined;
+    let model: string | undefined = undefined;
 
     if (!selectedWorkspaceId) {
       throw new Error('No workspace selected to create session');

@@ -1,0 +1,8 @@
+{
+  "test.hello": "你好世界",
+  "settings.theme": "主题",
+  "settings.theme.description": "选择您喜欢的配色方案",
+  "settings.theme.light": "浅色",
+  "settings.theme.dark": "深色",
+  "settings.theme.system": "跟随系统"
+}

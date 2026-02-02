@@ -7,12 +7,13 @@
 import { defu } from 'defu';
 
 /**
- * Plugin definition: name + enforce + partial hooks implementation
+ * Plugin definition: name + enforce + partial hooks + config
  */
-export type DefinePlugin<H> = {
+export type DefinePlugin<H, C = object> = {
   name: string;
   enforce?: 'pre' | 'post';
-} & Partial<H>;
+} & Partial<H> &
+  Partial<C>;
 
 /**
  * Extract `this` context type from hook function
@@ -86,10 +87,10 @@ type IsObjectReturn<H, K extends keyof H> = HookReturn<H, K> extends object
 /**
  * PluginManager - Type-safe plugin lifecycle and hook execution
  */
-export class PluginManager<H extends object> {
-  readonly #plugins: DefinePlugin<H>[];
+export class PluginManager<H extends object, C extends object = object> {
+  readonly #plugins: DefinePlugin<H, C>[];
 
-  constructor(rawPlugins: DefinePlugin<H>[] = []) {
+  constructor(rawPlugins: DefinePlugin<H, C>[] = []) {
     // Sort plugins by enforce: pre -> normal -> post
     this.#plugins = [
       ...rawPlugins.filter((p) => p.enforce === 'pre'),
@@ -101,8 +102,18 @@ export class PluginManager<H extends object> {
   /**
    * Get all registered plugins
    */
-  getPlugins(): readonly DefinePlugin<H>[] {
+  getPlugins(): readonly DefinePlugin<H, C>[] {
     return this.#plugins;
+  }
+
+  /**
+   * Collect non-nullish values of a property from all plugins.
+   * Returns values in enforce order (pre -> normal -> post).
+   */
+  collect<K extends keyof C>(key: K): NonNullable<C[K]>[] {
+    return this.#plugins
+      .map((plugin) => (plugin as Partial<C>)[key])
+      .filter((v): v is NonNullable<C[K]> => v !== null && v !== undefined);
   }
 
   /**
