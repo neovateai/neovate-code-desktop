@@ -119,7 +119,6 @@ export const ModelSelector = ({
     setIsLoading(true);
     try {
       const res = await request('models.list', { cwd: cwd || '/tmp' });
-      console.log('models.list', res);
       if (res.data?.groupedModels) {
         setGroupedModels(res.data.groupedModels);
       }
