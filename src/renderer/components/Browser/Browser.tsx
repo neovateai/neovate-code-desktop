@@ -57,7 +57,7 @@ export const Browser = forwardRef<
         .executeJavaScript(INJECT_SCRIPT, true)
         .then(() => console.log('ReactGrab injection initiated'))
         .catch((e) => console.error('Failed to inject ReactGrab:', e));
-      webview.openDevTools();
+      // webview.openDevTools();
     };
 
     const handleStartLoading = () => {
