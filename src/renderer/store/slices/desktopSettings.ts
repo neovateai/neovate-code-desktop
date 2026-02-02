@@ -48,7 +48,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   developerMode: false,
   runOnStartup: false,
   language: 'en-US',
-  multiProjectSupport: true,
+  multiProjectSupport: false,
 };
 
 export const createDesktopSettingsSlice: StateCreator<
