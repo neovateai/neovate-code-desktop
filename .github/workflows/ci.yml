@@ -1,7 +1,10 @@
-name: PR Build
+name: CI
 
 on:
   pull_request:
+    branches:
+      - master
+  push:
     branches:
       - master
 
@@ -98,8 +101,7 @@ jobs:
   comment:
     needs: build-mac-dev
     runs-on: ubuntu-latest
-    # Skip comment for fork PRs (no write permission)
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       pull-requests: write
     steps:
