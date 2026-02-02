@@ -19,6 +19,7 @@ export interface DesktopSettingsSliceState {
   developerMode: boolean;
   runOnStartup: boolean;
   locale: Locales;
+  multiProjectSupport: boolean;
 }
 
 export interface DesktopSettingsSliceActions {
@@ -31,6 +32,7 @@ export interface DesktopSettingsSliceActions {
   setDeveloperMode: (enabled: boolean) => void;
   setRunOnStartup: (enabled: boolean) => void;
   setLocale: (locale: Locales) => void;
+  setMultiProjectSupport: (enabled: boolean) => void;
 }
 
 export type DesktopSettingsSlice = DesktopSettingsSliceState &
@@ -46,6 +48,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   developerMode: false,
   runOnStartup: false,
   locale: 'en-US',
+  multiProjectSupport: false,
 };
 
 export const createDesktopSettingsSlice: StateCreator<
@@ -97,5 +100,9 @@ export const createDesktopSettingsSlice: StateCreator<
 
   setLocale: (locale: Locales) => {
     set({ locale });
+  },
+
+  setMultiProjectSupport: (multiProjectSupport: boolean) => {
+    set({ multiProjectSupport });
   },
 });

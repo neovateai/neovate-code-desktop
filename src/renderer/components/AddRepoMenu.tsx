@@ -1,9 +1,22 @@
-import { CloudIcon, FolderIcon } from '@hugeicons/core-free-icons';
+import {
+  CloudIcon,
+  Delete02Icon,
+  FolderIcon,
+} from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { CheckIcon } from 'lucide-react';
 import React from 'react';
 import { useStore } from '../store';
+import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
+import { useRepoDelete } from './Repo/useRepoDelete';
 import { toastManager } from './ui';
-import { Menu, MenuItem, MenuPopup, MenuTrigger } from './ui/menu';
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from './ui/menu';
 
 interface AddRepoMenuProps {
   children: React.ReactElement<Record<string, unknown>>;
@@ -12,7 +25,24 @@ interface AddRepoMenuProps {
 export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
-  const { request, addRepo, addWorkspace, repos, selectWorkspace } = useStore();
+  const {
+    request,
+    addRepo,
+    addWorkspace,
+    repos,
+    selectWorkspace,
+    selectedWorkspaceId,
+    multiProjectSupport,
+    workspaces,
+  } = useStore();
+
+  const {
+    deleteDialogOpen,
+    repoToDelete,
+    handleDeleteRepoClick,
+    handleConfirmDelete,
+    handleCancelDelete,
+  } = useRepoDelete();
 
   const handleOpenProject = async () => {
     // Prevent multiple simultaneous operations
@@ -149,6 +179,24 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
     });
   };
 
+  const repoEntries = Object.entries(repos);
+
+  const handleSwitchWorkspace = (workspaceId: string) => {
+    selectWorkspace(workspaceId);
+    setOpen(false);
+  };
+
+  const getFirstWorkspaceId = (repoPath: string) => {
+    return Object.values(workspaces).find((w) => w.repoPath === repoPath)?.id;
+  };
+
+  const isCurrentRepo = (repoPath: string) => {
+    const currentWorkspace = selectedWorkspaceId
+      ? workspaces[selectedWorkspaceId]
+      : null;
+    return currentWorkspace?.repoPath === repoPath;
+  };
+
   return (
     <Menu open={open} onOpenChange={setOpen}>
       <MenuTrigger render={children} />
@@ -161,6 +209,58 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
           <HugeiconsIcon icon={CloudIcon} size={16} strokeWidth={1.5} />
           <span>Clone from URL</span>
         </MenuItem>
+
+        {!multiProjectSupport && repoEntries.length > 0 && (
+          <>
+            <MenuSeparator />
+            {repoEntries.map(([path, repo]) => {
+              const firstWorkspaceId = getFirstWorkspaceId(path);
+              if (!firstWorkspaceId) return null;
+
+              const isCurrent = isCurrentRepo(path);
+
+              return (
+                <MenuItem
+                  key={path}
+                  onClick={() => handleSwitchWorkspace(firstWorkspaceId)}
+                  className="group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{repo.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500 truncate">
+                      {path}
+                    </div>
+                  </div>
+                  {isCurrent && (
+                    <div className="p-1">
+                      <CheckIcon size={14} />
+                    </div>
+                  )}
+                  {!isCurrent && (
+                    <button
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded"
+                      onClick={(e) => handleDeleteRepoClick(e, path, repo.name)}
+                    >
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        size={14}
+                        strokeWidth={1.5}
+                        className="text-red-500"
+                      />
+                    </button>
+                  )}
+                </MenuItem>
+              );
+            })}
+          </>
+        )}
+
+        <RepoDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={handleCancelDelete}
+          repo={repoToDelete}
+          onConfirm={() => handleConfirmDelete(() => setOpen(false))}
+        />
       </MenuPopup>
     </Menu>
   );

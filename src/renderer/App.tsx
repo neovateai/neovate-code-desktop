@@ -209,13 +209,7 @@ function App() {
             <AppLayoutPanelGroup>
               {/* Tasks Panel (left sidebar) */}
               <AppLayoutPrimarySidebar>
-                <RepoSidebar
-                  repos={Object.values(repos)}
-                  selectedRepoPath={selectedRepoPath}
-                  selectedWorkspaceId={selectedWorkspaceId}
-                  onSelectRepo={selectRepo}
-                  onSelectWorkspace={selectWorkspace}
-                />
+                <RepoSidebar />
               </AppLayoutPrimarySidebar>
 
               {/* Chat Panel (main content) */}

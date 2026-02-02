@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand';
 import { toastManager } from './components/ui/toast';
-import { DEFAULT_LOCALE, PERSISTENCE_DEBOUNCE_MS } from './constants';
-import type { Locales } from './core/i18n';
+import { PERSISTENCE_DEBOUNCE_MS } from './constants';
+import { DEFAULT_LOCALE, type Locales } from './core/i18n';
 import { DEFAULT_KEYBINDINGS } from './lib/keybindings';
 import { logger } from './lib/logger';
 import type {
@@ -48,6 +48,7 @@ interface PersistedState {
   keybindings: KeybindingsConfig;
   runOnStartup: boolean;
   locale: Locales;
+  multiProjectSupport: boolean;
 }
 
 // Debounce helper
@@ -119,6 +120,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       keybindings: state.keybindings ?? { ...DEFAULT_KEYBINDINGS },
       runOnStartup: state.runOnStartup ?? false,
       locale: state.locale ?? DEFAULT_LOCALE,
+      multiProjectSupport: state.multiProjectSupport ?? true,
     };
   };
 
@@ -190,6 +192,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       keybindings = { ...DEFAULT_KEYBINDINGS },
       runOnStartup = false,
       locale = DEFAULT_LOCALE,
+      multiProjectSupport = true,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -253,6 +256,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         keybindings,
         runOnStartup,
         locale,
+        multiProjectSupport,
       },
       false,
     );

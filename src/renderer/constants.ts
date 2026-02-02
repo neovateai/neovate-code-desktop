@@ -63,4 +63,4 @@ export const STORAGE_KEY_APP_LAYOUT = 'neovate-app-layout';
 // =============================================================================
 // Defaults
 // =============================================================================
-export const DEFAULT_LOCALE = 'en';
+export const DEFAULT_LOCALE = 'en-US';
