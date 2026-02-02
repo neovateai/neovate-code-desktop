@@ -238,12 +238,14 @@ export function ContentTabBar() {
 // Add tab button with dropdown
 import { useEffect, useRef, useState } from 'react';
 import { SINGLETON_TAB_TYPES, TAB_TYPE_OPTIONS } from './types';
+import { useStore } from '@/store';
 
 function AddTabButton() {
-  const { addTab, tabs } = useContentPanelContext();
+  const { addTab, tabs, activeTab, setActiveTab } = useContentPanelContext();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const pendingTabRequest = useStore((s) => s.pendingTabRequest);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -263,6 +265,31 @@ function AddTabButton() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
+
+  useEffect(() => {
+    // 由其他UI状态发起的切换tab请求
+    if (pendingTabRequest) {
+      const pendingType = pendingTabRequest.type;
+      const activeType = activeTab?.type;
+      // 触发 Tab 添加或者激活
+      if (pendingType !== activeType) {
+        const targetTab = tabs.find((i) => i.type === pendingType);
+        if (targetTab?.id) {
+          setActiveTab(targetTab?.id);
+        } else {
+          handleAddTab(pendingType);
+        }
+      }
+      // 完成tab添加或者激活，子tab准备承接打开行为
+      useStore.setState({
+        pendingTabRequest: null,
+        pendingTabUri: {
+          type: pendingType,
+          uri: pendingTabRequest.uri,
+        },
+      });
+    }
+  }, [pendingTabRequest, activeTab, tabs]);
 
   const handleAddTab = (type: ContentTabType) => {
     const name = type.charAt(0).toUpperCase() + type.slice(1);
