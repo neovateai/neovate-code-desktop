@@ -3,6 +3,7 @@ import { ipcMainCaller } from '../../../lib/ipc';
 import { logger } from '../../../lib/logger';
 import { useContentPanelContext } from '../ContentPanelProvider';
 import type { EditorTab } from '../types';
+import { useStore } from '../../../store';
 
 type EditorStatus = 'idle' | 'starting' | 'ready' | 'error';
 
@@ -52,6 +53,8 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initRef = useRef(false);
+  const pendingTabUri = useStore((s) => s.pendingTabUri);
+  const { request } = useStore();
 
   const startEditor = async () => {
     if (status === 'starting') return;
@@ -83,6 +86,15 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
     }
   };
 
+  useEffect(() => {
+    if (pendingTabUri?.type === 'editor') {
+      request<any>('editor.open', {
+        cwd: repoPath,
+        filePath: pendingTabUri.uri,
+      });
+    }
+  }, [pendingTabUri]);
+
   // Start editor when pane becomes active
   useEffect(() => {
     if (!isActive) return;
@@ -99,21 +111,30 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
     }
   }, [isActive, status]);
 
-  if (status === 'error' && error) {
-    return <ErrorState message={error} onRetry={startEditor} />;
-  }
-
-  if (status !== 'ready' || !serverUrl) {
-    return <LoadingState status={status} />;
-  }
+  const renderHolder = () => {
+    if (!isActive) {
+      return null;
+    }
+    if (status === 'error' && error) {
+      return <ErrorState message={error} onRetry={startEditor} />;
+    }
+    if (status !== 'ready' || !serverUrl) {
+      return <LoadingState status={status} />;
+    }
+  };
 
   return (
-    <iframe
-      ref={iframeRef}
-      src={serverUrl}
-      title="Code Editor"
-      className={`flex-1 w-full h-full border-0 bg-background min-h-0 ${isActive ? 'block' : 'hidden'}`}
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-    />
+    <>
+      {renderHolder()}
+      {!!serverUrl && (
+        <iframe
+          ref={iframeRef}
+          src={serverUrl}
+          title="Code Editor"
+          className={`flex-1 w-full h-full border-0 bg-background min-h-0 ${isActive ? 'block' : 'hidden'}`}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+        />
+      )}
+    </>
   );
 }
