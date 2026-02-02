@@ -238,7 +238,7 @@ export function ContentTabBar() {
 // Add tab button with dropdown
 import { useEffect, useRef, useState } from 'react';
 import { SINGLETON_TAB_TYPES, TAB_TYPE_OPTIONS } from './types';
-import { useStore } from '@/store';
+import { useStore } from '../../store';
 
 function AddTabButton() {
   const { addTab, tabs, activeTab, setActiveTab } = useContentPanelContext();

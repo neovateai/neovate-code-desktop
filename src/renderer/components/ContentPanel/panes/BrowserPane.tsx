@@ -1,4 +1,4 @@
-import { useStore } from '@/store';
+import { useStore } from '../../../store';
 import { useEffect, useRef, useState } from 'react';
 import type { BrowserTab } from '../types';
 

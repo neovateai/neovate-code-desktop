@@ -3,7 +3,7 @@ import { ipcMainCaller } from '../../../lib/ipc';
 import { logger } from '../../../lib/logger';
 import { useContentPanelContext } from '../ContentPanelProvider';
 import type { EditorTab } from '../types';
-import { useStore } from '@/store';
+import { useStore } from '../../../store';
 
 type EditorStatus = 'idle' | 'starting' | 'ready' | 'error';
 

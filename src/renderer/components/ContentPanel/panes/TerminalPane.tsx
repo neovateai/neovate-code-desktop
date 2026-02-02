@@ -16,7 +16,7 @@ import {
   useContentPanelContext,
 } from '../ContentPanelProvider';
 import type { TerminalTab } from '../types';
-import { useStore } from '@/store';
+import { useStore } from '../../../store';
 
 // XTerm theme configurations
 const darkTerminalTheme: ITheme = {
@@ -598,7 +598,6 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
       return;
     }
     setPendingTabRequest({ type: 'browser', uri, repoPath });
-    useStore.setState({ webUrls: [uri] }); // TODO: 后续支持多连接，现在只控制一个
   };
 
   return (
