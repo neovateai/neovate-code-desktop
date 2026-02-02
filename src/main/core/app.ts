@@ -182,8 +182,9 @@ export class MainApp {
       {
         label: 'View',
         submenu: [
-          { role: 'reload' },
-          { role: 'forceReload' },
+          ...(is.dev
+            ? [{ role: 'reload' as const }, { role: 'forceReload' as const }]
+            : []),
           { role: 'toggleDevTools' },
           { type: 'separator' },
           { role: 'resetZoom' },
