@@ -60,6 +60,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/ui": "^4.0.18",
     "@xterm/addon-serialize": "^0.14.0",
+    "@xterm/addon-web-links": "^0.12.0",
     "adm-zip": "^0.5.16",
     "agentation": "^1.3.2",
     "autoprefixer": "^10.4.23",
@@ -99,7 +100,7 @@
     "zustand": "^5.0.10"
   },
   "dependencies": {
-    "@neovate/code": "^0.25.0",
+    "@neovate/code": "^0.26.0",
     "electron-updater": "^6.7.3",
     "node-pty": "^1.1.0"
   },

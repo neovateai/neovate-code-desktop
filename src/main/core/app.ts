@@ -289,6 +289,7 @@ export class MainApp {
         sandbox: false,
         webSecurity: false,
         allowRunningInsecureContent: true,
+        webviewTag: true,
       },
     });
 

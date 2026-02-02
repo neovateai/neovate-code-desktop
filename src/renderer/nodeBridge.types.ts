@@ -8,7 +8,7 @@
 // import type { ApprovalMode, McpServerConfig } from './config';
 // import type { ResponseFormat, ThinkingConfig } from './loop';
 // import type { ImagePart, Message, NormalizedMessage } from './message';
-// import type { ModelInfo, ProvidersMap } from './model';
+// import type { ModelInfo, ProvidersMap } from './provider/model';
 // import type { ApprovalCategory, ToolUse } from './tool';
 
 type ApprovalMode = any;
@@ -77,6 +77,25 @@ type ConfigListOutput = {
     projectConfigDir: string;
     config: any;
   };
+};
+
+// ============================================================================
+// GlobalData Handlers
+// ============================================================================
+
+type GlobalDataRecentModelsGetInput = {
+  cwd: string;
+};
+type GlobalDataRecentModelsGetOutput = {
+  success: boolean;
+  data: {
+    recentModels: string[];
+  };
+};
+
+type GlobalDataRecentModelsAddInput = {
+  cwd: string;
+  model: string;
 };
 
 // ============================================================================
@@ -275,6 +294,7 @@ type ModelsListOutput = {
       providerId: string;
       modelId: string;
     }>;
+    recentModels: string[];
   };
 };
 
@@ -552,6 +572,59 @@ type ProvidersListOutput = {
     }>;
   };
 };
+
+type ProvidersLoginInitOAuthInput = {
+  cwd: string;
+  providerId: 'github-copilot' | 'qwen' | 'codex';
+  timeout?: number;
+};
+type ProvidersLoginInitOAuthOutput =
+  | {
+      success: true;
+      data: {
+        authUrl: string;
+        userCode?: string;
+        oauthSessionId: string;
+      };
+    }
+  | { success: false; error: string };
+
+type ProvidersLoginCompleteOAuthInput = {
+  cwd: string;
+  providerId: 'github-copilot' | 'qwen' | 'codex';
+  oauthSessionId: string;
+  code: string;
+};
+type ProvidersLoginCompleteOAuthOutput =
+  | {
+      success: true;
+      data: { user?: string };
+    }
+  | { success: false; error: string };
+
+type ProvidersLoginStatusInput = {
+  cwd: string;
+  providerId: string;
+};
+type ProvidersLoginStatusOutput = {
+  success: true;
+  data: { isLoggedIn: boolean; user?: string };
+};
+
+type ProvidersLoginPollOAuthInput = {
+  cwd: string;
+  oauthSessionId: string;
+};
+type ProvidersLoginPollOAuthOutput =
+  | {
+      success: true;
+      data: {
+        status: 'pending' | 'completed' | 'error';
+        user?: string;
+        error?: string;
+      };
+    }
+  | { success: false; error: string };
 
 // ============================================================================
 // Session Handlers
@@ -1135,6 +1208,16 @@ type ToolApprovalOutput = {
  * Maps handler method names to their input and output types.
  */
 export type HandlerMap = {
+  // GlobalData handlers
+  'globalData.recentModels.get': {
+    input: GlobalDataRecentModelsGetInput;
+    output: GlobalDataRecentModelsGetOutput;
+  };
+  'globalData.recentModels.add': {
+    input: GlobalDataRecentModelsAddInput;
+    output: SuccessResponse;
+  };
+
   // Config handlers
   'config.get': { input: ConfigGetInput; output: ConfigGetOutput };
   'config.set': { input: ConfigSetInput; output: SuccessResponse };
@@ -1240,6 +1323,22 @@ export type HandlerMap = {
 
   // Providers handlers
   'providers.list': { input: ProvidersListInput; output: ProvidersListOutput };
+  'providers.login.initOAuth': {
+    input: ProvidersLoginInitOAuthInput;
+    output: ProvidersLoginInitOAuthOutput;
+  };
+  'providers.login.completeOAuth': {
+    input: ProvidersLoginCompleteOAuthInput;
+    output: ProvidersLoginCompleteOAuthOutput;
+  };
+  'providers.login.status': {
+    input: ProvidersLoginStatusInput;
+    output: ProvidersLoginStatusOutput;
+  };
+  'providers.login.pollOAuth': {
+    input: ProvidersLoginPollOAuthInput;
+    output: ProvidersLoginPollOAuthOutput;
+  };
 
   // Session handlers
   'session.initialize': {

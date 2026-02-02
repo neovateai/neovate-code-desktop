@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 import type { NormalizedMessage } from '../client/types/message';
 import { logger } from '../lib/logger';
 import {
@@ -25,51 +25,11 @@ function getMessageText(message: NormalizedMessage): string {
   }
   if (Array.isArray(message.content)) {
     return message.content
-      .filter(
-        (part): part is { type: 'text'; text: string } => part.type === 'text',
-      )
-      .map((part) => part.text)
+      .filter((block) => block.type === 'text')
+      .map((block) => ('text' in block ? block.text : ''))
       .join(' ');
   }
   return '';
-}
-
-function hasBashStdout(text: string): boolean {
-  return text.includes('<bash-stdout>');
-}
-
-function extractBashInput(text: string): string | null {
-  const match = text.match(/<bash-input>([\s\S]*?)<\/bash-input>/);
-  return match ? match[1] : null;
-}
-
-function isCanceledMessage(message: NormalizedMessage): boolean {
-  const text = getMessageText(message);
-  return text === CANCELED_MESSAGE_TEXT;
-}
-
-function getMessagePreview(message: NormalizedMessage): {
-  text: string;
-  isBashInput: boolean;
-} {
-  let text = getMessageText(message);
-  const bashInput = extractBashInput(text);
-  if (bashInput !== null) {
-    text = bashInput.replace(/\s+/g, ' ').trim();
-    const truncated = text.length > 80 ? text.slice(0, 80) + '...' : text;
-    return { text: truncated, isBashInput: true };
-  }
-  text = text.replace(/\s+/g, ' ').trim();
-  const truncated = text.length > 80 ? text.slice(0, 80) + '...' : text;
-  return { text: truncated, isBashInput: false };
-}
-
-function formatTimestamp(timestamp: string): string {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
 }
 
 export function ForkModal({
@@ -78,178 +38,90 @@ export function ForkModal({
   messages,
   onSelect,
 }: ForkModalProps) {
-  logger.debug('[UI]', 'ForkModal render', {
-    open,
-    messagesCount: messages.length,
-  });
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  // Filter to user messages only and reverse for chronological order (newest first)
-  const userMessages = useMemo(
-    () =>
-      messages
-        .filter((m) => {
-          if (m.role !== 'user') return false;
-          if ('hidden' in m && m.hidden) return false;
-          if (isCanceledMessage(m)) return false;
-          const text = getMessageText(m);
-          if (text === CANCELED_MESSAGE_TEXT) return false;
-          if (hasBashStdout(text)) return false;
-          // Exclude tool result messages
-          if (
-            Array.isArray(m.content) &&
-            m.content.some((part) => part.type === 'tool_result')
-          ) {
-            return false;
-          }
-          return true;
-        })
-        .reverse(),
-    [messages],
-  );
+  const humanMessages = useMemo(() => {
+    return messages
+      .map((msg, index) => ({ msg, index }))
+      .filter(
+        ({ msg }) =>
+          msg.role === 'user' && getMessageText(msg) !== CANCELED_MESSAGE_TEXT,
+      );
+  }, [messages]);
 
-  // Reset selection when modal opens or messages change
   useEffect(() => {
-    if (open) {
-      setSelectedIndex(0);
+    if (open && humanMessages.length > 0) {
+      setSelectedIndex(humanMessages.length - 1);
     }
-  }, [open, userMessages.length]);
+  }, [open, humanMessages.length]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      logger.debug('[UI]', 'ForkModal handleKeyDown', {
-        key: e.key,
-        type: e.type,
-      });
-
-      if (e.key === 'Escape') {
-        logger.debug('[UI]', 'ForkModal Escape pressed, calling onClose');
-        e.preventDefault();
-        onClose();
-        return;
-      }
+    (e: KeyboardEvent) => {
+      if (!open || humanMessages.length === 0) return;
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.max(0, prev - 1));
-        return;
-      }
-
-      if (e.key === 'ArrowDown') {
+        setSelectedIndex((prev) =>
+          prev === null || prev === 0 ? humanMessages.length - 1 : prev - 1,
+        );
+      } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.min(userMessages.length - 1, prev + 1));
-        return;
-      }
-
-      if (e.key === 'Enter') {
+        setSelectedIndex((prev) =>
+          prev === null || prev === humanMessages.length - 1 ? 0 : prev + 1,
+        );
+      } else if (e.key === 'Enter' && selectedIndex !== null) {
         e.preventDefault();
-        if (userMessages[selectedIndex]) {
-          onSelect(userMessages[selectedIndex].uuid);
+        const selected = humanMessages[selectedIndex];
+        if (selected) {
+          onSelect(selected.msg.uuid);
+          onClose();
         }
-        return;
       }
     },
-    [userMessages, selectedIndex, onSelect, onClose],
+    [open, humanMessages, selectedIndex, onSelect, onClose],
   );
 
-  const handleItemClick = useCallback(
-    (uuid: string) => {
-      onSelect(uuid);
-    },
-    [onSelect],
-  );
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  const handleSelect = (uuid: string) => {
+    logger.debug('[ForkModal]', 'Selected message:', uuid);
+    onSelect(uuid);
+    onClose();
+  };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogPopup
-        className="sm:max-w-2xl"
-        onKeyDown={handleKeyDown}
-        showCloseButton={true}
-      >
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogPopup className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Fork from Message</DialogTitle>
+          <DialogTitle>Fork Conversation</DialogTitle>
           <DialogDescription>
-            Select a message to fork from. The conversation will branch from
+            Select a message to fork from. The conversation will continue from
             this point.
           </DialogDescription>
         </DialogHeader>
-
-        <div className="mx-6 mt-4 max-h-[60vh] overflow-y-auto rounded-lg border border-border">
-          {userMessages.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              No previous messages to fork from
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {userMessages.map((message, index) => {
-                const isSelected = index === selectedIndex;
-                const { text: preview, isBashInput } =
-                  getMessagePreview(message);
-                const timestamp = formatTimestamp(message.timestamp);
-
-                return (
-                  <button
-                    key={message.uuid}
-                    type="button"
-                    className={cn(
-                      'w-full px-4 py-3 text-left transition-colors',
-                      'hover:bg-accent/50 focus:outline-none',
-                      isSelected && 'bg-accent',
-                    )}
-                    onClick={() => handleItemClick(message.uuid)}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="shrink-0 text-xs text-muted-foreground font-mono">
-                        {timestamp}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        {isBashInput && (
-                          <span className="mr-2 text-xs font-semibold text-orange-500">
-                            !
-                          </span>
-                        )}
-                        <span
-                          className={cn(
-                            'text-sm',
-                            isSelected
-                              ? 'text-accent-foreground'
-                              : 'text-foreground',
-                          )}
-                        >
-                          {preview}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="mx-6 mt-4 mb-6 flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-              ↑
-            </kbd>
-            <kbd className="ml-1 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-              ↓
-            </kbd>
-            <span className="ml-2">to navigate</span>
-          </span>
-          <span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-              Enter
-            </kbd>
-            <span className="ml-2">to select</span>
-          </span>
-          <span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-              Esc
-            </kbd>
-            <span className="ml-2">to cancel</span>
-          </span>
+        <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
+          {humanMessages.map(({ msg, index }, listIndex) => (
+            <button
+              key={msg.uuid}
+              type="button"
+              onClick={() => handleSelect(msg.uuid)}
+              onMouseEnter={() => setSelectedIndex(listIndex)}
+              className={cn(
+                'block w-full rounded-lg border p-3 text-left transition-colors',
+                selectedIndex === listIndex
+                  ? 'border-accent bg-accent/10'
+                  : 'border-border hover:border-accent/50',
+              )}
+            >
+              <div className="text-muted-foreground mb-1 text-xs">
+                Message {index + 1}
+              </div>
+              <div className="line-clamp-2 text-sm">{getMessageText(msg)}</div>
+            </button>
+          ))}
         </div>
       </DialogPopup>
     </Dialog>

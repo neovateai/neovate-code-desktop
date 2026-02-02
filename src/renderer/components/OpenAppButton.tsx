@@ -1,12 +1,12 @@
 import { ChevronDown, Copy, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from './ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/menu';
+} from './ui/menu';
 import antigravityIcon from '../assets/icons/antigravity.png';
 import cursorIcon from '../assets/icons/cursor.png';
 import finderIcon from '../assets/icons/finder.png';
