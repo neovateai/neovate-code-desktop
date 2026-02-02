@@ -10,7 +10,6 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useStore } from '../../store';
 import { AddRepoMenu } from '../AddRepoMenu';
-import { ProjectSelectorDropdown } from '../ProjectSelectorDropdown';
 import { Button } from '../ui/button';
 import { Separator as UISeparator } from '../ui/separator';
 import { useAppLayoutPanels } from './AppLayoutProvider';

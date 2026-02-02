@@ -12,6 +12,8 @@ import { type MouseEvent, memo, useEffect, useState } from 'react';
 import type { RepoData } from '../client/types/entities';
 import { cn } from '../lib/utils';
 import { useStore } from '../store';
+import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
+import { useRepoDelete } from './Repo/useRepoDelete';
 import {
   ContextMenu,
   ContextMenuItem,
@@ -36,12 +38,6 @@ function formatRelativeTime(timestamp: number): string {
 const DEFAULT_SESSION_LIMIT = 5;
 
 import {
-  Accordion,
-  AccordionItem,
-  AccordionPanel,
-  AccordionTrigger,
-} from './ui/accordion';
-import {
   AlertDialog,
   AlertDialogClose,
   AlertDialogDescription,
@@ -49,9 +45,14 @@ import {
   AlertDialogHeader,
   AlertDialogPopup,
   AlertDialogTitle,
-} from './ui/alert-dialog';
-import { Button } from './ui/button';
-
+  Button,
+} from './ui';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from './ui/accordion';
 import {
   Empty,
   EmptyDescription,
@@ -83,11 +84,9 @@ export const RepoSidebar = () => {
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
   const repos = useStore((state) => state.repos);
   const selectedRepoPath = useStore((state) => state.selectedRepoPath);
+  // console.log('repos,selectedRepoPath', repos, selectedRepoPath);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
 
-  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
-  const [selectedRepoForDialog, setSelectedRepoForDialog] =
-    useState<RepoData | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
   const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
@@ -97,19 +96,13 @@ export const RepoSidebar = () => {
     summary: string;
   } | null>(null);
 
-  const handleRepoInfoClick = (repo: RepoData, e: MouseEvent) => {
-    e.stopPropagation();
-    setSelectedRepoForDialog(repo);
-    setAlertDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (selectedRepoForDialog) {
-      deleteRepo(selectedRepoForDialog.path);
-      setAlertDialogOpen(false);
-      setSelectedRepoForDialog(null);
-    }
-  };
+  const {
+    deleteDialogOpen: repoDeleteDialogOpen,
+    repoToDelete: repoToDeleteInfo,
+    handleDeleteRepoClick: handleRepoDeleteClick,
+    handleConfirmDelete: handleRepoConfirmDelete,
+    handleCancelDelete: handleRepoCancelDelete,
+  } = useRepoDelete();
 
   const updateSession = useStore((state) => state.updateSession);
   const removeSession = useStore((state) => state.removeSession);
@@ -248,20 +241,25 @@ export const RepoSidebar = () => {
             ).map((repo) => (
               <AccordionItem key={repo.path} value={repo.path}>
                 {multiProjectSupport && (
-                  <AccordionTrigger className="px-3 py-2 group">
-                    <div className="flex items-center gap-2 flex-1">
+                  <AccordionTrigger className="px-3 py-2 group w-full max-w-full">
+                    <div className="flex items-center gap-2 w-full min-w-0">
                       <HugeiconsIcon
                         icon={FolderIcon}
                         size={18}
                         strokeWidth={1.5}
+                        className="flex-shrink-0"
                       />
-                      <span className="font-medium text-sm">{repo.name}</span>
-                      <span
-                        className="ml-auto p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => handleRepoInfoClick(repo, e)}
+                      <div className="font-medium text-sm truncate w-full">
+                        {repo.name}
+                      </div>
+                      {/* <span
+                        className="absolute ml-auto p-1 rounded opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity"
+                        onClick={(e) =>
+                          handleRepoDeleteClick(e, repo.path, repo.name)
+                        }
                       >
-                        <Trash2 size={16} strokeWidth={1.5} />
-                      </span>
+                        <Trash2 size={14} strokeWidth={1.5} />
+                      </span> */}
                     </div>
                   </AccordionTrigger>
                 )}
@@ -468,30 +466,12 @@ export const RepoSidebar = () => {
         <RepoSidebar.Footer />
       </div>
 
-      <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
-        <AlertDialogPopup>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Repository?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedRepoForDialog &&
-                `This will remove '${selectedRepoForDialog.name}' from the sidebar. The repository and its workspaces will remain on disk.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>
-              <Button variant="outline">Cancel</Button>
-            </AlertDialogClose>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              className="gap-2"
-            >
-              <Trash2 size={16} strokeWidth={1.5} />
-              Remove
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogPopup>
-      </AlertDialog>
+      <RepoDeleteDialog
+        open={repoDeleteDialogOpen}
+        onOpenChange={handleRepoCancelDelete}
+        repo={repoToDeleteInfo}
+        onConfirm={handleRepoConfirmDelete}
+      />
 
       <AlertDialog open={sessionAlertOpen} onOpenChange={setSessionAlertOpen}>
         <AlertDialogPopup>

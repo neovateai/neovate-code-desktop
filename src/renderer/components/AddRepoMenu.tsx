@@ -1,8 +1,14 @@
-import { CloudIcon, FolderIcon } from '@hugeicons/core-free-icons';
+import {
+  CloudIcon,
+  Delete02Icon,
+  FolderIcon,
+} from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CheckIcon } from 'lucide-react';
 import React from 'react';
 import { useStore } from '../store';
+import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
+import { useRepoDelete } from './Repo/useRepoDelete';
 import { toastManager } from './ui';
 import {
   Menu,
@@ -26,8 +32,17 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
     repos,
     selectWorkspace,
     selectedWorkspaceId,
+    multiProjectSupport,
     workspaces,
   } = useStore();
+
+  const {
+    deleteDialogOpen,
+    repoToDelete,
+    handleDeleteRepoClick,
+    handleConfirmDelete,
+    handleCancelDelete,
+  } = useRepoDelete();
 
   const handleOpenProject = async () => {
     // Prevent multiple simultaneous operations
@@ -195,7 +210,7 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
           <span>Clone from URL</span>
         </MenuItem>
 
-        {repoEntries.length > 0 && (
+        {!multiProjectSupport && repoEntries.length > 0 && (
           <>
             <MenuSeparator />
             {repoEntries.map(([path, repo]) => {
@@ -208,6 +223,7 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
                 <MenuItem
                   key={path}
                   onClick={() => handleSwitchWorkspace(firstWorkspaceId)}
+                  className="group"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{repo.name}</div>
@@ -215,12 +231,36 @@ export const AddRepoMenu = ({ children }: AddRepoMenuProps) => {
                       {path}
                     </div>
                   </div>
-                  {isCurrent && <CheckIcon />}
+                  {isCurrent && (
+                    <div className="p-1">
+                      <CheckIcon size={14} />
+                    </div>
+                  )}
+                  {!isCurrent && (
+                    <button
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded"
+                      onClick={(e) => handleDeleteRepoClick(e, path, repo.name)}
+                    >
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        size={14}
+                        strokeWidth={1.5}
+                        className="text-red-500"
+                      />
+                    </button>
+                  )}
                 </MenuItem>
               );
             })}
           </>
         )}
+
+        <RepoDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={handleCancelDelete}
+          repo={repoToDelete}
+          onConfirm={() => handleConfirmDelete(() => setOpen(false))}
+        />
       </MenuPopup>
     </Menu>
   );

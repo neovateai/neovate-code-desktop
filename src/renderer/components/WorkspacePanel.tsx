@@ -8,14 +8,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
-import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip';
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
@@ -29,6 +21,14 @@ import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
 import { splitMessages } from './messages/messageHelpers';
 import { Button } from './ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from './ui/empty';
+import { Tooltip, TooltipPopup, TooltipTrigger } from './ui/tooltip';
 
 // Define the context type
 interface WorkspaceContextType {
@@ -457,7 +457,7 @@ WorkspacePanel.Header = function Header() {
         ></TooltipTrigger>
         <TooltipPopup>{displayTitle}</TooltipPopup>
       </Tooltip>
-      <Button
+      {/* <Button
         variant="ghost"
         size="sm"
         onClick={handleNewChat}
@@ -472,7 +472,7 @@ WorkspacePanel.Header = function Header() {
           />
         </svg>
         New Chat
-      </Button>
+      </Button> */}
     </div>
   );
 };
