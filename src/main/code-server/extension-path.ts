@@ -2,7 +2,7 @@ import { app } from 'electron';
 import path from 'path';
 
 const EXTENSION_DIR = 'extensions';
-const VSIX_FILENAME = 'neovate-code-extension-0.0.1.vsix';
+const VSIX_FILENAME = 'neovate-code-extension-0.0.2.vsix';
 
 /**
  * 获取扩展目录的统一路径

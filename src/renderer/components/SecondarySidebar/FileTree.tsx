@@ -1,4 +1,4 @@
-import { ChevronRight, FolderIcon } from '@hugeicons/core-free-icons';
+import { ChevronRight, FolderIcon, Plus } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
 
@@ -49,6 +49,7 @@ function TreeNode({
   selectedKey,
   onSelect,
 }: TreeNodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const isExpanded = expandedKeys.has(item.relPath);
   const isSelected = selectedKey === item.relPath;
   const hasChildren = item.children && item.children.length > 0;
@@ -68,16 +69,24 @@ function TreeNode({
     }
   };
 
+  const handlePlusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('Add action for:', item.fullPath);
+    // TODO: Add to Chat
+  };
+
   return (
     <div className="select-none relative group">
       <div
-        className={`flex items-center py-1 px-2 rounded cursor-pointer text-sm transition-colors relative z-0 group ${isSelected ? 'bg-accent' : 'hover:bg-accent/50'}`}
-        style={{ paddingLeft: `${level * 12 + 8}px` }}
+        className={`flex items-center py-0.5 px-2 rounded cursor-pointer text-sm transition-colors relative z-0 group ${isSelected ? 'bg-accent ring-1 ring-gray-200 dark:ring-gray-600' : 'hover:bg-accent/80'}`}
+        style={{ paddingLeft: `${level * 12 + 4}px` }}
         onClick={handleClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         {item.isFolder && (
           <div
-            className="flex items-center justify-center w-4 h-4 mr-1.5"
+            className="flex items-center justify-center w-4 h-4 mr-1"
             onClick={handleToggle}
           >
             {hasChildren && (
@@ -91,20 +100,23 @@ function TreeNode({
           </div>
         )}
 
-        {!item.isFolder && <div className="w-4 mr-1.5" />}
+        {!item.isFolder && <div className="w-4 mr-1" />}
 
         {item.isFolder ? (
           <HugeiconsIcon
             icon={FolderIcon}
-            size={14}
+            size={12}
             strokeWidth={1.5}
-            className="text-muted-foreground flex-shrink-0 mr-1.5"
+            className="text-muted-foreground flex-shrink-0 mr-1"
           />
         ) : (
           <FileLangIcon path={item.fullPath} />
         )}
 
-        <span className="truncate text-foreground ml-1" title={item.fullPath}>
+        <span
+          className="truncate text-foreground ml-0.5 flex-1"
+          title={item.fullPath}
+        >
           {filename}
           {item.editStatus === 'rename' && (
             <span className="ml-1 text-xs text-muted-foreground">
@@ -112,6 +124,21 @@ function TreeNode({
             </span>
           )}
         </span>
+
+        {isHovered && (
+          <div
+            className="flex items-center justify-center w-4 h-4 ml-1"
+            onClick={handlePlusClick}
+            title="Add to chat"
+          >
+            <HugeiconsIcon
+              icon={Plus}
+              size={12}
+              strokeWidth={1.5}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            />
+          </div>
+        )}
       </div>
 
       {item.isFolder && hasChildren && isExpanded && (

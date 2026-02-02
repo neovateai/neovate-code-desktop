@@ -1,5 +1,8 @@
 import { EventEmitter } from 'events';
 import net from 'net';
+import type { WebContents } from 'electron';
+import { getRendererCaller } from '../../shared/lib/ipc/main';
+import type { IPCRendererHandlers } from '../ipc';
 
 interface IBridgeRequestParams {
   operationType: string;
@@ -12,8 +15,17 @@ class ExtensionBridgeServer extends EventEmitter {
   private clients = new Map<string, net.Socket>();
   private handlers = new Map<
     string,
-    (params: IBridgeRequestParams['params'], cwd: string) => Promise<any>
+    (
+      params: IBridgeRequestParams['params'],
+      cwd: string,
+      webContents?: WebContents,
+    ) => Promise<any>
   >();
+  private webContents?: WebContents;
+
+  connect2renderer(webContents: WebContents) {
+    this.webContents = webContents;
+  }
 
   start(port: number = 45000) {
     return new Promise((resolve) => {
@@ -41,7 +53,7 @@ class ExtensionBridgeServer extends EventEmitter {
             const handler = this.handlers.get(operationType);
             if (handler) {
               try {
-                const result = await handler(params, cwd);
+                const result = await handler(params, cwd, this.webContents);
                 const response = JSON.stringify(result);
                 socket.write(Buffer.from(response));
               } catch (error) {
@@ -97,6 +109,7 @@ class ExtensionBridgeServer extends EventEmitter {
     handler: (
       params: IBridgeRequestParams['params'],
       cwd: string,
+      webContents?: WebContents,
     ) => Promise<T>,
   ) {
     this.handlers.set(operationType, handler);
@@ -122,4 +135,13 @@ bridgeServer.register('ping', async () => {
 bridgeServer.register('file.change', async (params) => {
   console.log('file change', params);
   // TODO: When file change, do sth
+});
+/** trigger by click link in editor */
+bridgeServer.register('link.open', async (params, cwd, webContents) => {
+  if (webContents) {
+    const caller = getRendererCaller<IPCRendererHandlers>(webContents);
+    caller.browser.open.send(params.url);
+    return { success: true, data: { msg: 'called success' } };
+  }
+  return { success: false, data: {}, errorMsg: `WebContents not found` };
 });

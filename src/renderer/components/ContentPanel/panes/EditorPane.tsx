@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ipcMainCaller } from '../../../lib/ipc';
+import { ipcMainCaller, ipcRendererHandler } from '../../../lib/ipc';
 import { logger } from '../../../lib/logger';
 import { useContentPanelContext } from '../ContentPanelProvider';
 import type { EditorTab } from '../types';
@@ -55,6 +55,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   const initRef = useRef(false);
   const pendingTabUri = useStore((s) => s.pendingTabUri);
   const { request } = useStore();
+  const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
 
   const startEditor = async () => {
     if (status === 'starting') return;
@@ -86,6 +87,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
     }
   };
 
+  // 文件打开行为承接
   useEffect(() => {
     if (pendingTabUri?.type === 'editor') {
       request<any>('editor.open', {
@@ -94,6 +96,16 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
       });
     }
   }, [pendingTabUri]);
+
+  // editor extension 劫持了https 链接，使用内置browser打开
+  useEffect(() => {
+    const unsub = ipcRendererHandler.browser.open.listen((url) => {
+      setPendingTabRequest({ type: 'browser', uri: url, repoPath });
+    });
+    return () => {
+      unsub();
+    };
+  }, []);
 
   // Start editor when pane becomes active
   useEffect(() => {

@@ -129,4 +129,7 @@ export type IPCRendererHandlers = {
     updateReady: (version: string) => void;
     error: (message: string) => void;
   };
+  browser: {
+    open: (url: string) => void;
+  };
 };
