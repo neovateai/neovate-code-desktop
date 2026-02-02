@@ -45,7 +45,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   keybindings: { ...DEFAULT_KEYBINDINGS },
   developerMode: false,
   runOnStartup: false,
-  locale: 'en',
+  locale: 'en-US',
 };
 
 export const createDesktopSettingsSlice: StateCreator<

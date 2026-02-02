@@ -9,7 +9,7 @@ export const demoI18nPlugin: RendererPlugin = {
         const module = await import(`./locales/${locale}.json`);
         return module.default;
       } catch {
-        const fallback = await import('./locales/en.json');
+        const fallback = await import('./locales/en-US.json');
         return fallback.default;
       }
     },

@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import en from '../../locales/en.json';
+import enUS from '../../locales/en-US.json';
 import zhCN from '../../locales/zh-CN.json';
 import { DEFAULT_LOCALE, normalizeLocale, type Locales } from './locales';
 
@@ -44,7 +44,7 @@ export class I18nManager {
 
     await this.instance.init({
       resources: {
-        en: { translation: en },
+        'en-US': { translation: enUS },
         'zh-CN': { translation: zhCN },
       },
       fallbackLng: DEFAULT_LOCALE,
