@@ -16,6 +16,7 @@ import {
 import { registerMainHandlers } from '../../shared/lib/ipc/main';
 import { codeServerManager } from '../code-server';
 import { ipcMainHandlers } from '../ipc';
+import { bridgeServer } from '../code-server/bridge';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
 import { updaterService } from '../updater';
@@ -297,6 +298,8 @@ export class MainApp {
     // Initialize updater service after window is created
     if (this.mainWindow) {
       updaterService.init(this.mainWindow);
+      // 设置 bridgeServer 的 webContents，以便 extension 可以通知 renderer
+      bridgeServer.connect2renderer(this.mainWindow.webContents);
     }
 
     // Load renderer

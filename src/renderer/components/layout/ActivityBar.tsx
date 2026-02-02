@@ -1,10 +1,9 @@
 import {
-  ComputerTerminal01Icon,
+  DashboardSquare01FreeIcons,
   FolderIcon,
   GitBranchIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { memo } from 'react';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store';
 import type { SecondarySidebarTab } from '../../store/slices/ui';
@@ -51,10 +50,10 @@ export const ActivityBar = function ActivityBar() {
       />
       <Separator className="w-6 my-1" />
       <ActivityBarButton
-        icon={ComputerTerminal01Icon}
+        icon={DashboardSquare01FreeIcons}
         onClick={toggleContentPanel}
         active={!isContentPanelCollapsed()}
-        title="Terminal"
+        title="Panels"
       />
     </div>
   );
