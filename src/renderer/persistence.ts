@@ -35,6 +35,7 @@ interface PersistedState {
   sessions: Record<string, any>;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
+  pinnedSessions: string[];
   // Settings state
   showSettings: boolean;
   settingsActiveTab: SettingsActiveTab;
@@ -109,6 +110,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       sessions: state.sessions || {},
       openRepoAccordions: state.openRepoAccordions || [],
       expandedSessionGroups: state.expandedSessionGroups || {},
+      pinnedSessions: state.pinnedSessions || [],
       // Settings state
       showSettings: state.showSettings ?? false,
       settingsActiveTab: state.settingsActiveTab ?? 'preferences',
@@ -183,6 +185,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       sessions = {},
       openRepoAccordions = [],
       expandedSessionGroups = {},
+      pinnedSessions = [],
       // Settings state
       showSettings = false,
       settingsActiveTab = 'preferences',
@@ -236,6 +239,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         sessions,
         openRepoAccordions,
         expandedSessionGroups,
+        pinnedSessions,
         // Settings state
         showSettings,
         settingsActiveTab,
