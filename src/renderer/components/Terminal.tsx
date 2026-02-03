@@ -1,6 +1,6 @@
-import { type ITheme, Terminal as XTerm } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import 'xterm/css/xterm.css';
+import { type ITheme, Terminal as XTerm } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import '@xterm/xterm/css/xterm.css';
 import type React from 'react';
 import {
   createContext,
@@ -343,7 +343,7 @@ function TerminalPane({
 
         // Handle keyboard shortcuts (Cmd+K on Mac, Ctrl+K on Windows/Linux to clear)
         const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-        xterm.attachCustomKeyEventHandler((event) => {
+        xterm.attachCustomKeyEventHandler((event: KeyboardEvent) => {
           const modifierKey = isMac ? event.metaKey : event.ctrlKey;
           if (event.type === 'keydown' && modifierKey && event.key === 'k') {
             xterm.clear();
@@ -352,7 +352,7 @@ function TerminalPane({
           return true; // Let xterm handle other keys
         });
 
-        xterm.onData((data) => {
+        xterm.onData((data: string) => {
           if (tab.ptyId) {
             ipcMainCaller.terminal.write({ ptyId: tab.ptyId, data });
           }
