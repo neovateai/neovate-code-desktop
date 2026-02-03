@@ -91,6 +91,7 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
   const pinnedSessions = useStore((state) => state.pinnedSessions);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
   const sessionProcessing = useStore((state) => state.sessionProcessing);
+  const sidebarSortBy = useStore((state) => state.sidebarSortBy);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
   const updateSession = useStore((state) => state.updateSession);
@@ -198,7 +199,7 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
                     className="text-warning-foreground"
                   />
                 ) : (
-                  <Pin size={14} strokeWidth={1.5} className="fill-current" />
+                  <Pin size={14} strokeWidth={1.5} />
                 )}
               </div>
               {isEditing ? (
@@ -223,6 +224,13 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
                   {displaySummary}
                 </span>
               )}
+              <span className="text-sm text-muted-foreground group-hover:hidden">
+                {formatRelativeTime(
+                  sidebarSortBy === 'created'
+                    ? session.created
+                    : session.modified,
+                )}
+              </span>
               {confirmingDeleteId === session.sessionId ? (
                 <button
                   className="text-xs text-destructive bg-muted rounded px-2 py-0.5"
