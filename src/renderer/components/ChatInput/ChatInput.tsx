@@ -346,6 +346,7 @@ export const ChatInput = memo(
                   cwd={cwd}
                   sessionId={sessionId}
                   onModelChange={handleModelChange}
+                  compact
                 />
               )}
 
