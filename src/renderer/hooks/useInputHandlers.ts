@@ -69,6 +69,7 @@ export function useInputHandlers({
     toggleThinking,
     setThinkingEnabled,
     setThinking,
+    setThinkingVariants,
     pastedTextMap,
     pastedImageMap,
     setPastedTextMap,
@@ -660,6 +661,7 @@ export function useInputHandlers({
     thinkingEnabled,
     setThinkingEnabled,
     setThinking,
+    setThinkingVariants,
     isSearching: fileSuggestion.isLoading,
   };
 }

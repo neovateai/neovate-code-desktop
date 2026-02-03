@@ -125,6 +125,7 @@ export const ChatInput = memo(
       thinkingEnabled,
       setThinkingEnabled,
       setThinking,
+      setThinkingVariants,
       isSearching,
     } = useInputHandlers({
       sessionId,
@@ -147,7 +148,6 @@ export const ChatInput = memo(
         if (!request || !cwd || !sessionId) return;
 
         try {
-          // Fetch model info to update thinking state
           const modelInfoResponse = await request('session.getModel', {
             cwd,
             sessionId,
@@ -159,21 +159,34 @@ export const ChatInput = memo(
             'modelInfo' in modelInfoResponse.data &&
             modelInfoResponse.data.modelInfo
           ) {
-            const hasThinkingConfig =
-              !!modelInfoResponse.data.modelInfo.thinkingConfig;
-            setThinkingEnabled(hasThinkingConfig);
-            setThinking(hasThinkingConfig ? 'low' : null);
+            const variants = modelInfoResponse.data.modelInfo.model?.variants;
+            const variantKeys =
+              variants && Object.keys(variants).length > 0
+                ? Object.keys(variants)
+                : [];
+            const hasThinking = variantKeys.length > 0;
+            setThinkingEnabled(hasThinking);
+            setThinkingVariants(variantKeys);
+            setThinking(hasThinking ? variantKeys[0] : null);
           } else {
             setThinkingEnabled(false);
+            setThinkingVariants([]);
             setThinking(null);
           }
         } catch {
-          // On error, disable thinking
           setThinkingEnabled(false);
+          setThinkingVariants([]);
           setThinking(null);
         }
       },
-      [request, cwd, sessionId, setThinkingEnabled, setThinking],
+      [
+        request,
+        cwd,
+        sessionId,
+        setThinkingEnabled,
+        setThinkingVariants,
+        setThinking,
+      ],
     );
 
     const { value } = inputState.state;
@@ -276,6 +289,12 @@ export const ChatInput = memo(
             <div>Session ID: {sessionId || 'null'}</div>
             <div>CWD: {cwd || 'null'}</div>
             <div>Processing: {processingState?.status || 'null'}</div>
+            <div>Thinking: {thinking || 'null'}</div>
+            <div>Thinking Enabled: {String(thinkingEnabled)}</div>
+            <div>
+              Thinking Variants:{' '}
+              {JSON.stringify(inputState.thinkingVariants || [])}
+            </div>
           </div>
         )}
 

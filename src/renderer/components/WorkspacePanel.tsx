@@ -204,25 +204,31 @@ export const WorkspacePanel = ({
           'modelInfo' in response.data &&
           response.data.modelInfo
         ) {
-          const hasThinkingConfig = !!response.data.modelInfo.thinkingConfig;
+          const variants = response.data.modelInfo.model?.variants;
+          const variantKeys =
+            variants && Object.keys(variants).length > 0
+              ? Object.keys(variants)
+              : [];
+          const hasThinking = variantKeys.length > 0;
           setSessionInput(selectedSessionId, {
-            thinkingEnabled: hasThinkingConfig,
-            thinking: hasThinkingConfig ? 'low' : null,
+            thinkingEnabled: hasThinking,
+            thinkingVariants: variantKeys,
+            thinking: hasThinking ? variantKeys[0] : null,
             thinkingInitialized: true,
           });
         } else {
-          // Model doesn't support thinking
           setSessionInput(selectedSessionId, {
             thinkingEnabled: false,
+            thinkingVariants: [],
             thinking: null,
             thinkingInitialized: true,
           });
         }
       } catch (error) {
         console.error('Failed to fetch model info:', error);
-        // Default to disabled on error
         setSessionInput(selectedSessionId, {
           thinkingEnabled: false,
+          thinkingVariants: [],
           thinking: null,
           thinkingInitialized: true,
         });

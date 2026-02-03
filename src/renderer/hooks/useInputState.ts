@@ -163,6 +163,7 @@ export function useInputState(
   const planMode = sessionInput.planMode;
   const thinking = sessionInput.thinking;
   const thinkingEnabled = sessionInput.thinkingEnabled;
+  const thinkingVariants = sessionInput.thinkingVariants;
 
   const togglePlanMode = useCallback(() => {
     if (sessionId) {
@@ -177,18 +178,17 @@ export function useInputState(
   }, [sessionId, planMode, setSessionInput]);
 
   const toggleThinking = useCallback(() => {
-    if (sessionId && thinkingEnabled) {
+    if (sessionId && thinkingEnabled && thinkingVariants.length > 0) {
+      const currentIndex =
+        thinking === null ? -1 : thinkingVariants.indexOf(thinking);
+      const nextIndex = currentIndex + 1;
       const newThinking: ThinkingLevel =
-        thinking === null
-          ? 'low'
-          : thinking === 'low'
-            ? 'medium'
-            : thinking === 'medium'
-              ? 'high'
-              : null;
+        nextIndex >= thinkingVariants.length
+          ? null
+          : thinkingVariants[nextIndex];
       setSessionInput(sessionId, { thinking: newThinking });
     }
-  }, [sessionId, thinking, thinkingEnabled, setSessionInput]);
+  }, [sessionId, thinking, thinkingEnabled, thinkingVariants, setSessionInput]);
 
   const setThinkingEnabled = useCallback(
     (enabled: boolean) => {
@@ -203,6 +203,15 @@ export function useInputState(
     (level: ThinkingLevel) => {
       if (sessionId) {
         setSessionInput(sessionId, { thinking: level });
+      }
+    },
+    [sessionId, setSessionInput],
+  );
+
+  const setThinkingVariants = useCallback(
+    (variants: string[]) => {
+      if (sessionId) {
+        setSessionInput(sessionId, { thinkingVariants: variants });
       }
     },
     [sessionId, setSessionInput],
@@ -246,10 +255,12 @@ export function useInputState(
     planMode,
     thinking,
     thinkingEnabled,
+    thinkingVariants,
     togglePlanMode,
     toggleThinking,
     setThinkingEnabled,
     setThinking,
+    setThinkingVariants,
     // Pasted maps
     pastedTextMap,
     pastedImageMap,

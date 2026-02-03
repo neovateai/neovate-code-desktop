@@ -667,7 +667,7 @@ const useStore = create<Store>()((set, get, api) => ({
     try {
       // Transform params to backend format
       const planModeBoolean = params.planMode === 'plan';
-      const thinking = params.think ? { effect: params.think } : undefined;
+      const thinking = params.think ? { effort: params.think } : undefined;
       const attachments = params.images?.map((data) => {
         const mimeMatch = data.match(/^data:([^;]+);base64,/);
         const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';

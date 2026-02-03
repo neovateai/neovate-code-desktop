@@ -29,7 +29,7 @@ type SessionId = string;
 // Input mode types
 export type InputMode = 'prompt' | 'bash' | 'memory';
 export type PlanMode = 'normal' | 'plan' | 'brainstorm';
-export type ThinkingLevel = null | 'low' | 'medium' | 'high';
+export type ThinkingLevel = string | null;
 
 // Session-scoped input state
 export interface SessionInputState {
@@ -40,6 +40,7 @@ export interface SessionInputState {
   planMode: PlanMode;
   thinking: ThinkingLevel;
   thinkingEnabled: boolean;
+  thinkingVariants: string[];
   thinkingInitialized: boolean;
   pastedTextMap: Record<string, string>;
   pastedImageMap: Record<string, string>;
@@ -55,6 +56,7 @@ export const defaultSessionInputState: SessionInputState = {
   planMode: 'normal',
   thinking: null,
   thinkingEnabled: false,
+  thinkingVariants: [],
   thinkingInitialized: false,
   pastedTextMap: {},
   pastedImageMap: {},
