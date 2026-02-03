@@ -65,7 +65,7 @@ const API_FORMAT_OPTIONS = [
 ] as const;
 
 // OAuth providers that need special handling
-const OAUTH_PROVIDERS = ['github-copilot', 'antigravity'];
+const OAUTH_PROVIDERS = ['github-copilot', 'codex', 'qwen'];
 
 // Slugify a string to create a valid provider ID
 const slugify = (str: string): string => {
