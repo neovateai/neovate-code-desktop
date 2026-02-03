@@ -360,10 +360,6 @@ export const RepoSidebar = () => {
     <div className="h-full flex flex-col">
       {developerMode && (
         <div className="mb-2 mx-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
-          <div>selectedRepoPath: {selectedRepoPath || 'null'}</div>
-          <div>selectedWorkspaceId: {selectedWorkspaceId || 'null'}</div>
-          <div>selectedSessionId: {selectedSessionId || 'null'}</div>
-          <div>repos: {Object.keys(repos).join(', ') || 'none'}</div>
           <div>
             multiProjectSupport: {multiProjectSupport ? 'true' : 'false'}
           </div>

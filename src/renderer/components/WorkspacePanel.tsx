@@ -385,18 +385,6 @@ export const WorkspacePanel = ({
   return (
     <WorkspaceContext.Provider value={contextValue}>
       <div className="flex flex-col h-full">
-        {/* Debug Info */}
-        {developerMode && (
-          <div className="mx-4 mt-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
-            <div>Selected Session ID: {selectedSessionId || 'null'}</div>
-            <div>Selected Workspace ID: {selectedWorkspaceId || 'null'}</div>
-            <div>isLoading: {String(isLoading)}</div>
-            <div>Processing State: {sessionProcessing?.status ?? 'null'}</div>
-            <div>Connection State: {connectionState}</div>
-            <div>Sessions Count: {allSessions.length}</div>
-            <div>Messages Count: {messages.length}</div>
-          </div>
-        )}
         <WorkspacePanel.Header />
         <WorkspacePanel.Messages />
         <div className="p-4 flex flex-col gap-3">
