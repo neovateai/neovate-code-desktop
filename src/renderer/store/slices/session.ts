@@ -261,10 +261,11 @@ export const createSessionSlice: StateCreator<
         ...prev.inputBySession,
         [sessionId]: {
           ...defaultSessionInputState,
-          // but keep thinking and thinkingEnabled
           thinking: prev.inputBySession[sessionId]?.thinking || null,
           thinkingEnabled:
             prev.inputBySession[sessionId]?.thinkingEnabled || false,
+          thinkingVariants:
+            prev.inputBySession[sessionId]?.thinkingVariants || [],
           planMode: prev.inputBySession[sessionId]?.planMode || 'normal',
         },
       },
