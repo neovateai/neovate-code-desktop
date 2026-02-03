@@ -447,7 +447,7 @@ export const SkillsPanel = () => {
                         </span>
                       </div>
                       <button
-                        className="p-1.5 rounded-md transition-colors disabled:opacity-50 text-muted-foreground"
+                        className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-opacity disabled:opacity-50"
                         onClick={() => handleRemove(skill)}
                         disabled={removingSkill === skill.name}
                         title="Remove skill"
@@ -455,15 +455,16 @@ export const SkillsPanel = () => {
                         {removingSkill === skill.name ? (
                           <HugeiconsIcon
                             icon={Loading02Icon}
-                            size={16}
+                            size={14}
                             strokeWidth={1.5}
                             className="animate-spin"
                           />
                         ) : (
                           <HugeiconsIcon
                             icon={Delete02Icon}
-                            size={16}
+                            size={14}
                             strokeWidth={1.5}
+                            className="text-red-500"
                           />
                         )}
                       </button>
@@ -498,7 +499,8 @@ export const SkillsPanel = () => {
                             {skill.source}
                           </span>
                         </div>
-                        <Button
+                        <button
+                          className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-opacity disabled:opacity-50"
                           onClick={() => handleRemove(skill)}
                           disabled={removingSkill === skill.name}
                           title="Remove skill"
@@ -506,18 +508,19 @@ export const SkillsPanel = () => {
                           {removingSkill === skill.name ? (
                             <HugeiconsIcon
                               icon={Loading02Icon}
-                              size={16}
+                              size={14}
                               strokeWidth={1.5}
                               className="animate-spin"
                             />
                           ) : (
                             <HugeiconsIcon
                               icon={Delete02Icon}
-                              size={16}
+                              size={14}
                               strokeWidth={1.5}
+                              className="text-red-500"
                             />
                           )}
-                        </Button>
+                        </button>
                       </div>
                     ))}
                   </div>
