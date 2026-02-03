@@ -1,9 +1,10 @@
+import { FitAddon } from '@xterm/addon-fit';
 import { SerializeAddon } from '@xterm/addon-serialize';
-import { useCallback, useEffect, useRef } from 'react';
-import { type ITheme, Terminal as XTerm } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
-import 'xterm/css/xterm.css';
+import { WebglAddon } from '@xterm/addon-webgl';
+import { type ITheme, Terminal as XTerm } from '@xterm/xterm';
+import '@xterm/xterm/css/xterm.css';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   TERMINAL_MAX_SCROLLBACK_LINES,
   TERMINAL_SAVE_COOLDOWN_MS,
@@ -327,6 +328,8 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         return;
       }
 
+      let webglAddon: WebglAddon | null = null;
+
       try {
         const { xterm, fitAddon, serializeAddon } = createXTermInstance(
           isDark,
@@ -337,6 +340,28 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         logger.debug('[ContentPanel:TerminalPane] XTerm instance created');
 
         xterm.open(container);
+
+        // Load WebGL addon for GPU-accelerated rendering with fallback to canvas
+        try {
+          webglAddon = new WebglAddon();
+          webglAddon.onContextLoss(() => {
+            logger.warn(
+              '[ContentPanel:TerminalPane] WebGL context lost, falling back to canvas',
+            );
+            webglAddon?.dispose();
+            webglAddon = null;
+          });
+          xterm.loadAddon(webglAddon);
+          logger.debug(
+            '[ContentPanel:TerminalPane] WebGL renderer initialized',
+          );
+        } catch (e) {
+          logger.warn(
+            '[ContentPanel:TerminalPane] WebGL addon failed, using canvas renderer:',
+            e,
+          );
+        }
+
         fitAddon.fit();
 
         // Select-to-copy: copy selection to clipboard on mouseup
@@ -523,11 +548,12 @@ export function TerminalPane({ tab, isActive }: TerminalPaneProps) {
         });
         resizeObserver.observe(container);
 
-        // Store cleanup for ResizeObserver
+        // Store cleanup for ResizeObserver and WebGL
         const originalCleanup = instance.cleanup;
         instance.cleanup = () => {
           if (resizeTimeout) clearTimeout(resizeTimeout);
           resizeObserver.disconnect();
+          webglAddon?.dispose();
           originalCleanup?.();
         };
 
