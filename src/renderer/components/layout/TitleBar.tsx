@@ -1,8 +1,8 @@
 import {
   ArrowDown01Icon,
+  FolderAddIcon,
   PanelLeftIcon,
   PanelRightIcon,
-  PlusSignIcon,
   Settings01Icon,
   ViewSidebarLeftIcon,
   ViewSidebarRightIcon,
@@ -54,7 +54,7 @@ export function TitleBar() {
               className="size-8"
               title="Add repository"
             >
-              <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} />
+              <HugeiconsIcon icon={FolderAddIcon} size={18} strokeWidth={1.5} />
             </Button>
           ) : (
             <Button
