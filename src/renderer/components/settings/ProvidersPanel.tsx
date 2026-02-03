@@ -823,7 +823,7 @@ export const ProvidersPanel = () => {
                       {/* Dropdown */}
                       {showTestDropdown && (
                         <div
-                          className="absolute right-0 top-full mt-1 z-10 rounded-md shadow-lg overflow-hidden bg-muted border border-border"
+                          className="absolute right-0 top-full mt-1 z-10 rounded-md shadow-lg overflow-hidden border border-border bg-popover"
                           style={{
                             minWidth: '200px',
                             maxHeight: '300px',
