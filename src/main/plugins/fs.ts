@@ -28,6 +28,17 @@ export const fsPlugin: Plugin = {
           data: {},
         };
       },
+      'editor.theme.set': (data: { cwd: string; theme: string }) => {
+        const { cwd = '', theme = '' } = data || {};
+        bridgeServer.send(
+          { operationType: 'editor.theme.set', params: { theme } },
+          cwd,
+        );
+        return {
+          success: true,
+          data: {},
+        };
+      },
     } as ReturnType<NonNullable<Plugin['nodeBridgeHandler']>>;
   },
 };
