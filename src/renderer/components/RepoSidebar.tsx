@@ -1,12 +1,17 @@
 import {
+  Clock01Icon,
   Comment01Icon,
+  FilterIcon,
+  FolderAddIcon,
   FolderIcon,
   HelpCircleIcon,
+  PlusSignCircleIcon,
   PlusSignIcon,
+  TaskEdit01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { CheckIcon, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import type { RepoData } from '../client/types/entities';
 import { cn } from '../lib/utils';
@@ -30,8 +35,18 @@ import {
   AlertDialogPopup,
   AlertDialogTitle,
   Button,
+  toastManager,
 } from './ui';
 import { Accordion, AccordionItem, AccordionPanel } from './ui/accordion';
+import {
+  Menu,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from './ui/menu';
 import { RepoAccordionTrigger } from './Repo/AccordionTrigger';
 import {
   Empty,
@@ -268,6 +283,106 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
   );
 };
 
+const SidebarTitleBar = () => {
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const sidebarOrganize = useStore((state) => state.sidebarOrganize);
+  const sidebarSortBy = useStore((state) => state.sidebarSortBy);
+  const setSidebarOrganize = useStore((state) => state.setSidebarOrganize);
+  const setSidebarSortBy = useStore((state) => state.setSidebarSortBy);
+
+  const handleOpenProject = async () => {
+    const electron = window.electron;
+    if (!electron?.selectDirectory) {
+      return;
+    }
+    await electron.selectDirectory();
+  };
+
+  const handleOrganizeChange = (value: string) => {
+    if (value === 'chronological') {
+      toastManager.add({
+        type: 'info',
+        title: 'Coming soon',
+        description: 'Chronological list view is not implemented yet',
+      });
+      return;
+    }
+    setSidebarOrganize(value as 'byProject' | 'chronological');
+  };
+
+  if (!multiProjectSupport) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center justify-between px-3 py-2">
+      <span className="text-sm font-medium text-foreground">Sessions</span>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7"
+          onClick={handleOpenProject}
+          title="Add project"
+        >
+          <HugeiconsIcon icon={FolderAddIcon} size={16} strokeWidth={1.5} />
+        </Button>
+        <Menu>
+          <MenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                title="Filter"
+              >
+                <HugeiconsIcon icon={FilterIcon} size={16} strokeWidth={1.5} />
+              </Button>
+            }
+          />
+          <MenuPopup side="bottom" align="end" className="text-xs">
+            <MenuGroup>
+              <MenuGroupLabel>Organize</MenuGroupLabel>
+              <MenuItem onClick={() => handleOrganizeChange('byProject')}>
+                <HugeiconsIcon icon={FolderIcon} size={14} strokeWidth={1.5} />
+                <span className="flex-1">By project</span>
+                {sidebarOrganize === 'byProject' && <CheckIcon size={12} />}
+              </MenuItem>
+              <MenuItem onClick={() => handleOrganizeChange('chronological')}>
+                <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={1.5} />
+                <span className="flex-1">Chronological list</span>
+                {sidebarOrganize === 'chronological' && <CheckIcon size={12} />}
+              </MenuItem>
+            </MenuGroup>
+            <MenuSeparator />
+            <MenuGroup>
+              <MenuGroupLabel>Sort by</MenuGroupLabel>
+              <MenuItem onClick={() => setSidebarSortBy('created')}>
+                <HugeiconsIcon
+                  icon={PlusSignCircleIcon}
+                  size={14}
+                  strokeWidth={1.5}
+                />
+                <span className="flex-1">Created</span>
+                {sidebarSortBy === 'created' && <CheckIcon size={14} />}
+              </MenuItem>
+              <MenuItem onClick={() => setSidebarSortBy('updated')}>
+                <HugeiconsIcon
+                  icon={TaskEdit01Icon}
+                  size={12}
+                  strokeWidth={1.5}
+                />
+                <span className="flex-1">Updated</span>
+                {sidebarSortBy === 'updated' && <CheckIcon size={12} />}
+              </MenuItem>
+            </MenuGroup>
+          </MenuPopup>
+        </Menu>
+      </div>
+    </div>
+  );
+};
+
 export const RepoSidebar = () => {
   const openRepos = useStore((state) => state.openRepoAccordions);
   const setOpenRepoAccordions = useStore(
@@ -364,6 +479,8 @@ export const RepoSidebar = () => {
 
   return (
     <div className="h-full flex flex-col">
+      <SidebarTitleBar />
+
       {developerMode && (
         <div className="mb-2 mx-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
           <div>

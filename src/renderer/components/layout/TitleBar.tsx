@@ -48,14 +48,7 @@ export function TitleBar() {
         />
         <AddRepoMenu>
           {multiProjectSupport ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              title="Add repository"
-            >
-              <HugeiconsIcon icon={FolderAddIcon} size={18} strokeWidth={1.5} />
-            </Button>
+            <></>
           ) : (
             <Button
               variant="ghost"

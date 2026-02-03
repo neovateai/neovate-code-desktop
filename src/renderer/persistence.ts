@@ -9,7 +9,12 @@ import type {
   SendMessageWith,
   ThemeValue,
 } from './store/slices/desktopSettings';
-import type { ContentPanelTab, SecondarySidebarTab } from './store/slices/ui';
+import type {
+  ContentPanelTab,
+  SecondarySidebarTab,
+  SidebarOrganize,
+  SidebarSortBy,
+} from './store/slices/ui';
 
 // Settings active tab type
 type SettingsActiveTab =
@@ -37,6 +42,8 @@ interface PersistedState {
   contentPanelTabs: ContentPanelTab[];
   contentPanelActiveTab: ContentPanelTab | null;
   secondarySidebarTab: SecondarySidebarTab;
+  sidebarOrganize: SidebarOrganize;
+  sidebarSortBy: SidebarSortBy;
   // Onboarding state
   onboardingCompleted: boolean;
   // DesktopSettings state
@@ -109,6 +116,8 @@ export function setupPersistence(store: StoreApi<any>): void {
       contentPanelTabs: state.contentPanelTabs ?? ['terminal'],
       contentPanelActiveTab: state.contentPanelActiveTab ?? 'terminal',
       secondarySidebarTab: state.secondarySidebarTab ?? 'files',
+      sidebarOrganize: state.sidebarOrganize ?? 'byProject',
+      sidebarSortBy: state.sidebarSortBy ?? 'updated',
       // Onboarding state
       onboardingCompleted: state.onboardingCompleted ?? false,
       // DesktopSettings state
@@ -181,6 +190,8 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       contentPanelTabs = ['terminal'],
       contentPanelActiveTab = 'terminal',
       secondarySidebarTab = 'files',
+      sidebarOrganize = 'byProject',
+      sidebarSortBy = 'updated',
       // Onboarding state
       onboardingCompleted = false,
       // DesktopSettings state
@@ -232,6 +243,8 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         contentPanelTabs,
         contentPanelActiveTab,
         secondarySidebarTab,
+        sidebarOrganize,
+        sidebarSortBy,
 
         selectedRepoPath: validatedRepoPath,
         selectedWorkspaceId: validatedWorkspaceId,

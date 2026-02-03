@@ -2,6 +2,8 @@ import type { StateCreator } from 'zustand';
 
 export type ContentPanelTab = 'terminal';
 export type SecondarySidebarTab = 'files' | 'git';
+export type SidebarOrganize = 'byProject' | 'chronological';
+export type SidebarSortBy = 'created' | 'updated';
 
 export interface UISlice {
   // Content Panel (terminal, logs, etc.) - supports multiple open tabs
@@ -14,6 +16,12 @@ export interface UISlice {
   // Secondary Sidebar (files, git)
   secondarySidebarTab: SecondarySidebarTab;
   setSecondarySidebarTab: (tab: SecondarySidebarTab) => void;
+
+  // Sidebar filter settings
+  sidebarOrganize: SidebarOrganize;
+  sidebarSortBy: SidebarSortBy;
+  setSidebarOrganize: (organize: SidebarOrganize) => void;
+  setSidebarSortBy: (sortBy: SidebarSortBy) => void;
 }
 
 export const createUISlice: StateCreator<UISlice, [], [], UISlice> = (set) => ({
@@ -41,4 +49,10 @@ export const createUISlice: StateCreator<UISlice, [], [], UISlice> = (set) => ({
   // Secondary Sidebar
   secondarySidebarTab: 'files',
   setSecondarySidebarTab: (tab) => set({ secondarySidebarTab: tab }),
+
+  // Sidebar filter settings
+  sidebarOrganize: 'byProject',
+  sidebarSortBy: 'updated',
+  setSidebarOrganize: (organize) => set({ sidebarOrganize: organize }),
+  setSidebarSortBy: (sortBy) => set({ sidebarSortBy: sortBy }),
 });
