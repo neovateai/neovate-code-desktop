@@ -1,5 +1,6 @@
 export { useDebounce } from './useDebounce';
 export { useDoublePress } from './useDoublePress';
+export { useNotification } from './useNotification';
 export { useFileSuggestion } from './useFileSuggestion';
 export { useGlobalKeybindings } from './useGlobalKeybindings';
 export {

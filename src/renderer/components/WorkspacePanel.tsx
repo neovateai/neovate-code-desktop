@@ -12,6 +12,7 @@ import {
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
+import { useNotification } from '../hooks';
 import { logger } from '../lib/logger';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
@@ -89,6 +90,8 @@ export const WorkspacePanel = ({
     (state) => state.slashCommandJSXBySession,
   );
   const developerMode = useStore((state) => state.developerMode);
+
+  useNotification(selectedSessionId, workspace?.worktreePath ?? '');
 
   // Subscribe directly to sessionProcessing state for proper reactivity
   const sessionProcessing = useStore((state) =>
