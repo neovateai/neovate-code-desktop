@@ -90,6 +90,7 @@ type GlobalDataRecentModelsGetOutput = {
   success: boolean;
   data: {
     recentModels: string[];
+    thinkingLevel: string | undefined;
   };
 };
 
@@ -277,6 +278,7 @@ type ModelsListOutput = {
     groupedModels: Array<{
       provider: string;
       providerId: string;
+      isActive: boolean;
       models: Array<{
         name: string;
         modelId: string;
@@ -295,6 +297,7 @@ type ModelsListOutput = {
       modelId: string;
     }>;
     recentModels: string[];
+    thinkingLevel: string | undefined;
   };
 };
 
@@ -649,6 +652,7 @@ type SessionInitializeOutput = {
     sessionSummary: string | undefined;
     pastedTextMap: Record<string, string>;
     pastedImageMap: Record<string, string>;
+    thinkingLevel: string | undefined;
   };
 };
 
@@ -1183,6 +1187,13 @@ type UtilsPlaySoundInput = {
 
 type UtilsPlaySoundOutput = SuccessResponse | ErrorResponse;
 
+type UtilsNotifyInput = {
+  cwd: string;
+  config: string | false | undefined;
+};
+
+type UtilsNotifyOutput = SuccessResponse;
+
 // ============================================================================
 // UI Bridge Handlers (from uiBridge.ts)
 // ============================================================================
@@ -1480,6 +1491,10 @@ export type HandlerMap = {
   'utils.playSound': {
     input: UtilsPlaySoundInput;
     output: UtilsPlaySoundOutput;
+  };
+  'utils.notify': {
+    input: UtilsNotifyInput;
+    output: UtilsNotifyOutput;
   };
 
   // UI Bridge handlers
