@@ -1,0 +1,116 @@
+import type { ITheme } from 'xterm';
+
+export interface TerminalTheme {
+  id: string;
+  name: string;
+  dark: ITheme;
+  light: ITheme;
+}
+
+export const terminalThemes: TerminalTheme[] = [
+  {
+    id: 'default',
+    name: 'Default',
+    dark: {
+      background: '#0a0a0a',
+      foreground: '#e0e0e0',
+      cursor: '#f0f0f0',
+      cursorAccent: '#0a0a0a',
+      selectionBackground: 'rgba(255, 255, 255, 0.2)',
+      black: '#1d1d1d',
+      red: '#ff5f56',
+      green: '#27c93f',
+      yellow: '#ffbd2e',
+      blue: '#57acf5',
+      magenta: '#c678dd',
+      cyan: '#56b6c2',
+      white: '#abb2bf',
+      brightBlack: '#5c6370',
+      brightRed: '#e06c75',
+      brightGreen: '#98c379',
+      brightYellow: '#e5c07b',
+      brightBlue: '#61afef',
+      brightMagenta: '#c678dd',
+      brightCyan: '#56b6c2',
+      brightWhite: '#ffffff',
+    },
+    light: {
+      background: '#fafafa',
+      foreground: '#383a42',
+      cursor: '#526eff',
+      cursorAccent: '#fafafa',
+      selectionBackground: 'rgba(0, 0, 0, 0.1)',
+      black: '#383a42',
+      red: '#e45649',
+      green: '#50a14f',
+      yellow: '#c18401',
+      blue: '#4078f2',
+      magenta: '#a626a4',
+      cyan: '#0184bc',
+      white: '#a0a1a7',
+      brightBlack: '#4f525e',
+      brightRed: '#e06c75',
+      brightGreen: '#98c379',
+      brightYellow: '#e5c07b',
+      brightBlue: '#61afef',
+      brightMagenta: '#c678dd',
+      brightCyan: '#56b6c2',
+      brightWhite: '#ffffff',
+    },
+  },
+  {
+    id: 'cursor',
+    name: 'Cursor',
+    dark: {
+      background: '#141414',
+      foreground: '#E4E4E4',
+      cursor: '#E4E4E4',
+      cursorAccent: '#141414',
+      selectionBackground: 'rgba(228, 228, 228, 0.12)',
+      black: '#242424',
+      red: '#FC6B83',
+      green: '#3FA266',
+      yellow: '#D2943E',
+      blue: '#81A1C1',
+      magenta: '#B48EAD',
+      cyan: '#88C0D0',
+      white: '#E4E4E4',
+      brightBlack: '#5C6370',
+      brightRed: '#FC6B83',
+      brightGreen: '#70B489',
+      brightYellow: '#F1B467',
+      brightBlue: '#87A6C4',
+      brightMagenta: '#B48EAD',
+      brightCyan: '#88C0D0',
+      brightWhite: '#FFFFFF',
+    },
+    light: {
+      background: '#F3F3F3',
+      foreground: '#141414',
+      cursor: '#141414',
+      cursorAccent: '#F3F3F3',
+      selectionBackground: 'rgba(20, 20, 20, 0.12)',
+      black: '#141414',
+      red: '#CF2D56',
+      green: '#1F8A65',
+      yellow: '#A16900',
+      blue: '#3C7CAB',
+      magenta: '#B8448B',
+      cyan: '#4C7F8C',
+      white: '#FCFCFC',
+      brightBlack: '#6B6B6B',
+      brightRed: '#E75E78',
+      brightGreen: '#55A583',
+      brightYellow: '#C08532',
+      brightBlue: '#6299C3',
+      brightMagenta: '#D06BA6',
+      brightCyan: '#6F9BA6',
+      brightWhite: '#FFFFFF',
+    },
+  },
+];
+
+export function getTerminalTheme(themeId: string, isDark: boolean): ITheme {
+  const theme = terminalThemes.find((t) => t.id === themeId) ?? terminalThemes[0];
+  return isDark ? theme.dark : theme.light;
+}
