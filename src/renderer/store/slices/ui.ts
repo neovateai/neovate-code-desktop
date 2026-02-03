@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 
 export type ContentPanelTab = 'terminal';
-export type SecondarySidebarTab = 'files' | 'git';
+export type SecondarySidebarTab = string;
 
 export interface UISlice {
   // Content Panel (terminal, logs, etc.) - supports multiple open tabs

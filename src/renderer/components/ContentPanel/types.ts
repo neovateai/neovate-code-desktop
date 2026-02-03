@@ -32,8 +32,22 @@ export interface BrowserTab extends BaseTab {
   type: 'browser';
 }
 
+// Plugin-contributed panel tab
+export interface PluginTab extends BaseTab {
+  type: 'plugin';
+  /** References ContentPanelDescriptor.id */
+  panelId: string;
+  /** Props passed to the panel component */
+  props?: Record<string, unknown>;
+}
+
 // Discriminated union - extend as needed
-export type ContentTab = TerminalTab | EditorTab | ReviewTab | BrowserTab;
+export type ContentTab =
+  | TerminalTab
+  | EditorTab
+  | ReviewTab
+  | BrowserTab
+  | PluginTab;
 
 // Tab type literal union for type guards
 export type ContentTabType = ContentTab['type'];
@@ -53,7 +67,8 @@ export type CreateTabInput =
   | Omit<TerminalTab, 'id'>
   | Omit<EditorTab, 'id'>
   | Omit<ReviewTab, 'id'>
-  | Omit<BrowserTab, 'id'>;
+  | Omit<BrowserTab, 'id'>
+  | Omit<PluginTab, 'id'>;
 
 // Available tab types for the add menu
 export const TAB_TYPE_OPTIONS: readonly {
