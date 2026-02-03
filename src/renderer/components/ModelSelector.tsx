@@ -343,7 +343,7 @@ export const ModelSelector = ({
         className={cn(
           'inline-flex items-center gap-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-foreground',
           compact
-            ? 'px-2 py-1 text-xs hover:bg-accent'
+            ? 'h-8 gap-1.5 px-[calc(var(--spacing)*2.5-1px)] text-sm hover:bg-accent sm:h-7 sm:text-xs'
             : 'justify-between px-3 py-1.5 text-sm font-medium hover:bg-accent bg-muted border border-border min-w-48 max-w-64',
         )}
       >
