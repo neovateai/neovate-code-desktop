@@ -11,7 +11,13 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { CheckIcon, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import {
+  CheckIcon,
+  ChevronDown,
+  ChevronRight,
+  Pin,
+  Trash2,
+} from 'lucide-react';
 import { memo, useState } from 'react';
 import type { RepoData, SessionData } from '../client/types/entities';
 import { cn } from '../lib/utils';
@@ -94,6 +100,9 @@ const ChronologicalSessionList = ({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
   const [showAll, setShowAll] = useState(false);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
+    null,
+  );
 
   const flatSessions = Object.entries(sessions).flatMap(
     ([workspaceId, workspaceSessions]) => {
@@ -164,7 +173,7 @@ const ChronologicalSessionList = ({
           <ContextMenu key={session.sessionId}>
             <ContextMenuTrigger
               className={cn(
-                'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors',
+                'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
                 isSessionSelected
                   ? 'bg-accent text-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground',
@@ -174,23 +183,35 @@ const ChronologicalSessionList = ({
                 selectWorkspace(workspaceId);
                 selectSession(session.sessionId);
               }}
+              onMouseLeave={() => setConfirmingDeleteId(null)}
             >
-              {isProcessing ? (
-                <Spinner className="size-3.5" />
-              ) : isAwaitingApproval ? (
-                <HugeiconsIcon
-                  icon={HelpCircleIcon}
-                  size={14}
-                  strokeWidth={1.5}
-                  className="text-warning-foreground"
-                />
-              ) : (
-                <HugeiconsIcon
-                  icon={Comment01Icon}
-                  size={14}
-                  strokeWidth={1.5}
-                />
-              )}
+              <button
+                className="hidden group-hover:block"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toastManager.add({ title: 'Pin feature not implemented' });
+                }}
+              >
+                <Pin size={14} strokeWidth={1.5} />
+              </button>
+              <div className="group-hover:hidden">
+                {isProcessing ? (
+                  <Spinner className="size-3.5" />
+                ) : isAwaitingApproval ? (
+                  <HugeiconsIcon
+                    icon={HelpCircleIcon}
+                    size={14}
+                    strokeWidth={1.5}
+                    className="text-warning-foreground"
+                  />
+                ) : (
+                  <HugeiconsIcon
+                    icon={Comment01Icon}
+                    size={14}
+                    strokeWidth={1.5}
+                  />
+                )}
+              </div>
               {isEditing ? (
                 <input
                   className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
@@ -213,9 +234,35 @@ const ChronologicalSessionList = ({
                   {displaySummary}
                 </span>
               )}
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground group-hover:hidden">
                 {formatRelativeTime(session.modified)}
               </span>
+              {confirmingDeleteId === session.sessionId ? (
+                <button
+                  className="text-xs text-destructive bg-muted rounded px-2 py-0.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteSession(
+                      session.sessionId,
+                      workspaceId,
+                      session.summary || 'New Chat',
+                    );
+                    setConfirmingDeleteId(null);
+                  }}
+                >
+                  Confirm
+                </button>
+              ) : (
+                <button
+                  className="hidden group-hover:block rounded hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmingDeleteId(session.sessionId);
+                  }}
+                >
+                  <Trash2 size={14} strokeWidth={1.5} />
+                </button>
+              )}
             </ContextMenuTrigger>
             <ContextMenuPopup>
               <ContextMenuItem
@@ -283,6 +330,9 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
+    null,
+  );
 
   const startRename = (sessionId: string, currentSummary: string) => {
     setEditingSessionId(sessionId);
@@ -373,7 +423,7 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                   <ContextMenu key={session.sessionId}>
                     <ContextMenuTrigger
                       className={cn(
-                        'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors',
+                        'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
                         isSessionSelected
                           ? 'bg-accent text-foreground'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground',
@@ -383,23 +433,37 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                         selectWorkspace(workspaceId);
                         selectSession(session.sessionId);
                       }}
+                      onMouseLeave={() => setConfirmingDeleteId(null)}
                     >
-                      {isProcessing ? (
-                        <Spinner className="size-3.5" />
-                      ) : isAwaitingApproval ? (
-                        <HugeiconsIcon
-                          icon={HelpCircleIcon}
-                          size={14}
-                          strokeWidth={1.5}
-                          className="text-warning-foreground"
-                        />
-                      ) : (
-                        <HugeiconsIcon
-                          icon={Comment01Icon}
-                          size={14}
-                          strokeWidth={1.5}
-                        />
-                      )}
+                      <button
+                        className="hidden group-hover:block"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toastManager.add({
+                            title: 'Pin feature not implemented',
+                          });
+                        }}
+                      >
+                        <Pin size={14} strokeWidth={1.5} />
+                      </button>
+                      <div className="group-hover:hidden">
+                        {isProcessing ? (
+                          <Spinner className="size-3.5" />
+                        ) : isAwaitingApproval ? (
+                          <HugeiconsIcon
+                            icon={HelpCircleIcon}
+                            size={14}
+                            strokeWidth={1.5}
+                            className="text-warning-foreground"
+                          />
+                        ) : (
+                          <HugeiconsIcon
+                            icon={Comment01Icon}
+                            size={14}
+                            strokeWidth={1.5}
+                          />
+                        )}
+                      </div>
                       {isEditing ? (
                         <input
                           className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
@@ -424,13 +488,39 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                           {displaySummary}
                         </span>
                       )}
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground group-hover:hidden">
                         {formatRelativeTime(
                           sidebarSortBy === 'created'
                             ? session.created
                             : session.modified,
                         )}
                       </span>
+                      {confirmingDeleteId === session.sessionId ? (
+                        <button
+                          className="text-xs text-destructive bg-muted rounded px-2 py-0.5"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteSession(
+                              session.sessionId,
+                              workspaceId,
+                              session.summary || 'New Chat',
+                            );
+                            setConfirmingDeleteId(null);
+                          }}
+                        >
+                          Confirm
+                        </button>
+                      ) : (
+                        <button
+                          className="hidden group-hover:block rounded hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmingDeleteId(session.sessionId);
+                          }}
+                        >
+                          <Trash2 size={14} strokeWidth={1.5} />
+                        </button>
+                      )}
                     </ContextMenuTrigger>
                     <ContextMenuPopup>
                       <ContextMenuItem
@@ -598,34 +688,10 @@ export const RepoSidebar = () => {
   const request = useStore((state) => state.request);
   const developerMode = useStore((state) => state.developerMode);
 
-  const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
-  const [sessionToDelete, setSessionToDelete] = useState<{
-    sessionId: string;
-    workspaceId: string;
-    summary: string;
-  } | null>(null);
-
-  const handleDeleteSessionClick = (
+  const handleDeleteSession = async (
     sessionId: string,
     workspaceId: string,
-    summary: string,
   ) => {
-    setSessionToDelete({ sessionId, workspaceId, summary });
-    setSessionAlertOpen(true);
-  };
-
-  const {
-    deleteDialogOpen: repoDeleteDialogOpen,
-    repoToDelete: repoToDeleteInfo,
-    handleDeleteRepoClick,
-    handleConfirmDelete: handleRepoConfirmDelete,
-    handleCancelDelete: handleRepoCancelDelete,
-  } = useRepoDelete();
-
-  const handleConfirmDeleteSession = async () => {
-    if (!sessionToDelete) return;
-
-    const { sessionId, workspaceId } = sessionToDelete;
     const workspace = workspaces[workspaceId];
     if (!workspace) return;
 
@@ -643,8 +709,6 @@ export const RepoSidebar = () => {
 
         if (!result.success) {
           console.error('Failed to delete session:', result.error);
-          setSessionAlertOpen(false);
-          setSessionToDelete(null);
           return;
         }
       }
@@ -661,10 +725,15 @@ export const RepoSidebar = () => {
     } catch (error) {
       console.error('Failed to delete session:', error);
     }
-
-    setSessionAlertOpen(false);
-    setSessionToDelete(null);
   };
+
+  const {
+    deleteDialogOpen: repoDeleteDialogOpen,
+    repoToDelete: repoToDeleteInfo,
+    handleDeleteRepoClick,
+    handleConfirmDelete: handleRepoConfirmDelete,
+    handleCancelDelete: handleRepoCancelDelete,
+  } = useRepoDelete();
 
   const repoList = Object.values(repos);
   const displayRepos = multiProjectSupport
@@ -707,9 +776,7 @@ export const RepoSidebar = () => {
             </EmptyHeader>
           </Empty>
         ) : sidebarOrganize === 'chronological' && multiProjectSupport ? (
-          <ChronologicalSessionList
-            onDeleteSession={handleDeleteSessionClick}
-          />
+          <ChronologicalSessionList onDeleteSession={handleDeleteSession} />
         ) : multiProjectSupport ? (
           <Accordion
             value={openRepos}
@@ -772,7 +839,7 @@ export const RepoSidebar = () => {
                 <AccordionPanel>
                   <RepoSessionList
                     repo={repo}
-                    onDeleteSession={handleDeleteSessionClick}
+                    onDeleteSession={handleDeleteSession}
                   />
                 </AccordionPanel>
               </AccordionItem>
@@ -783,7 +850,7 @@ export const RepoSidebar = () => {
             <RepoSessionList
               key={repo.path}
               repo={repo}
-              onDeleteSession={handleDeleteSessionClick}
+              onDeleteSession={handleDeleteSession}
             />
           ))
         )}
@@ -799,31 +866,6 @@ export const RepoSidebar = () => {
         repo={repoToDeleteInfo}
         onConfirm={handleRepoConfirmDelete}
       />
-
-      <AlertDialog open={sessionAlertOpen} onOpenChange={setSessionAlertOpen}>
-        <AlertDialogPopup>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete "{sessionToDelete?.summary}". This action cannot
-              be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>
-              <Button variant="outline">Cancel</Button>
-            </AlertDialogClose>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDeleteSession}
-              className="gap-2"
-            >
-              <Trash2 size={16} strokeWidth={1.5} />
-              Delete
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogPopup>
-      </AlertDialog>
     </div>
   );
 };
