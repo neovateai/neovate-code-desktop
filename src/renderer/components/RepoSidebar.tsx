@@ -13,7 +13,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { CheckIcon, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
-import type { RepoData } from '../client/types/entities';
+import type { RepoData, SessionData } from '../client/types/entities';
 import { cn } from '../lib/utils';
 import { useStore } from '../store';
 import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
@@ -68,6 +68,190 @@ function formatRelativeTime(timestamp: number): string {
 }
 
 const DEFAULT_SESSION_LIMIT = 5;
+const CHRONOLOGICAL_SESSION_LIMIT = 50;
+
+interface ChronologicalSessionListProps {
+  onDeleteSession: (
+    sessionId: string,
+    workspaceId: string,
+    summary: string,
+  ) => void;
+}
+
+const ChronologicalSessionList = ({
+  onDeleteSession,
+}: ChronologicalSessionListProps) => {
+  const workspaces = useStore((state) => state.workspaces);
+  const sessions = useStore((state) => state.sessions);
+  const sidebarSortBy = useStore((state) => state.sidebarSortBy);
+  const selectedSessionId = useStore((state) => state.selectedSessionId);
+  const sessionProcessing = useStore((state) => state.sessionProcessing);
+  const selectWorkspace = useStore((state) => state.selectWorkspace);
+  const selectSession = useStore((state) => state.selectSession);
+  const updateSession = useStore((state) => state.updateSession);
+  const request = useStore((state) => state.request);
+
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [showAll, setShowAll] = useState(false);
+
+  const flatSessions = Object.entries(sessions).flatMap(
+    ([workspaceId, workspaceSessions]) => {
+      const workspace = workspaces[workspaceId];
+      if (!workspace) return [];
+      return workspaceSessions.map((session) => ({
+        session,
+        workspaceId,
+      }));
+    },
+  );
+
+  const sortedSessions = flatSessions.slice().sort((a, b) => {
+    if (sidebarSortBy === 'created') {
+      return b.session.created - a.session.created;
+    }
+    return b.session.modified - a.session.modified;
+  });
+
+  const visibleSessions = showAll
+    ? sortedSessions
+    : sortedSessions.slice(0, CHRONOLOGICAL_SESSION_LIMIT);
+  const hiddenCount = sortedSessions.length - CHRONOLOGICAL_SESSION_LIMIT;
+
+  const startRename = (sessionId: string, currentSummary: string) => {
+    setEditingSessionId(sessionId);
+    setEditingValue(currentSummary || 'New Chat');
+  };
+
+  const saveRename = async (workspaceId: string, sessionId: string) => {
+    const trimmed = editingValue.trim();
+    if (trimmed) {
+      const workspace = workspaces[workspaceId];
+      if (workspace) {
+        try {
+          await request('session.config.setSummary', {
+            cwd: workspace.worktreePath,
+            sessionId,
+            summary: trimmed,
+          });
+          updateSession(workspaceId, sessionId, { summary: trimmed });
+        } catch (error) {
+          console.error('Failed to rename session:', error);
+        }
+      }
+    }
+    setEditingSessionId(null);
+  };
+
+  const cancelRename = () => {
+    setEditingSessionId(null);
+  };
+
+  return (
+    <div className="space-y-1">
+      {visibleSessions.map(({ session, workspaceId }) => {
+        const isSessionSelected = selectedSessionId === session.sessionId;
+        const isEditing = editingSessionId === session.sessionId;
+        const displaySummary = session.summary || 'New Chat';
+        const processing = sessionProcessing[session.sessionId] || {
+          status: 'idle',
+        };
+        const isProcessing = processing.status === 'processing';
+        const isAwaitingApproval = processing.status === 'awaiting_approval';
+        const isFailed = processing.status === 'failed';
+
+        return (
+          <ContextMenu key={session.sessionId}>
+            <ContextMenuTrigger
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors',
+                isSessionSelected
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                isFailed && 'text-destructive-foreground',
+              )}
+              onClick={() => {
+                selectWorkspace(workspaceId);
+                selectSession(session.sessionId);
+              }}
+            >
+              {isProcessing ? (
+                <Spinner className="size-3.5" />
+              ) : isAwaitingApproval ? (
+                <HugeiconsIcon
+                  icon={HelpCircleIcon}
+                  size={14}
+                  strokeWidth={1.5}
+                  className="text-warning-foreground"
+                />
+              ) : (
+                <HugeiconsIcon
+                  icon={Comment01Icon}
+                  size={14}
+                  strokeWidth={1.5}
+                />
+              )}
+              {isEditing ? (
+                <input
+                  className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
+                  value={editingValue}
+                  onChange={(e) => setEditingValue(e.target.value)}
+                  onBlur={() => saveRename(workspaceId, session.sessionId)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      saveRename(workspaceId, session.sessionId);
+                    } else if (e.key === 'Escape') {
+                      cancelRename();
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                  onFocus={(e) => e.target.select()}
+                />
+              ) : (
+                <span className="flex-1 text-sm truncate">
+                  {displaySummary}
+                </span>
+              )}
+              <span className="text-sm text-muted-foreground">
+                {formatRelativeTime(session.modified)}
+              </span>
+            </ContextMenuTrigger>
+            <ContextMenuPopup>
+              <ContextMenuItem
+                onClick={() =>
+                  startRename(session.sessionId, session.summary || '')
+                }
+              >
+                Rename
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="text-red-500"
+                onClick={() =>
+                  onDeleteSession(
+                    session.sessionId,
+                    workspaceId,
+                    session.summary || 'New Chat',
+                  )
+                }
+              >
+                Delete
+              </ContextMenuItem>
+            </ContextMenuPopup>
+          </ContextMenu>
+        );
+      })}
+      {hiddenCount > 0 && (
+        <button
+          className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll ? 'Show less' : `Show ${hiddenCount} more`}
+        </button>
+      )}
+    </div>
+  );
+};
 
 interface RepoSessionListProps {
   repo: RepoData;
@@ -85,6 +269,7 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
   const selectedSessionId = useStore((state) => state.selectedSessionId);
   const sessionProcessing = useStore((state) => state.sessionProcessing);
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const sidebarSortBy = useStore((state) => state.sidebarSortBy);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
   const createOrSelectEmptySession = useStore(
@@ -136,8 +321,12 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
 
         const workspaceSessions = (sessions[workspaceId] || [])
           .slice()
-          // .filter((item) => item.messageCount > 0)
-          .sort((a, b) => b.modified - a.modified);
+          .sort((a, b) => {
+            if (sidebarSortBy === 'created') {
+              return b.created - a.created;
+            }
+            return b.modified - a.modified;
+          });
         const expandKey = `${workspaceId}`;
         const isExpanded = expandedSessions[expandKey] ?? false;
         const visibleSessions = isExpanded
@@ -236,7 +425,11 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                         </span>
                       )}
                       <span className="text-sm text-muted-foreground">
-                        {formatRelativeTime(session.modified)}
+                        {formatRelativeTime(
+                          sidebarSortBy === 'created'
+                            ? session.created
+                            : session.modified,
+                        )}
                       </span>
                     </ContextMenuTrigger>
                     <ContextMenuPopup>
@@ -299,14 +492,6 @@ const SidebarTitleBar = () => {
   };
 
   const handleOrganizeChange = (value: string) => {
-    if (value === 'chronological') {
-      toastManager.add({
-        type: 'info',
-        title: 'Coming soon',
-        description: 'Chronological list view is not implemented yet',
-      });
-      return;
-    }
     setSidebarOrganize(value as 'byProject' | 'chronological');
   };
 
@@ -348,11 +533,19 @@ const SidebarTitleBar = () => {
                 <span className="flex-1">By project</span>
                 {sidebarOrganize === 'byProject' && <CheckIcon size={12} />}
               </MenuItem>
-              <MenuItem onClick={() => handleOrganizeChange('chronological')}>
-                <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={1.5} />
-                <span className="flex-1">Chronological list</span>
-                {sidebarOrganize === 'chronological' && <CheckIcon size={12} />}
-              </MenuItem>
+              {multiProjectSupport && (
+                <MenuItem onClick={() => handleOrganizeChange('chronological')}>
+                  <HugeiconsIcon
+                    icon={Clock01Icon}
+                    size={14}
+                    strokeWidth={1.5}
+                  />
+                  <span className="flex-1">Chronological list</span>
+                  {sidebarOrganize === 'chronological' && (
+                    <CheckIcon size={12} />
+                  )}
+                </MenuItem>
+              )}
             </MenuGroup>
             <MenuSeparator />
             <MenuGroup>
@@ -393,6 +586,7 @@ export const RepoSidebar = () => {
   const selectedSessionId = useStore((state) => state.selectedSessionId);
   const selectSession = useStore((state) => state.selectSession);
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const sidebarOrganize = useStore((state) => state.sidebarOrganize);
   const repos = useStore((state) => state.repos);
   const selectedRepoPath = useStore((state) => state.selectedRepoPath);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
@@ -512,6 +706,10 @@ export const RepoSidebar = () => {
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
+        ) : sidebarOrganize === 'chronological' && multiProjectSupport ? (
+          <ChronologicalSessionList
+            onDeleteSession={handleDeleteSessionClick}
+          />
         ) : multiProjectSupport ? (
           <Accordion
             value={openRepos}
