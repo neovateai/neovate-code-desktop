@@ -68,6 +68,7 @@ export function useSlashCommands({
   return {
     suggestions,
     selectedIndex: navigation.selectedIndex,
+    setSelectedIndex: navigation.setSelectedIndex,
     isLoading,
     navigateNext: navigation.navigateNext,
     navigatePrevious: navigation.navigatePrevious,

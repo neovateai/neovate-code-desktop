@@ -159,6 +159,7 @@ export function useFileSuggestion({
     matchedPaths,
     isLoading,
     selectedIndex: navigation.selectedIndex,
+    setSelectedIndex: navigation.setSelectedIndex,
     startIndex: activeMatch.startIndex,
     fullMatch: activeMatch.fullMatch,
     triggerType: activeMatch.triggerType,
