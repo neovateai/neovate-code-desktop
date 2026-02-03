@@ -29,6 +29,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   ContextMenuPopup,
+  ContextMenuSeparator,
   ContextMenuTrigger,
 } from './ui/context-menu';
 import { ScrollArea } from './ui/scroll-area';
@@ -283,6 +284,26 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
               >
                 Delete
               </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem
+                onClick={() => {
+                  const workspace = workspaces[workspaceId];
+                  if (workspace) {
+                    navigator.clipboard.writeText(workspace.worktreePath);
+                    toastManager.add({ title: 'Copied working directory' });
+                  }
+                }}
+              >
+                Copy working directory
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(session.sessionId);
+                  toastManager.add({ title: 'Copied session ID' });
+                }}
+              >
+                Copy session ID
+              </ContextMenuItem>
             </ContextMenuPopup>
           </ContextMenu>
         );
@@ -507,6 +528,26 @@ const ChronologicalSessionList = ({
                 }
               >
                 Delete
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem
+                onClick={() => {
+                  const workspace = workspaces[workspaceId];
+                  if (workspace) {
+                    navigator.clipboard.writeText(workspace.worktreePath);
+                    toastManager.add({ title: 'Copied working directory' });
+                  }
+                }}
+              >
+                Copy working directory
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(session.sessionId);
+                  toastManager.add({ title: 'Copied session ID' });
+                }}
+              >
+                Copy session ID
               </ContextMenuItem>
             </ContextMenuPopup>
           </ContextMenu>
@@ -777,6 +818,25 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                         }
                       >
                         Delete
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem
+                        onClick={() => {
+                          navigator.clipboard.writeText(workspace.worktreePath);
+                          toastManager.add({
+                            title: 'Copied working directory',
+                          });
+                        }}
+                      >
+                        Copy working directory
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onClick={() => {
+                          navigator.clipboard.writeText(session.sessionId);
+                          toastManager.add({ title: 'Copied session ID' });
+                        }}
+                      >
+                        Copy session ID
                       </ContextMenuItem>
                     </ContextMenuPopup>
                   </ContextMenu>
