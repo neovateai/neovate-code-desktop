@@ -60,9 +60,14 @@ const DEFAULT_SESSION_LIMIT = 5;
 
 interface RepoSessionListProps {
   repo: RepoData;
+  onDeleteSession: (
+    sessionId: string,
+    workspaceId: string,
+    summary: string,
+  ) => void;
 }
 
-const RepoSessionList = ({ repo }: RepoSessionListProps) => {
+const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
   const workspaces = useStore((state) => state.workspaces);
   const sessions = useStore((state) => state.sessions);
   const expandedSessions = useStore((state) => state.expandedSessionGroups);
@@ -249,7 +254,16 @@ const RepoSessionList = ({ repo }: RepoSessionListProps) => {
                       >
                         Rename
                       </ContextMenuItem>
-                      <ContextMenuItem className="text-red-500">
+                      <ContextMenuItem
+                        className="text-red-500"
+                        onClick={() =>
+                          onDeleteSession(
+                            session.sessionId,
+                            workspaceId,
+                            session.summary || 'New Chat',
+                          )
+                        }
+                      >
                         Delete
                       </ContextMenuItem>
                     </ContextMenuPopup>
@@ -299,6 +313,15 @@ export const RepoSidebar = () => {
     workspaceId: string;
     summary: string;
   } | null>(null);
+
+  const handleDeleteSessionClick = (
+    sessionId: string,
+    workspaceId: string,
+    summary: string,
+  ) => {
+    setSessionToDelete({ sessionId, workspaceId, summary });
+    setSessionAlertOpen(true);
+  };
 
   const {
     deleteDialogOpen: repoDeleteDialogOpen,
@@ -411,14 +434,21 @@ export const RepoSidebar = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionPanel>
-                  <RepoSessionList repo={repo} />
+                  <RepoSessionList
+                    repo={repo}
+                    onDeleteSession={handleDeleteSessionClick}
+                  />
                 </AccordionPanel>
               </AccordionItem>
             ))}
           </Accordion>
         ) : (
           displayRepos.map((repo) => (
-            <RepoSessionList key={repo.path} repo={repo} />
+            <RepoSessionList
+              key={repo.path}
+              repo={repo}
+              onDeleteSession={handleDeleteSessionClick}
+            />
           ))
         )}
       </ScrollArea>
