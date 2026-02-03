@@ -6,7 +6,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import type { RepoData } from '../client/types/entities';
 import { cn } from '../lib/utils';
@@ -31,12 +31,8 @@ import {
   AlertDialogTitle,
   Button,
 } from './ui';
-import {
-  Accordion,
-  AccordionItem,
-  AccordionPanel,
-  AccordionTrigger,
-} from './ui/accordion';
+import { Accordion, AccordionItem, AccordionPanel } from './ui/accordion';
+import { RepoAccordionTrigger } from './Repo/AccordionTrigger';
 import {
   Empty,
   EmptyDescription,
@@ -137,25 +133,7 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
         return (
           <div key={workspaceId}>
             <div>
-              {multiProjectSupport ? (
-                <button
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded transition-colors w-full text-left mb-1 text-muted-foreground hover:bg-accent hover:text-foreground',
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    selectWorkspace(workspaceId);
-                    createOrSelectEmptySession(workspaceId);
-                  }}
-                >
-                  <HugeiconsIcon
-                    icon={PlusSignIcon}
-                    size={14}
-                    strokeWidth={1.5}
-                  />
-                  <span className="text-sm">New Chat</span>
-                </button>
-              ) : (
+              {multiProjectSupport ? null : (
                 <Button
                   className="mb-3 mt-2 w-full"
                   variant="outline"
@@ -304,6 +282,10 @@ export const RepoSidebar = () => {
   const selectedRepoPath = useStore((state) => state.selectedRepoPath);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const removeSession = useStore((state) => state.removeSession);
+  const selectWorkspace = useStore((state) => state.selectWorkspace);
+  const createOrSelectEmptySession = useStore(
+    (state) => state.createOrSelectEmptySession,
+  );
   const request = useStore((state) => state.request);
   const developerMode = useStore((state) => state.developerMode);
 
@@ -326,6 +308,7 @@ export const RepoSidebar = () => {
   const {
     deleteDialogOpen: repoDeleteDialogOpen,
     repoToDelete: repoToDeleteInfo,
+    handleDeleteRepoClick,
     handleConfirmDelete: handleRepoConfirmDelete,
     handleCancelDelete: handleRepoCancelDelete,
   } = useRepoDelete();
@@ -419,20 +402,58 @@ export const RepoSidebar = () => {
             multiple
           >
             {displayRepos.map((repo) => (
-              <AccordionItem key={repo.path} value={repo.path}>
-                <AccordionTrigger className="px-3 py-2 group w-full max-w-full">
+              <AccordionItem key={repo.path} value={repo.path} className="mb-1">
+                <RepoAccordionTrigger className="flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors text-muted-foreground hover:bg-accent hover:text-foreground group w-full max-w-full">
                   <div className="flex items-center gap-2 w-full min-w-0">
                     <HugeiconsIcon
                       icon={FolderIcon}
                       size={18}
                       strokeWidth={1.5}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 group-hover:hidden"
                     />
-                    <div className="font-medium text-sm truncate w-full">
+                    {openRepos.includes(repo.path) ? (
+                      <ChevronDown
+                        size={18}
+                        strokeWidth={1.5}
+                        className="flex-shrink-0 hidden group-hover:block"
+                      />
+                    ) : (
+                      <ChevronRight
+                        size={18}
+                        strokeWidth={1.5}
+                        className="flex-shrink-0 hidden group-hover:block"
+                      />
+                    )}
+                    <div className="font-medium text-sm truncate flex-1">
                       {repo.name}
                     </div>
+                    <button
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-opacity"
+                      onClick={(e) =>
+                        handleDeleteRepoClick(e, repo.path, repo.name)
+                      }
+                    >
+                      <Trash2 size={14} strokeWidth={1.5} />
+                    </button>
+                    <button
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-accent transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const workspaceId = repo.workspaceIds[0];
+                        if (workspaceId) {
+                          selectWorkspace(workspaceId);
+                          createOrSelectEmptySession(workspaceId);
+                        }
+                      }}
+                    >
+                      <HugeiconsIcon
+                        icon={PlusSignIcon}
+                        size={14}
+                        strokeWidth={1.5}
+                      />
+                    </button>
                   </div>
-                </AccordionTrigger>
+                </RepoAccordionTrigger>
                 <AccordionPanel>
                   <RepoSessionList
                     repo={repo}
