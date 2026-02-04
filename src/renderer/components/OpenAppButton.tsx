@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/menu';
 import antigravityIcon from '../assets/icons/antigravity.png';
@@ -138,7 +139,8 @@ export function OpenAppButton({ cwd }: OpenAppButtonProps) {
             );
           })
         )}
-        <DropdownMenuItem onClick={handleCopyPath}>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleCopyPath} className="pl-3">
           <Copy className="size-4 shrink-0" />
           <span>Copy path</span>
           <span className="ml-auto text-xs text-muted-foreground">⌘⇧C</span>
