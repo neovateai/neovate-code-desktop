@@ -100,7 +100,7 @@ export function OpenAppButton({ cwd }: OpenAppButtonProps) {
     <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="h-8">
             Open <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         }

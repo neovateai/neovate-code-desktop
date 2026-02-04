@@ -10,6 +10,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useStore } from '../../store';
 import { AddRepoMenu } from '../AddRepoMenu';
+import { OpenAppButton } from '../OpenAppButton';
 import { Button } from '../ui/button';
 import { Separator as UISeparator } from '../ui/separator';
 import { useAppLayoutPanels } from './AppLayoutProvider';
@@ -76,6 +77,7 @@ export function TitleBar() {
         // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
         style={{ WebkitAppRegion: 'no-drag' }}
       >
+        {selectedRepoPath && <OpenAppButton cwd={selectedRepoPath} />}
         <TitleBarButton
           icon={Settings01Icon}
           onClick={() => setShowSettings(true)}
