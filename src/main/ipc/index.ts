@@ -90,7 +90,14 @@ export const ipcMainHandlers = {
   codeServer: {
     start: createMainHandler<{ folderPath?: string }, { url: string }>(
       async () => {
-        const instance = await codeServerManager.start();
+        const d1 = Date.now();
+        const instance = await codeServerManager.start((p) => {
+          console.log('[Code server downloading]', p);
+          if (p.downloadedBytes === p.totalBytes) {
+            console.log('[Code server downloaded, cost]', Date.now() - d1);
+          }
+        });
+
         return { url: instance.url };
       },
     ),
