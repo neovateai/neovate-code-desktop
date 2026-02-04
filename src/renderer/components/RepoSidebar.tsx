@@ -863,18 +863,126 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
 };
 
 const SidebarTitleBar = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
   const sidebarOrganize = useStore((state) => state.sidebarOrganize);
   const sidebarSortBy = useStore((state) => state.sidebarSortBy);
   const setSidebarOrganize = useStore((state) => state.setSidebarOrganize);
   const setSidebarSortBy = useStore((state) => state.setSidebarSortBy);
+  const request = useStore((state) => state.request);
+  const addRepo = useStore((state) => state.addRepo);
+  const addWorkspace = useStore((state) => state.addWorkspace);
+  const repos = useStore((state) => state.repos);
+  const selectWorkspace = useStore((state) => state.selectWorkspace);
 
   const handleOpenProject = async () => {
-    const electron = window.electron;
-    if (!electron?.selectDirectory) {
+    if (isLoading) {
       return;
     }
-    await electron.selectDirectory();
+
+    let loadingToastId: string | undefined;
+
+    const closeLoadingToast = () => {
+      if (loadingToastId) {
+        toastManager.close(loadingToastId);
+        loadingToastId = undefined;
+      }
+    };
+
+    try {
+      const electron = window.electron;
+      if (!electron?.selectDirectory) {
+        console.error('Directory selection is not available');
+        return;
+      }
+      const selectedPath = await electron.selectDirectory();
+
+      if (!selectedPath) {
+        return;
+      }
+
+      if (repos[selectedPath]) {
+        toastManager.add({
+          title: 'Repository already exists',
+          description: `The repository at ${selectedPath} is already added.`,
+          type: 'error',
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      loadingToastId = toastManager.add({
+        title: 'Adding repository',
+        description: 'Loading repository information...',
+        type: 'loading',
+      });
+
+      const response = await request('project.getRepoInfo', {
+        cwd: selectedPath,
+      });
+
+      if (response.success && response.data?.repoData) {
+        const repoData = response.data.repoData;
+
+        addRepo(repoData);
+
+        try {
+          const workspacesResponse = await request('project.workspaces.list', {
+            cwd: selectedPath,
+          });
+
+          if (
+            workspacesResponse.success &&
+            workspacesResponse.data?.workspaces
+          ) {
+            const workspaces = workspacesResponse.data.workspaces;
+            for (const workspace of workspaces) {
+              addWorkspace(workspace);
+            }
+            if (workspaces.length > 0) {
+              selectWorkspace(workspaces[0].id);
+            }
+          } else if (!workspacesResponse.success) {
+            console.warn(
+              'Failed to fetch workspaces:',
+              workspacesResponse.error || 'Unknown error',
+            );
+          }
+        } catch (workspaceError) {
+          console.warn('Error fetching workspaces:', workspaceError);
+        }
+
+        closeLoadingToast();
+
+        toastManager.add({
+          title: 'Repository added',
+          description: `Successfully added ${repoData.name}`,
+          type: 'success',
+        });
+      } else {
+        closeLoadingToast();
+
+        const errorMessage = response.error || 'Invalid response from server';
+        toastManager.add({
+          title: 'Failed to add repository',
+          description: errorMessage,
+          type: 'error',
+        });
+      }
+    } catch (error) {
+      closeLoadingToast();
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Could not connect to server';
+
+      toastManager.add({
+        title: 'Failed to add repository',
+        description: errorMessage,
+        type: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOrganizeChange = (value: string) => {
