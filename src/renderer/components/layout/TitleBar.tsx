@@ -46,10 +46,8 @@ export function TitleBar() {
           onClick={togglePrimarySidebar}
           title={isPrimarySidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'}
         />
-        <AddRepoMenu>
-          {multiProjectSupport ? (
-            <></>
-          ) : (
+        {!multiProjectSupport && (
+          <AddRepoMenu>
             <Button
               variant="ghost"
               className="h-8 px-2 text-sm font-medium"
@@ -65,8 +63,8 @@ export function TitleBar() {
                 className="ml-1"
               />
             </Button>
-          )}
-        </AddRepoMenu>
+          </AddRepoMenu>
+        )}
       </div>
 
       {/* Spacer */}

@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type { useStore } from '../store';
 import type { RendererApp } from './app';
 import type { LazyNamespaceConfig } from './i18n';
+import type { PluginConfigContribution } from './plugin';
 import type { DefinePlugin } from './plugin-manager';
 
 /**
@@ -20,6 +21,12 @@ export interface RendererPluginHooks {
    * Return void to skip registration.
    */
   configI18n(): LazyNamespaceConfig | void;
+
+  /**
+   * Return UI contributions (activity bar items, sidebar panels, content panels).
+   * Return empty object {} to skip contribution.
+   */
+  configContributes(this: PluginContext): PluginConfigContribution;
 
   /**
    * Called after store hydration, before React render.

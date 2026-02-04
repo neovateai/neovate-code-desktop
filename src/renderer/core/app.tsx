@@ -8,6 +8,7 @@ import { useStore } from '../store';
 import { RenderErrorFallback } from './components/RenderErrorFallback';
 import type { LazyNamespaceConfig } from './i18n';
 import { I18nManager } from './i18n/manager';
+import type { PluginConfigContribution } from './plugin';
 import { PluginManager } from './plugin-manager';
 import type {
   RendererPlugin,
@@ -42,6 +43,12 @@ export class RendererApp {
   >;
   readonly i18nManager: I18nManager;
 
+  /** Plugin UI contributions collected at startup */
+  contributions: PluginConfigContribution = {};
+
+  /** UI operations namespace - TODO: add panel APIs after tabManager refactor */
+  readonly ui = {};
+
   constructor(options?: RendererAppOptions) {
     this.windows = options?.windows ?? [];
     this.pluginManager = new PluginManager(options?.plugins);
@@ -72,6 +79,13 @@ export class RendererApp {
     await hydrateStore(useStore);
     await this.i18nManager.init({ store: useStore });
     this.i18nManager.setupLazyNamespaces(lazyNamespaceConfigs);
+
+    // Collect plugin UI contributions
+    this.contributions = await this.pluginManager.applySeriesMerge(
+      'configContributes',
+      { app: this },
+      {},
+    );
 
     await this.pluginManager.applySeries(
       'beforeRender',

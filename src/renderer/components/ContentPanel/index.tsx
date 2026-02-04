@@ -1,14 +1,22 @@
-import { memo } from 'react';
+import { lazy, memo, Suspense, useMemo } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { type RendererApp, useRendererApp } from '../../core/app';
+import type {
+  ContentPanelDescriptor,
+  ContentPanelProps as PluginPaneProps,
+} from '../../core/plugin';
+import { cn } from '../../lib/utils';
 import {
   ContentPanelProvider,
   useContentPanelContext,
 } from './ContentPanelProvider';
 import { ContentTabBar } from './ContentTabBar';
+import { PanelError, PanelLoading, PanelNotFound } from './PanelFallbacks';
 import { BrowserPane } from './panes/BrowserPane';
 import { EditorPane } from './panes/EditorPane';
 import { ReviewPane } from './panes/ReviewPane';
 import { TerminalPane } from './panes/TerminalPane';
-import type { ContentTab } from './types';
+import type { ContentTab, PluginTab } from './types';
 
 // Empty state when no tabs
 function EmptyState() {
@@ -36,8 +44,64 @@ function ContentPaneRouter() {
   );
 }
 
+// Inner component that renders plugin content (hooks called unconditionally)
+const PluginPaneContent = memo(function PluginPaneContent({
+  tab,
+  isActive,
+  app,
+  descriptor,
+}: {
+  tab: PluginTab;
+  isActive: boolean;
+  app: RendererApp;
+  descriptor: ContentPanelDescriptor;
+}) {
+  const Component = useMemo(
+    () => lazy(descriptor.componentLoader),
+    [descriptor.componentLoader],
+  );
+
+  return (
+    <div className={cn('h-full', !isActive && 'hidden')}>
+      <ErrorBoundary FallbackComponent={PanelError}>
+        <Suspense fallback={<PanelLoading />}>
+          <Component tab={tab} app={app} />
+        </Suspense>
+      </ErrorBoundary>
+    </div>
+  );
+});
+
+// Plugin pane renderer (validates before rendering)
+const ContentPanelPluginPane = memo(function ContentPanelPluginPane({
+  tab,
+  isActive,
+}: {
+  tab: PluginTab;
+  isActive: boolean;
+}) {
+  const app = useRendererApp();
+  const descriptor = useMemo(
+    () => app.contributions.contentPanels?.find((p) => p.id === tab.panelId),
+    [app.contributions.contentPanels, tab.panelId],
+  );
+
+  if (!descriptor) {
+    return <PanelNotFound panelId={tab.panelId} />;
+  }
+
+  return (
+    <PluginPaneContent
+      tab={tab}
+      isActive={isActive}
+      app={app}
+      descriptor={descriptor}
+    />
+  );
+});
+
 // Individual pane renderer
-function ContentPane({
+const ContentPane = memo(function ContentPane({
   tab,
   isActive,
 }: {
@@ -53,10 +117,12 @@ function ContentPane({
       return <ReviewPane tab={tab} isActive={isActive} />;
     case 'browser':
       return <BrowserPane tab={tab} isActive={isActive} />;
+    case 'plugin':
+      return <ContentPanelPluginPane tab={tab} isActive={isActive} />;
     default:
       return null;
   }
-}
+});
 
 // Main ContentPanel component
 interface ContentPanelProps {
