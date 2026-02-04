@@ -235,7 +235,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
           {!toolResult.result.isError &&
             (!toolResult.result.returnDisplay ||
               typeof toolResult.result.returnDisplay === 'string') && (
-              <div className="text-[13px] text-foreground whitespace-pre-wrap font-mono bg-card px-2 pb-2 rounded">
+              <div className="text-[13px] text-foreground whitespace-pre-wrap font-mono bg-card px-2 pb-2 rounded overflow-x-auto">
                 {getResultText(toolResult.result)}
               </div>
             )}

@@ -1,4 +1,3 @@
-import { Agentation } from 'agentation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppLoading } from './components/AppLoading';
 import { ContentPanel } from './components/ContentPanel';
@@ -45,6 +44,16 @@ function App() {
   // Minimum display time for loading animation
   const loadStartTime = useRef(Date.now());
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+  useEffect(() => {
+    if (
+      import.meta.env.DEV &&
+      process.env.NODE_ENV !== 'production' &&
+      developerMode
+    ) {
+      void import('react-grab');
+    }
+  }, [developerMode]);
 
   useEffect(() => {
     const elapsed = Date.now() - loadStartTime.current;
@@ -252,7 +261,6 @@ function App() {
       {/* Onboarding Modal - renders on top when visible */}
       <OnboardingModal />
       <UpdaterToast />
-      {process.env.NODE_ENV !== 'production' && developerMode && <Agentation />}
     </>
   );
 }

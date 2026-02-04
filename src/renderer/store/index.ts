@@ -104,6 +104,7 @@ interface UISelectionState {
   } | null;
   /** tab 激活后的子uri行为 */
   pendingTabUri: { type: 'editor' | 'browser'; uri: string } | null;
+  pinnedSessions: string[];
 }
 
 // Fork modal state
@@ -152,6 +153,11 @@ interface CoreActions {
     repoPath: string;
     uri: string;
   }) => void;
+
+  // Pin session actions
+  pinSession: (sessionId: string) => void;
+  unpinSession: (sessionId: string) => void;
+  togglePinSession: (sessionId: string) => void;
 
   // Session control actions
   updateSessions: (workspaceId: string) => Promise<void>;
@@ -202,6 +208,7 @@ const useStore = create<Store>()((set, get, api) => ({
   isTestComponentVisible: false,
   pendingTabRequest: null,
   pendingTabUri: null,
+  pinnedSessions: [],
 
   // Initial fork modal state
   forkModalVisible: false,
@@ -667,7 +674,7 @@ const useStore = create<Store>()((set, get, api) => ({
     try {
       // Transform params to backend format
       const planModeBoolean = params.planMode === 'plan';
-      const thinking = params.think ? { effect: params.think } : undefined;
+      const thinking = params.think ? { effort: params.think } : undefined;
       const attachments = params.images?.map((data) => {
         const mimeMatch = data.match(/^data:([^;]+);base64,/);
         const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
@@ -820,6 +827,28 @@ const useStore = create<Store>()((set, get, api) => ({
     set({
       pendingTabRequest: opts,
     });
+  },
+
+  pinSession: (sessionId: string) => {
+    set((state) => ({
+      pinnedSessions: state.pinnedSessions.includes(sessionId)
+        ? state.pinnedSessions
+        : [...state.pinnedSessions, sessionId],
+    }));
+  },
+
+  unpinSession: (sessionId: string) => {
+    set((state) => ({
+      pinnedSessions: state.pinnedSessions.filter((id) => id !== sessionId),
+    }));
+  },
+
+  togglePinSession: (sessionId: string) => {
+    set((state) => ({
+      pinnedSessions: state.pinnedSessions.includes(sessionId)
+        ? state.pinnedSessions.filter((id) => id !== sessionId)
+        : [...state.pinnedSessions, sessionId],
+    }));
   },
 
   updateSessions: async (workspaceId: string) => {

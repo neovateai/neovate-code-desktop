@@ -1,8 +1,8 @@
 import {
   ArrowDown01Icon,
+  FolderAddIcon,
   PanelLeftIcon,
   PanelRightIcon,
-  PlusSignIcon,
   Settings01Icon,
   ViewSidebarLeftIcon,
   ViewSidebarRightIcon,
@@ -47,16 +47,7 @@ export function TitleBar() {
           title={isPrimarySidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'}
         />
         <AddRepoMenu>
-          {multiProjectSupport ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              title="Add repository"
-            >
-              <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} />
-            </Button>
-          ) : (
+          {multiProjectSupport ? null : (
             <Button
               variant="ghost"
               className="h-8 px-2 text-sm font-medium"

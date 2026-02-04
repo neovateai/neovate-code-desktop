@@ -56,6 +56,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   const pendingTabUri = useStore((s) => s.pendingTabUri);
   const { request } = useStore();
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
+  const theme = useStore((state) => state.theme);
 
   const startEditor = async () => {
     if (status === 'starting') return;
@@ -96,6 +97,10 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
       });
     }
   }, [pendingTabUri]);
+
+  useEffect(() => {
+    request<any>('editor.theme.set', { cwd: repoPath, theme });
+  }, [theme]);
 
   // editor extension 劫持了https 链接，使用内置browser打开
   useEffect(() => {

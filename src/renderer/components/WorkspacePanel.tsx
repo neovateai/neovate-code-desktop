@@ -12,6 +12,7 @@ import {
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
+import { useNotification } from '../hooks';
 import { logger } from '../lib/logger';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
@@ -89,6 +90,8 @@ export const WorkspacePanel = ({
     (state) => state.slashCommandJSXBySession,
   );
   const developerMode = useStore((state) => state.developerMode);
+
+  useNotification(selectedSessionId, workspace?.worktreePath ?? '');
 
   // Subscribe directly to sessionProcessing state for proper reactivity
   const sessionProcessing = useStore((state) =>
@@ -204,25 +207,31 @@ export const WorkspacePanel = ({
           'modelInfo' in response.data &&
           response.data.modelInfo
         ) {
-          const hasThinkingConfig = !!response.data.modelInfo.thinkingConfig;
+          const variants = response.data.modelInfo.model?.variants;
+          const variantKeys =
+            variants && Object.keys(variants).length > 0
+              ? Object.keys(variants)
+              : [];
+          const hasThinking = variantKeys.length > 0;
           setSessionInput(selectedSessionId, {
-            thinkingEnabled: hasThinkingConfig,
-            thinking: hasThinkingConfig ? 'low' : null,
+            thinkingEnabled: hasThinking,
+            thinkingVariants: variantKeys,
+            thinking: hasThinking ? variantKeys[0] : null,
             thinkingInitialized: true,
           });
         } else {
-          // Model doesn't support thinking
           setSessionInput(selectedSessionId, {
             thinkingEnabled: false,
+            thinkingVariants: [],
             thinking: null,
             thinkingInitialized: true,
           });
         }
       } catch (error) {
         console.error('Failed to fetch model info:', error);
-        // Default to disabled on error
         setSessionInput(selectedSessionId, {
           thinkingEnabled: false,
+          thinkingVariants: [],
           thinking: null,
           thinkingInitialized: true,
         });
@@ -379,18 +388,6 @@ export const WorkspacePanel = ({
   return (
     <WorkspaceContext.Provider value={contextValue}>
       <div className="flex flex-col h-full">
-        {/* Debug Info */}
-        {developerMode && (
-          <div className="mx-4 mt-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
-            <div>Selected Session ID: {selectedSessionId || 'null'}</div>
-            <div>Selected Workspace ID: {selectedWorkspaceId || 'null'}</div>
-            <div>isLoading: {String(isLoading)}</div>
-            <div>Processing State: {sessionProcessing?.status ?? 'null'}</div>
-            <div>Connection State: {connectionState}</div>
-            <div>Sessions Count: {allSessions.length}</div>
-            <div>Messages Count: {messages.length}</div>
-          </div>
-        )}
         <WorkspacePanel.Header />
         <WorkspacePanel.Messages />
         <div className="p-4 flex flex-col gap-3">

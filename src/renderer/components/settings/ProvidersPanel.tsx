@@ -65,7 +65,7 @@ const API_FORMAT_OPTIONS = [
 ] as const;
 
 // OAuth providers that need special handling
-const OAUTH_PROVIDERS = ['github-copilot', 'antigravity'];
+const OAUTH_PROVIDERS = ['github-copilot', 'codex', 'qwen'];
 
 // Slugify a string to create a valid provider ID
 const slugify = (str: string): string => {
@@ -823,7 +823,7 @@ export const ProvidersPanel = () => {
                       {/* Dropdown */}
                       {showTestDropdown && (
                         <div
-                          className="absolute right-0 top-full mt-1 z-10 rounded-md shadow-lg overflow-hidden bg-muted border border-border"
+                          className="absolute right-0 top-full mt-1 z-10 rounded-md shadow-lg overflow-hidden border border-border bg-popover"
                           style={{
                             minWidth: '200px',
                             maxHeight: '300px',

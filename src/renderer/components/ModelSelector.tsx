@@ -32,6 +32,7 @@ interface ModelSelectorProps {
   cwd?: string;
   sessionId?: string;
   disabled?: boolean;
+  compact?: boolean;
   onModelChange?: (model: string) => void;
 }
 
@@ -79,6 +80,7 @@ export const ModelSelector = ({
   cwd,
   sessionId,
   disabled = false,
+  compact = false,
   onModelChange,
 }: ModelSelectorProps) => {
   const request = useStore((state) => state.request);
@@ -338,7 +340,12 @@ export const ModelSelector = ({
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         disabled={disabled}
-        className="inline-flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent bg-muted border border-border text-foreground min-w-48 max-w-64"
+        className={cn(
+          'inline-flex items-center gap-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-foreground',
+          compact
+            ? 'h-8 gap-1.5 px-[calc(var(--spacing)*2.5-1px)] text-sm hover:bg-accent sm:h-7 sm:text-xs'
+            : 'justify-between px-3 py-1.5 text-sm font-medium hover:bg-accent bg-muted border border-border min-w-48 max-w-64',
+        )}
       >
         <span className="truncate">{currentModel || 'Select model...'}</span>
         <svg
