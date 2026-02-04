@@ -47,7 +47,9 @@ export function TitleBar() {
           title={isPrimarySidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'}
         />
         <AddRepoMenu>
-          {multiProjectSupport ? null : (
+          {multiProjectSupport ? (
+            <></>
+          ) : (
             <Button
               variant="ghost"
               className="h-8 px-2 text-sm font-medium"
