@@ -7,6 +7,7 @@ import {
   CaseSensitive,
   WholeWord,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '../ui/input';
 import { useStore } from '../../store';
 import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
@@ -22,6 +23,7 @@ interface SearchResult {
 
 /** TODO: 大量结果场景性能优化 */
 export function SearchPanel({ active }: { active: boolean }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -221,7 +223,7 @@ export function SearchPanel({ active }: { active: boolean }) {
   if (!cwd) {
     return (
       <div className="p-4 text-sm text-center text-muted-foreground">
-        请选择一个工作区
+        {t('search.selectWorkspace')}
       </div>
     );
   }
@@ -240,7 +242,7 @@ export function SearchPanel({ active }: { active: boolean }) {
               setQuery(e.target.value)
             }
             onKeyDown={handleKeyDown}
-            placeholder="搜索文件..."
+            placeholder={t('search.placeholder')}
             className="h-7 pl-6 pr-16 text-sm bg-muted rounded-md flex items-center"
           />
           {/* Search Options inside input */}
@@ -252,7 +254,7 @@ export function SearchPanel({ active }: { active: boolean }) {
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               }`}
-              title="区分大小写"
+              title={t('search.caseSensitive')}
             >
               <CaseSensitive className="w-3 h-3" />
             </button>
@@ -264,7 +266,7 @@ export function SearchPanel({ active }: { active: boolean }) {
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               }`}
-              title="精确匹配"
+              title={t('search.exactMatch')}
             >
               <WholeWord className="w-3 h-3" />
             </button>
@@ -280,12 +282,12 @@ export function SearchPanel({ active }: { active: boolean }) {
         ) : searched && query.trim().length === 1 ? (
           <div className="p-8 text-sm text-center text-muted-foreground">
             <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>当前搜索可能导致性能问题，暂不支持</p>
+            <p>{t('search.performanceWarning')}</p>
           </div>
         ) : searched && results.length === 0 ? (
           <div className="p-8 text-sm text-center text-muted-foreground">
             <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>未找到匹配的文件</p>
+            <p>{t('search.noResults')}</p>
           </div>
         ) : (
           <div className="py-1">
@@ -318,7 +320,9 @@ export function SearchPanel({ active }: { active: boolean }) {
                       </div>
                       {result.matches && result.matches.length > 0 && (
                         <div className="flex-shrink-0 text-xs text-muted-foreground bg-accent/50 px-1.5 py-0.5 rounded">
-                          {result.matches.length} 处匹配
+                          {t('search.matchesCount', {
+                            count: result.matches.length,
+                          })}
                         </div>
                       )}
                     </div>
@@ -353,7 +357,7 @@ export function SearchPanel({ active }: { active: boolean }) {
       {/* Footer */}
       {searched && !loading && results.length > 0 && (
         <div className="px-3 py-2 border-t border-border text-xs text-muted-foreground text-center">
-          找到 {results.length} 个结果
+          {t('search.resultsFound', { count: results.length })}
         </div>
       )}
     </div>

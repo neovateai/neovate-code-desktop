@@ -4,5 +4,15 @@
   "settings.theme.description": "Select your preferred color scheme",
   "settings.theme.light": "Light",
   "settings.theme.dark": "Dark",
-  "settings.theme.system": "System"
+  "settings.theme.system": "System",
+  "search.selectWorkspace": "Please select a workspace",
+  "search.placeholder": "Search files...",
+  "search.caseSensitive": "Case sensitive",
+  "search.exactMatch": "Exact match",
+  "search.performanceWarning": "Single character search may cause performance issues and is not supported",
+  "search.noResults": "No matching files found",
+  "search.matchesCount": "{{count}} match",
+  "search.matchesCount_plural": "{{count}} matches",
+  "search.resultsFound": "{{count}} result found",
+  "search.resultsFound_plural": "{{count}} results found"
 }
