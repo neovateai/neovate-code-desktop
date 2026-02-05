@@ -19,16 +19,18 @@ export const ActivityBar = function ActivityBar() {
 
   const contentPanel = getPanel('contentPanel');
   const secondarySidebar = getPanel('secondarySidebar');
+  const secondaryOpen = !secondarySidebar.collapsed;
+  const contentOpen = !contentPanel.collapsed;
 
   const secondarySidebarTab = useStore((s) => s.secondarySidebarTab);
   const setSecondarySidebarTab = useStore((s) => s.setSecondarySidebarTab);
 
   const handleTabClick = (tab: SecondarySidebarTab) => {
-    if (secondarySidebarTab === tab && secondarySidebar.visible) {
+    if (secondarySidebarTab === tab && secondaryOpen) {
       toggle('secondarySidebar');
     } else {
       setSecondarySidebarTab(tab);
-      if (!secondarySidebar.visible) {
+      if (!secondaryOpen) {
         toggle('secondarySidebar');
       }
     }
@@ -42,7 +44,7 @@ export const ActivityBar = function ActivityBar() {
       <ActivityBarButton
         icon={FolderIcon}
         onClick={() => handleTabClick('files')}
-        active={secondarySidebarTab === 'files' && secondarySidebar.visible}
+        active={secondarySidebarTab === 'files' && secondaryOpen}
         title="Files"
       />
       <ActivityBarButton
@@ -54,7 +56,7 @@ export const ActivityBar = function ActivityBar() {
       <ActivityBarButton
         icon={GitBranchIcon}
         onClick={() => handleTabClick('git')}
-        active={secondarySidebarTab === 'git' && secondarySidebar.visible}
+        active={secondarySidebarTab === 'git' && secondaryOpen}
         title="Git"
       />
       {pluginItems.map((item) => (
@@ -64,7 +66,7 @@ export const ActivityBar = function ActivityBar() {
           onClick={() => handleTabClick(item.secondarySidebarPanelId)}
           active={
             secondarySidebarTab === item.secondarySidebarPanelId &&
-            secondarySidebar.visible
+            secondaryOpen
           }
           title={item.tooltip}
         />
@@ -73,7 +75,7 @@ export const ActivityBar = function ActivityBar() {
       <ActivityBarButton
         icon={DashboardSquare01FreeIcons}
         onClick={() => toggle('contentPanel')}
-        active={contentPanel.visible}
+        active={contentOpen}
         title="Panels"
       />
     </div>

@@ -12,21 +12,23 @@ import {
   ACTIVITY_BAR_WIDTH,
   CHAT_PANEL_MIN_SIZE,
   PANEL_CONFIG,
+  PANEL_PANEL_SPACING,
+  PANEL_WINDOW_EDGE_SPACING,
   STORAGE_KEY_APP_LAYOUT,
 } from '../../constants';
+import type { Layout, PanelId, PanelState } from './layoutTypes';
+import {
+  getContentWidthFromMouse,
+  getPrimaryWidthFromMouse,
+  getSecondaryWidthFromMouse,
+  applyToggle,
+  getRequiredMinWidth,
+  getRequiredCurrentWidth,
+  fitLayoutToWindow,
+} from './layoutMath';
+import { ipcMainCaller } from '../../lib/ipc';
 
-// =============================================================================
-// Types
-// =============================================================================
-
-export type PanelId = keyof typeof PANEL_CONFIG;
-
-export type PanelState = {
-  width: number;
-  visible: boolean;
-};
-
-export type Layout = Record<PanelId, PanelState>;
+export type { Layout, PanelId, PanelState } from './layoutTypes';
 
 interface AppLayoutContextValue {
   layout: Layout;
@@ -38,6 +40,31 @@ interface AppLayoutContextValue {
   startResize: (id: PanelId) => void;
 }
 
+const LAYOUT_CONSTANTS = {
+  activityBar: ACTIVITY_BAR_WIDTH,
+  edge: PANEL_WINDOW_EDGE_SPACING,
+  handle: PANEL_PANEL_SPACING,
+  chatMin: CHAT_PANEL_MIN_SIZE,
+  contentMin: PANEL_CONFIG.contentPanel.minWidth,
+  primaryMin: PANEL_CONFIG.primarySidebar.minWidth,
+  secondaryMin: PANEL_CONFIG.secondarySidebar.minWidth,
+};
+
+const PANEL_SIZE_CONFIG = {
+  primarySidebar: {
+    minWidth: PANEL_CONFIG.primarySidebar.minWidth,
+    maxWidth: PANEL_CONFIG.primarySidebar.maxWidth,
+  },
+  contentPanel: {
+    minWidth: PANEL_CONFIG.contentPanel.minWidth,
+    maxWidth: PANEL_CONFIG.contentPanel.maxWidth,
+  },
+  secondarySidebar: {
+    minWidth: PANEL_CONFIG.secondarySidebar.minWidth,
+    maxWidth: PANEL_CONFIG.secondarySidebar.maxWidth,
+  },
+};
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -46,15 +73,15 @@ function getDefaultLayout(): Layout {
   return {
     primarySidebar: {
       width: PANEL_CONFIG.primarySidebar.defaultWidth,
-      visible: PANEL_CONFIG.primarySidebar.defaultVisible,
+      collapsed: PANEL_CONFIG.primarySidebar.defaultCollapsed,
     },
     contentPanel: {
       width: PANEL_CONFIG.contentPanel.defaultWidth,
-      visible: PANEL_CONFIG.contentPanel.defaultVisible,
+      collapsed: PANEL_CONFIG.contentPanel.defaultCollapsed,
     },
     secondarySidebar: {
       width: PANEL_CONFIG.secondarySidebar.defaultWidth,
-      visible: PANEL_CONFIG.secondarySidebar.defaultVisible,
+      collapsed: PANEL_CONFIG.secondarySidebar.defaultCollapsed,
     },
   };
 }
@@ -83,13 +110,13 @@ function loadLayout(): Layout {
             ? panelState.width
             : config.defaultWidth;
 
-        // Validate visible
-        const visible =
-          typeof panelState.visible === 'boolean'
-            ? panelState.visible
-            : config.defaultVisible;
+        // Validate collapsed
+        const collapsed =
+          typeof panelState.collapsed === 'boolean'
+            ? panelState.collapsed
+            : config.defaultCollapsed;
 
-        layout[key] = { width, visible };
+        layout[key] = { width, collapsed };
       }
     }
 
@@ -150,14 +177,40 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggle = useCallback((id: PanelId) => {
+    const hasStoredLayout = (() => {
+      try {
+        return localStorage.getItem(STORAGE_KEY_APP_LAYOUT) !== null;
+      } catch {
+        return false;
+      }
+    })();
+
     setLayout((prev) => {
-      const newLayout = {
-        ...prev,
-        [id]: { ...prev[id], visible: !prev[id].visible },
-      };
+      let nextLayout = applyToggle({
+        layout: prev,
+        id,
+        windowWidth: window.innerWidth,
+        constants: LAYOUT_CONSTANTS,
+        panelConfig: PANEL_SIZE_CONFIG,
+        hasStoredLayout,
+      });
+
+      const requiredMin = getRequiredMinWidth(nextLayout, LAYOUT_CONSTANTS);
+      const targetWidth = Math.max(window.innerWidth, requiredMin);
+      if (window.innerWidth < requiredMin) {
+        void ipcMainCaller.app.ensureWindowWidth({ minWidth: requiredMin });
+      }
+      nextLayout = fitLayoutToWindow({
+        layout: nextLayout,
+        windowWidth: targetWidth,
+        constants: LAYOUT_CONSTANTS,
+      });
+      const nextRequiredMin = getRequiredMinWidth(nextLayout, LAYOUT_CONSTANTS);
+      void ipcMainCaller.app.ensureWindowWidth({ minWidth: nextRequiredMin });
+
       // Persist immediately on toggle
-      saveLayout(newLayout);
-      return newLayout;
+      saveLayout(nextLayout);
+      return nextLayout;
     });
   }, []);
 
@@ -169,50 +222,68 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!resizing) return;
 
+    const ensureWindowForLayout = (nextLayout: Layout) => {
+      const requiredCurrent = getRequiredCurrentWidth(
+        nextLayout,
+        LAYOUT_CONSTANTS,
+      );
+      if (requiredCurrent > window.innerWidth) {
+        void ipcMainCaller.app.ensureWindowWidth({
+          minWidth: requiredCurrent,
+        });
+      }
+    };
+
+    const applyResize = (id: PanelId, width: number) => {
+      const nextLayout: Layout = {
+        ...layoutRef.current,
+        [id]: { ...layoutRef.current[id], width },
+      };
+      ensureWindowForLayout(nextLayout);
+      setWidth(id, width);
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
       const { minWidth, maxWidth } = PANEL_CONFIG[resizing];
 
       if (resizing === 'primarySidebar') {
-        setWidth(
-          'primarySidebar',
-          Math.min(Math.max(e.clientX, minWidth), maxWidth),
-        );
+        const next = getPrimaryWidthFromMouse({
+          clientX: e.clientX,
+          windowWidth: window.innerWidth,
+          layout: layoutRef.current,
+          constants: LAYOUT_CONSTANTS,
+          minWidth,
+          maxWidth,
+        });
+        applyResize('primarySidebar', next);
       } else if (resizing === 'contentPanel') {
-        const primaryWidth = layoutRef.current.primarySidebar.visible
-          ? layoutRef.current.primarySidebar.width
-          : 0;
-        const secondaryWidth = layoutRef.current.secondarySidebar.visible
-          ? layoutRef.current.secondarySidebar.width
-          : 0;
-        // Calculate available space, ensuring chat panel keeps minimum size
-        const availableWidth =
-          window.innerWidth -
-          ACTIVITY_BAR_WIDTH -
-          primaryWidth -
-          secondaryWidth -
-          CHAT_PANEL_MIN_SIZE;
-        const dynamicMax = Math.min(maxWidth, availableWidth);
-        const rightBoundary =
-          window.innerWidth - ACTIVITY_BAR_WIDTH - secondaryWidth;
-        setWidth(
-          'contentPanel',
-          Math.min(Math.max(rightBoundary - e.clientX, minWidth), dynamicMax),
-        );
+        const next = getContentWidthFromMouse({
+          clientX: e.clientX,
+          windowWidth: window.innerWidth,
+          layout: layoutRef.current,
+          constants: LAYOUT_CONSTANTS,
+          minWidth,
+        });
+        applyResize('contentPanel', next);
       } else if (resizing === 'secondarySidebar') {
-        setWidth(
-          'secondarySidebar',
-          Math.min(
-            Math.max(
-              window.innerWidth - e.clientX - ACTIVITY_BAR_WIDTH,
-              minWidth,
-            ),
-            maxWidth,
-          ),
-        );
+        const next = getSecondaryWidthFromMouse({
+          clientX: e.clientX,
+          windowWidth: window.innerWidth,
+          layout: layoutRef.current,
+          constants: LAYOUT_CONSTANTS,
+          minWidth,
+          maxWidth,
+        });
+        applyResize('secondarySidebar', next);
       }
     };
 
     const handleMouseUp = () => {
+      const requiredMin = getRequiredMinWidth(
+        layoutRef.current,
+        LAYOUT_CONSTANTS,
+      );
+      void ipcMainCaller.app.ensureWindowWidth({ minWidth: requiredMin });
       // Persist layout on drag end
       saveLayout(layoutRef.current);
       setResizing(null);
@@ -220,6 +291,11 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
 
     // Cancel drag if window loses focus (mouseup outside window)
     const handleBlur = () => {
+      const requiredMin = getRequiredMinWidth(
+        layoutRef.current,
+        LAYOUT_CONSTANTS,
+      );
+      void ipcMainCaller.app.ensureWindowWidth({ minWidth: requiredMin });
       saveLayout(layoutRef.current);
       setResizing(null);
     };

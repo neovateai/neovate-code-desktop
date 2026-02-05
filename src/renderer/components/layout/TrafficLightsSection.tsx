@@ -22,6 +22,7 @@ const springTransition = {
 export function TrafficLightsSection() {
   const { getPanel, toggle } = useAppLayoutPanels();
   const panel = getPanel('primarySidebar');
+  const isOpen = !panel.collapsed;
 
   return (
     <div
@@ -35,13 +36,13 @@ export function TrafficLightsSection() {
         size="icon"
         className="!size-6 relative"
         onClick={() => toggle('primarySidebar')}
-        title={panel.visible ? 'Hide sidebar' : 'Show sidebar'}
+        title={isOpen ? 'Hide sidebar' : 'Show sidebar'}
       >
         {/* Cross-fade between icons - both rendered, opacity animated */}
         <motion.span
           className="absolute inset-0 flex items-center justify-center"
           initial={false}
-          animate={{ opacity: panel.visible ? 1 : 0 }}
+          animate={{ opacity: isOpen ? 1 : 0 }}
           transition={springTransition}
         >
           <HugeiconsIcon
@@ -53,7 +54,7 @@ export function TrafficLightsSection() {
         <motion.span
           className="absolute inset-0 flex items-center justify-center"
           initial={false}
-          animate={{ opacity: panel.visible ? 0 : 1 }}
+          animate={{ opacity: isOpen ? 0 : 1 }}
           transition={springTransition}
         >
           <HugeiconsIcon icon={PanelLeftIcon} size={18} strokeWidth={1.5} />

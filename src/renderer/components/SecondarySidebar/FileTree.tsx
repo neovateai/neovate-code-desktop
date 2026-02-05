@@ -207,7 +207,7 @@ export function FileTree() {
     setSelectedKey(item.relPath);
     if (!item.isFolder) {
       console.log('OPEN FILE', item);
-      if (!getPanel('contentPanel').visible) {
+      if (getPanel('contentPanel').collapsed) {
         toggle('contentPanel');
       }
       setPendingTabRequest({
