@@ -2,6 +2,7 @@ import {
   DashboardSquare01FreeIcons,
   FolderIcon,
   GitBranchIcon,
+  Search01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import type { ComponentType } from 'react';
@@ -43,6 +44,14 @@ export const ActivityBar = function ActivityBar() {
         onClick={() => handleTabClick('files')}
         active={secondarySidebarTab === 'files' && secondarySidebar.visible}
         title="Files"
+      />
+      <ActivityBarButton
+        icon={Search01Icon}
+        onClick={() => handleTabClick('search')}
+        active={
+          secondarySidebarTab === 'search' && !isSecondarySidebarCollapsed()
+        }
+        title="Search"
       />
       <ActivityBarButton
         icon={GitBranchIcon}

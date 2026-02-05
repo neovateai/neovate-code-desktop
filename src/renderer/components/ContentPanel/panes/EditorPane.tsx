@@ -91,10 +91,19 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   // 文件打开行为承接
   useEffect(() => {
     if (pendingTabUri?.type === 'editor') {
-      request<any>('editor.open', {
-        cwd: repoPath,
-        filePath: pendingTabUri.uri,
-      });
+      const uri = pendingTabUri.uri;
+      // 解析文件名#L1 格式，提取行号
+      const hashMatch = uri.match(/^(.+?)#L(\d+)$/);
+      if (hashMatch) {
+        const [, filePath, line] = hashMatch;
+        request<any>('editor.open', {
+          cwd: repoPath,
+          filePath,
+          line: parseInt(line, 10),
+        });
+      } else {
+        request<any>('editor.open', { cwd: repoPath, filePath: uri });
+      }
     }
   }, [pendingTabUri]);
 

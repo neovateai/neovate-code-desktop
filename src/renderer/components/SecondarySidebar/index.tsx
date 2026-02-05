@@ -10,6 +10,7 @@ import {
 } from '../ContentPanel/PanelFallbacks';
 import { FileTree } from './FileTree';
 import { GitPanel } from './GitPanel';
+import { SearchPanel } from './SearchPanel';
 
 // Inner component (hooks called unconditionally)
 function PluginPaneContent({
@@ -54,10 +55,13 @@ export function SecondarySidebar() {
 
   // Determine panel title
   const isBuiltinTab =
-    secondarySidebarTab === 'files' || secondarySidebarTab === 'git';
+    secondarySidebarTab === 'files' ||
+    secondarySidebarTab === 'git' ||
+    secondarySidebarTab === 'search';
   const panelTitle = useMemo(() => {
     if (secondarySidebarTab === 'files') return 'Files';
     if (secondarySidebarTab === 'git') return 'Git';
+    if (secondarySidebarTab === 'search') return 'Search';
     const descriptor = app.contributions.secondarySidebarPanels?.find(
       (p) => p.id === secondarySidebarTab,
     );
@@ -74,6 +78,7 @@ export function SecondarySidebar() {
       <div className="flex-1 overflow-auto">
         {secondarySidebarTab === 'files' && <FileTree />}
         {secondarySidebarTab === 'git' && <GitPanel />}
+        <SearchPanel active={secondarySidebarTab === 'search'} />
         {!isBuiltinTab && (
           <SecondarySidebarPluginPane panelId={secondarySidebarTab} />
         )}
