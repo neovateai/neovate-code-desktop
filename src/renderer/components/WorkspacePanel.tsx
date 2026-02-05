@@ -16,6 +16,7 @@ import { useNotification } from '../hooks';
 import { logger } from '../lib/logger';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
+import { SessionInfoBar } from './SessionInfoBar';
 import { ApprovalPanel } from './ApprovalPanel';
 import { AskQuestionPanel } from './AskQuestionPanel';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
@@ -385,10 +386,12 @@ export const WorkspacePanel = ({
     );
   }
 
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+
   return (
     <WorkspaceContext.Provider value={contextValue}>
       <div className="flex flex-col h-full">
-        {/* <WorkspacePanel.Header /> */}
+        {!multiProjectSupport && <WorkspacePanel.Header />}
         <WorkspacePanel.Messages />
         <div className="p-4 flex flex-col gap-3">
           <ActivityIndicator sessionId={selectedSessionId} />
@@ -449,51 +452,9 @@ export const WorkspacePanel = ({
 
 // Compound components
 WorkspacePanel.Header = function Header() {
-  const { workspace, activeSession } = useWorkspaceContext();
-  const createOrSelectEmptySession = useStore(
-    (state) => state.createOrSelectEmptySession,
-  );
-  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
-  const selectWorkspace = useStore((state) => state.selectWorkspace);
-
-  const handleNewChat = () => {
-    if (selectedWorkspaceId) {
-      selectWorkspace(selectedWorkspaceId);
-      createOrSelectEmptySession(selectedWorkspaceId);
-    }
-  };
-
-  const displayTitle =
-    activeSession?.summary || workspace.repoPath.split('/').pop();
-
   return (
     <div className="flex items-center justify-between h-12 px-4">
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <h2 className="text-base font-semibold text-foreground truncate pr-2 cursor-default">
-              {displayTitle}
-            </h2>
-          }
-        ></TooltipTrigger>
-        <TooltipPopup>{displayTitle}</TooltipPopup>
-      </Tooltip>
-      {/* <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleNewChat}
-        className="gap-2 shrink-0"
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path
-            d="M8 3.33334V12.6667M3.33334 8H12.6667"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-        New Chat
-      </Button> */}
+      <SessionInfoBar showProjectName={false} />
     </div>
   );
 };
