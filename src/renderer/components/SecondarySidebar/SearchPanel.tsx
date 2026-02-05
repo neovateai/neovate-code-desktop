@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '../ui/input';
 import { useStore } from '../../store';
 import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
-import './index.css';
+import '../../styles/seti.css';
 
 interface SearchResult {
   fullPath: string;

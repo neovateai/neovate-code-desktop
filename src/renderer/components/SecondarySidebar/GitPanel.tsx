@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../../store';
-import './index.css';
+import '../../styles/seti.css';
 
 interface GitFile {
   extName: string;
