@@ -13,9 +13,10 @@ import {
   getPrimaryWidthFromMouse,
   getContentWidthFromMouse,
   getSecondaryWidthFromMouse,
+  getResizeWidthFromMouse,
   applyToggle,
 } from './layoutMath';
-import { CHAT_PANEL_MIN_SIZE, PANEL_CONFIG } from '../../constants';
+import { CHAT_PANEL_MIN_SIZE, PANEL_CONFIG } from './constants';
 
 const constants = {
   activityBar: 48,
@@ -197,6 +198,54 @@ test('secondary width from mouse respects activity bar and dynamic max', () => {
     constants,
     minWidth: 250,
     maxWidth: 600,
+  });
+  expect(width).toBe(309);
+});
+
+test('getResizeWidthFromMouse uses primary sizing branch', () => {
+  const width = getResizeWidthFromMouse({
+    resizing: 'primarySidebar',
+    clientX: 700,
+    windowWidth: 1400,
+    layout: {
+      primarySidebar: { width: 300, collapsed: false },
+      contentPanel: { width: 400, collapsed: false },
+      secondarySidebar: { width: 300, collapsed: false },
+    },
+    constants,
+    panelConfig,
+  });
+  expect(width).toBe(309);
+});
+
+test('getResizeWidthFromMouse uses content sizing branch', () => {
+  const width = getResizeWidthFromMouse({
+    resizing: 'contentPanel',
+    clientX: 600,
+    windowWidth: 1400,
+    layout: {
+      primarySidebar: { width: 300, collapsed: false },
+      contentPanel: { width: 400, collapsed: false },
+      secondarySidebar: { width: 300, collapsed: false },
+    },
+    constants,
+    panelConfig,
+  });
+  expect(width).toBe(409);
+});
+
+test('getResizeWidthFromMouse uses secondary sizing branch', () => {
+  const width = getResizeWidthFromMouse({
+    resizing: 'secondarySidebar',
+    clientX: 900,
+    windowWidth: 1400,
+    layout: {
+      primarySidebar: { width: 300, collapsed: false },
+      contentPanel: { width: 400, collapsed: false },
+      secondarySidebar: { width: 300, collapsed: false },
+    },
+    constants,
+    panelConfig,
   });
   expect(width).toBe(309);
 });

@@ -152,7 +152,7 @@ export function SearchPanel({ active }: { active: boolean }) {
   };
 
   const handleMatchClick = (result: SearchResult, line: number) => {
-    if (!contentPanel.visible) {
+    if (contentPanel.collapsed) {
       toggle('contentPanel');
     }
     setPendingTabRequest({

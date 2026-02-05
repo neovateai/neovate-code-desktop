@@ -1,4 +1,4 @@
-import type { Layout, PanelId } from './layoutTypes';
+import type { Layout, PanelId } from './types';
 
 export type LayoutConstants = {
   activityBar: number;
@@ -275,6 +275,55 @@ export function getSecondaryWidthFromMouse({
     minWidth,
     max,
   );
+}
+
+export function getResizeWidthFromMouse({
+  resizing,
+  clientX,
+  windowWidth,
+  layout,
+  constants,
+  panelConfig,
+}: {
+  resizing: PanelId | null;
+  clientX: number;
+  windowWidth: number;
+  layout: Layout;
+  constants: LayoutConstants;
+  panelConfig: PanelSizeConfig;
+}): number | null {
+  if (!resizing) return null;
+  const { minWidth, maxWidth } = panelConfig[resizing];
+
+  if (resizing === 'primarySidebar') {
+    return getPrimaryWidthFromMouse({
+      clientX,
+      windowWidth,
+      layout,
+      constants,
+      minWidth,
+      maxWidth,
+    });
+  }
+
+  if (resizing === 'contentPanel') {
+    return getContentWidthFromMouse({
+      clientX,
+      windowWidth,
+      layout,
+      constants,
+      minWidth,
+    });
+  }
+
+  return getSecondaryWidthFromMouse({
+    clientX,
+    windowWidth,
+    layout,
+    constants,
+    minWidth,
+    maxWidth,
+  });
 }
 
 export function applyToggle({

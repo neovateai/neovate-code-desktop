@@ -3,7 +3,7 @@ import { createMainHandler } from '../../shared/lib/ipc/main';
 import { codeServerManager } from '../code-server';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
-import { computeEnsuredWindowWidth } from '../../shared/windowSizing';
+import { computeEnsuredWindowWidth } from '../../shared/layout/windowSizing';
 import {
   deleteTerminalState,
   getPtyCwd,
@@ -120,7 +120,13 @@ export const ipcMainHandlers = {
       },
     ),
 
-    ensureWindowWidth: createMainHandler<
+    getVersion: createMainHandler<void, { version: string }>(async () => {
+      return { version: app.getVersion() };
+    }),
+  },
+
+  window: {
+    ensureWidth: createMainHandler<
       { minWidth: number },
       { appliedWidth: number; maxWidth: number }
     >(async ({ input }) => {
@@ -144,10 +150,6 @@ export const ipcMainHandlers = {
       }
 
       return { appliedWidth, maxWidth };
-    }),
-
-    getVersion: createMainHandler<void, { version: string }>(async () => {
-      return { version: app.getVersion() };
     }),
   },
 };

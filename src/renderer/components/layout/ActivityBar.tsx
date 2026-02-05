@@ -50,7 +50,7 @@ export const ActivityBar = function ActivityBar() {
       <ActivityBarButton
         icon={Search01Icon}
         onClick={() => handleTabClick('search')}
-        active={secondarySidebarTab === 'search' && secondarySidebar.visible}
+        active={secondarySidebarTab === 'search' && secondaryOpen}
         title="Search"
       />
       <ActivityBarButton

@@ -8,7 +8,7 @@ import {
   PANEL_WINDOW_EDGE_SPACING,
   TITLEBAR_SIDEBAR_TOGGLE_WIDTH,
   TRAFFIC_LIGHTS_SPACER_WIDTH,
-} from '../../constants';
+} from '../../../shared/layout';
 import {
   type PanelId,
   AppLayoutPanelProvider,
