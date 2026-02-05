@@ -120,7 +120,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
   return (
     <div>
       {/* Tool header */}
-      <div className="flex items-center mb-2">
+      <div className="flex items-center mb-2 min-w-0">
         <HugeiconsIcon
           icon={toolIcon}
           size={16}
@@ -131,7 +131,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
           {displayName}
         </span>
         {toolUse.description && (
-          <span className="text-[13px] text-muted-foreground ml-2">
+          <span className="text-[13px] text-muted-foreground ml-2 truncate">
             {toolUse.description}
           </span>
         )}
