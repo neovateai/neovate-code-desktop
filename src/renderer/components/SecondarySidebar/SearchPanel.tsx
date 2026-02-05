@@ -36,7 +36,8 @@ export function SearchPanel({ active }: { active: boolean }) {
 
   const { request } = useStore();
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
-  const { isContentPanelCollapsed, toggleContentPanel } = useAppLayoutPanels();
+  const { getPanel, toggle } = useAppLayoutPanels();
+  const contentPanel = getPanel('contentPanel');
 
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
@@ -149,8 +150,8 @@ export function SearchPanel({ active }: { active: boolean }) {
   };
 
   const handleMatchClick = (result: SearchResult, line: number) => {
-    if (isContentPanelCollapsed()) {
-      toggleContentPanel();
+    if (!contentPanel.visible) {
+      toggle('contentPanel');
     }
     setPendingTabRequest({
       uri: result.fullPath + `#L${line}`,

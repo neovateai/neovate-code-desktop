@@ -48,9 +48,7 @@ export const ActivityBar = function ActivityBar() {
       <ActivityBarButton
         icon={Search01Icon}
         onClick={() => handleTabClick('search')}
-        active={
-          secondarySidebarTab === 'search' && !isSecondarySidebarCollapsed()
-        }
+        active={secondarySidebarTab === 'search' && secondarySidebar.visible}
         title="Search"
       />
       <ActivityBarButton
