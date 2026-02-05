@@ -31,15 +31,12 @@ export const WorkspacePanel = ({
   workspace: WorkspaceData | null;
   emptyStateType: 'no-repos' | 'no-workspace' | null;
 }) => {
-  const [inputValue, setInputValue] = useState('');
-
   // Get store actions and state
   const request = useStore((state) => state.request);
   const setMessages = useStore((state) => state.setMessages);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
   const workspaces = useStore((state) => state.workspaces);
-  const sessionsMap = useStore((state) => state.sessions);
   const messagesMap = useStore((state) => state.messages);
   const fetchSlashCommandList = useStore(
     (state) => state.fetchSlashCommandList,
@@ -51,7 +48,6 @@ export const WorkspacePanel = ({
   const slashCommandJSXBySession = useStore(
     (state) => state.slashCommandJSXBySession,
   );
-  const developerMode = useStore((state) => state.developerMode);
 
   useNotification(selectedSessionId, workspace?.worktreePath ?? '');
 
@@ -87,12 +83,6 @@ export const WorkspacePanel = ({
   const updateSessions = useStore((state) => state.updateSessions);
   const createOrSelectEmptySession = useStore(
     (state) => state.createOrSelectEmptySession,
-  );
-
-  // Get sessions and messages for the current workspace from store - memoized to avoid infinite loop
-  const allSessions = useMemo(
-    () => (selectedWorkspaceId ? sessionsMap[selectedWorkspaceId] || [] : []),
-    [selectedWorkspaceId, sessionsMap],
   );
 
   const messages = useMemo(
@@ -220,7 +210,6 @@ export const WorkspacePanel = ({
         think: inputState.thinking,
         images,
       });
-      setInputValue('');
     },
     [isLoading, selectedSessionId, getSessionInput, storeSendMessage],
   );
