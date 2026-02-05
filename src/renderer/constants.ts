@@ -60,7 +60,7 @@ export const TITLEBAR_SIDEBAR_TOGGLE_WIDTH = 32;
 export const PANEL_CONFIG = {
   primarySidebar: {
     defaultWidth: 220,
-    minWidth: 180,
+    minWidth: 250,
     maxWidth: 320,
     defaultVisible: true,
   },
