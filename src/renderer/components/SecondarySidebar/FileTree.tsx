@@ -166,7 +166,7 @@ export function FileTree() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [treeData, setTreeData] = useState<IFileTreeItem[]>([]);
 
-  const { isContentPanelCollapsed, toggleContentPanel } = useAppLayoutPanels();
+  const { getPanel, toggle } = useAppLayoutPanels();
   const { request } = useStore();
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
 
@@ -207,8 +207,8 @@ export function FileTree() {
     setSelectedKey(item.relPath);
     if (!item.isFolder) {
       console.log('OPEN FILE', item);
-      if (isContentPanelCollapsed()) {
-        toggleContentPanel();
+      if (!getPanel('contentPanel').visible) {
+        toggle('contentPanel');
       }
       setPendingTabRequest({
         uri: item.fullPath,

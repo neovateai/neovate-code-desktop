@@ -282,8 +282,10 @@ export class MainApp {
     this.mainWindow = new BrowserWindow({
       width: 1200,
       height: 800,
+      minWidth: 900,
+      minHeight: 600,
       titleBarStyle: 'hiddenInset',
-      trafficLightPosition: { x: 12, y: 14 },
+      trafficLightPosition: { x: 16, y: 16 },
       webPreferences: {
         preload: path.join(__dirname, '../preload/index.js'),
         contextIsolation: true,

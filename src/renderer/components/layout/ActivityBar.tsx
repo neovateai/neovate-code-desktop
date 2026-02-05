@@ -14,23 +14,21 @@ import { useAppLayoutPanels } from './AppLayoutProvider';
 
 export const ActivityBar = function ActivityBar() {
   const app = useRendererApp();
-  const {
-    isContentPanelCollapsed,
-    isSecondarySidebarCollapsed,
-    toggleContentPanel,
-    toggleSecondarySidebar,
-  } = useAppLayoutPanels();
+  const { getPanel, toggle } = useAppLayoutPanels();
+
+  const contentPanel = getPanel('contentPanel');
+  const secondarySidebar = getPanel('secondarySidebar');
 
   const secondarySidebarTab = useStore((s) => s.secondarySidebarTab);
   const setSecondarySidebarTab = useStore((s) => s.setSecondarySidebarTab);
 
   const handleTabClick = (tab: SecondarySidebarTab) => {
-    if (secondarySidebarTab === tab && !isSecondarySidebarCollapsed()) {
-      toggleSecondarySidebar();
+    if (secondarySidebarTab === tab && secondarySidebar.visible) {
+      toggle('secondarySidebar');
     } else {
       setSecondarySidebarTab(tab);
-      if (isSecondarySidebarCollapsed()) {
-        toggleSecondarySidebar();
+      if (!secondarySidebar.visible) {
+        toggle('secondarySidebar');
       }
     }
   };
@@ -43,15 +41,13 @@ export const ActivityBar = function ActivityBar() {
       <ActivityBarButton
         icon={FolderIcon}
         onClick={() => handleTabClick('files')}
-        active={
-          secondarySidebarTab === 'files' && !isSecondarySidebarCollapsed()
-        }
+        active={secondarySidebarTab === 'files' && secondarySidebar.visible}
         title="Files"
       />
       <ActivityBarButton
         icon={GitBranchIcon}
         onClick={() => handleTabClick('git')}
-        active={secondarySidebarTab === 'git' && !isSecondarySidebarCollapsed()}
+        active={secondarySidebarTab === 'git' && secondarySidebar.visible}
         title="Git"
       />
       {pluginItems.map((item) => (
@@ -61,7 +57,7 @@ export const ActivityBar = function ActivityBar() {
           onClick={() => handleTabClick(item.secondarySidebarPanelId)}
           active={
             secondarySidebarTab === item.secondarySidebarPanelId &&
-            !isSecondarySidebarCollapsed()
+            secondarySidebar.visible
           }
           title={item.tooltip}
         />
@@ -69,8 +65,8 @@ export const ActivityBar = function ActivityBar() {
       <Separator className="w-6 my-1" />
       <ActivityBarButton
         icon={DashboardSquare01FreeIcons}
-        onClick={toggleContentPanel}
-        active={!isContentPanelCollapsed()}
+        onClick={() => toggle('contentPanel')}
+        active={contentPanel.visible}
         title="Panels"
       />
     </div>
