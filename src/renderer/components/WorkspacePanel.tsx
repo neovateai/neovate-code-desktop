@@ -19,6 +19,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from './ui/empty';
+import { WelcomePanel } from './WelcomePanel';
 
 // Main component
 export const WorkspacePanel = ({
@@ -316,9 +317,7 @@ WorkspacePanel.Messages = function Messages() {
   return (
     <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-4 min-w-0">
       {messages.length === 0 ? (
-        <div className="text-center mt-8" style={{ color: '#999' }}>
-          No messages yet. Start a conversation!
-        </div>
+        <WelcomePanel />
       ) : (
         <div className="min-w-0">
           {/* Completed messages (memoized to prevent re-renders) */}
