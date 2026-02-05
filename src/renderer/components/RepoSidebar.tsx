@@ -1037,7 +1037,7 @@ export const RepoSidebar = () => {
     : repoList.filter((repo) => repo.path === selectedRepoPath);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col pt-8 relative">
       <PinnedSessionList onDeleteSession={handleDeleteSession} />
       <SidebarTitleBar />
 
