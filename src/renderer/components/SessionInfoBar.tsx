@@ -7,11 +7,13 @@ import { Separator as UISeparator } from './ui/separator';
 interface SessionInfoBarProps {
   showSeparator?: boolean;
   showProjectName?: boolean;
+  draggable?: boolean;
 }
 
 export function SessionInfoBar({
   showSeparator = false,
   showProjectName = true,
+  draggable = true,
 }: SessionInfoBarProps) {
   const selectedSessionId = useStore((s) => s.selectedSessionId);
   const selectedWorkspaceId = useStore((s) => s.selectedWorkspaceId);
@@ -93,7 +95,11 @@ export function SessionInfoBar({
             onFocus={(e) => e.target.select()}
           />
         ) : (
-          <span className="text-foreground truncate max-w-80 font-medium">
+          <span
+            className="text-foreground truncate max-w-80 font-medium"
+            // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
+            style={draggable ? { WebkitAppRegion: 'drag' } : undefined}
+          >
             {activeSession.summary || 'New Chat'}
           </span>
         )}

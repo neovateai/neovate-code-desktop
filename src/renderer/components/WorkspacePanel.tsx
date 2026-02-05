@@ -454,7 +454,7 @@ export const WorkspacePanel = ({
 WorkspacePanel.Header = function Header() {
   return (
     <div className="flex items-center justify-between h-12 px-4">
-      <SessionInfoBar showProjectName={false} />
+      <SessionInfoBar showProjectName={false} draggable={false} />
     </div>
   );
 };
