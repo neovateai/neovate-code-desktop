@@ -1102,7 +1102,7 @@ export const ProvidersPanel = () => {
           onClick={() => setShowAddProviderModal(false)}
         >
           <div
-            className="rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto bg-muted border border-border"
+            className="rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto bg-popover border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
