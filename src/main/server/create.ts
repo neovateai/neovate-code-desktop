@@ -6,7 +6,7 @@ import portfinder from 'portfinder';
 import { isDev } from '../env';
 import { examplePlugin } from '../plugins/example';
 import { scmPlugin } from './../plugins/scm';
-import { fsPlugin } from './../plugins/fs';
+import { fsPlugin } from '../plugins/fs';
 import {
   POLL_INTERVAL_MS,
   PORT_RANGE_END,

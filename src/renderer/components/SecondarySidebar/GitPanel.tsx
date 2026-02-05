@@ -10,6 +10,7 @@ import {
   RefreshCw,
   RotateCcw,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../../store';
 import './index.css';
 
@@ -23,6 +24,7 @@ interface GitFile {
 }
 
 export const GitPanel = memo(function GitPanel() {
+  const { t } = useTranslation();
   const { request } = useStore();
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
@@ -187,7 +189,7 @@ export const GitPanel = memo(function GitPanel() {
                           handleRemoveFromStage(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
-                        title="从暂存区移除"
+                        title={t('git.removeFromStage')}
                       >
                         <ArrowDown className="w-3 h-3 text-muted-foreground hover:text-foreground" />
                       </button>
@@ -197,7 +199,7 @@ export const GitPanel = memo(function GitPanel() {
                           handleRevertFile(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
-                        title="还原文件"
+                        title={t('git.revertFile')}
                       >
                         <RotateCcw className="w-3 h-3 text-muted-foreground hover:text-foreground" />
                       </button>
@@ -210,7 +212,7 @@ export const GitPanel = memo(function GitPanel() {
                           handleAddToStage(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
-                        title="添加到暂存区"
+                        title={t('git.addToStage')}
                       >
                         <ArrowUp className="w-3 h-3 text-muted-foreground hover:text-foreground" />
                       </button>
@@ -220,7 +222,7 @@ export const GitPanel = memo(function GitPanel() {
                           handleRevertFile(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
-                        title="还原文件"
+                        title={t('git.revertFile')}
                       >
                         <RotateCcw className="w-3 h-3 text-muted-foreground hover:text-foreground" />
                       </button>
@@ -238,7 +240,7 @@ export const GitPanel = memo(function GitPanel() {
   if (!cwd) {
     return (
       <div className="p-4 text-sm text-center text-muted-foreground">
-        请选择一个工作区
+        {t('git.selectWorkspace')}
       </div>
     );
   }
@@ -248,7 +250,9 @@ export const GitPanel = memo(function GitPanel() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">正在加载Git状态...</p>
+          <p className="text-sm text-muted-foreground">
+            {t('git.loadingStatus')}
+          </p>
         </div>
       </div>
     );
@@ -258,7 +262,7 @@ export const GitPanel = memo(function GitPanel() {
   if (!hasChanges) {
     return (
       <div className="p-4 text-sm text-center text-muted-foreground">
-        没有检测到变更的文件
+        {t('git.noChanges')}
       </div>
     );
   }
@@ -266,11 +270,13 @@ export const GitPanel = memo(function GitPanel() {
   return (
     <div className="flex flex-col h-full">
       <div className="px-3 py-1.5 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground/70">Git 状态</span>
+        <span className="text-xs text-muted-foreground/70">
+          {t('git.status')}
+        </span>
         <button
           onClick={() => refreshGitStatus(cwd)}
           className="p-0.5 hover:bg-accent/50 rounded"
-          title="刷新状态"
+          title={t('git.refreshStatus')}
           disabled={loading}
         >
           <RefreshCw
@@ -283,7 +289,7 @@ export const GitPanel = memo(function GitPanel() {
         stagedFiles,
         stagedCollapsed,
         () => setStagedCollapsed(!stagedCollapsed),
-        '暂存区变更',
+        t('git.stagedChanges'),
         true,
       )}
       {stagedFiles.length > 0 && workingFiles.length > 0 && (
@@ -293,7 +299,7 @@ export const GitPanel = memo(function GitPanel() {
         workingFiles,
         workingCollapsed,
         () => setWorkingCollapsed(!workingCollapsed),
-        '工作区变更',
+        t('git.workingChanges'),
         false,
       )}
     </div>
