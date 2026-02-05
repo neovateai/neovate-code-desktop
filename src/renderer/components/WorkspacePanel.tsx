@@ -1,14 +1,5 @@
 import { MessageSquare } from 'lucide-react';
-import {
-  createContext,
-  memo,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SessionData, WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
@@ -32,34 +23,6 @@ import {
   EmptyTitle,
 } from './ui/empty';
 import { Tooltip, TooltipPopup, TooltipTrigger } from './ui/tooltip';
-
-// Define the context type
-interface WorkspaceContextType {
-  workspace: WorkspaceData;
-  activeSession: SessionData | null;
-  allSessions: SessionData[];
-  selectedSessionId: string | null;
-  selectSession: (id: string) => void;
-  messages: NormalizedMessage[];
-  inputValue: string;
-  isLoading: boolean;
-  sendMessage: (content: string) => Promise<void>;
-  setInputValue: (value: string) => void;
-}
-
-// Create the context
-const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
-  undefined,
-);
-
-// Custom hook to use the context
-export function useWorkspaceContext() {
-  const context = useContext(WorkspaceContext);
-  if (!context) {
-    throw new Error('useWorkspaceContext must be used within WorkspacePanel');
-  }
-  return context;
-}
 
 // Main component
 export const WorkspacePanel = ({
@@ -313,35 +276,9 @@ export const WorkspacePanel = ({
     }
   }, [selectedSessionId]);
 
-  const contextValue: WorkspaceContextType | null = useMemo(() => {
-    if (!workspace) return null;
-    return {
-      workspace,
-      activeSession,
-      allSessions,
-      selectedSessionId,
-      selectSession: handleSelectSession,
-      messages,
-      inputValue,
-      isLoading,
-      sendMessage,
-      setInputValue,
-    };
-  }, [
-    workspace,
-    activeSession,
-    allSessions,
-    selectedSessionId,
-    handleSelectSession,
-    messages,
-    inputValue,
-    isLoading,
-    sendMessage,
-  ]);
-
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
 
-  if (!workspace || !contextValue) {
+  if (!workspace) {
     return (
       <div className="flex items-center justify-center h-full">
         <Empty>
@@ -389,7 +326,7 @@ export const WorkspacePanel = ({
   }
 
   return (
-    <WorkspaceContext.Provider value={contextValue}>
+    <>
       <div className="flex flex-col h-full">
         {!multiProjectSupport && <WorkspacePanel.Header />}
         <WorkspacePanel.Messages />
@@ -446,7 +383,7 @@ export const WorkspacePanel = ({
         messages={messages}
         onSelect={handleForkSelect}
       />
-    </WorkspaceContext.Provider>
+    </>
   );
 };
 
@@ -460,7 +397,12 @@ WorkspacePanel.Header = function Header() {
 };
 
 WorkspacePanel.Messages = function Messages() {
-  const { messages, selectedSessionId } = useWorkspaceContext();
+  const selectedSessionId = useStore((state) => state.selectedSessionId);
+  const messagesMap = useStore((state) => state.messages);
+  const messages = useMemo(
+    () => (selectedSessionId ? messagesMap[selectedSessionId] || [] : []),
+    [selectedSessionId, messagesMap],
+  );
 
   // Refs for auto-scroll functionality
   const messagesEndRef = useRef<HTMLDivElement>(null);
