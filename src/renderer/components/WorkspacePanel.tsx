@@ -388,7 +388,7 @@ export const WorkspacePanel = ({
   return (
     <WorkspaceContext.Provider value={contextValue}>
       <div className="flex flex-col h-full">
-        <WorkspacePanel.Header />
+        {/* <WorkspacePanel.Header /> */}
         <WorkspacePanel.Messages />
         <div className="p-4 flex flex-col gap-3">
           <ActivityIndicator sessionId={selectedSessionId} />

@@ -20,31 +20,20 @@ import {
   Trash2,
 } from 'lucide-react';
 import { memo, useState } from 'react';
-import type { RepoData, SessionData } from '../client/types/entities';
+import type { RepoData } from '../client/types/entities';
 import { cn } from '../lib/utils';
 import { useStore } from '../store';
 import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
 import { useRepoDelete } from './Repo/useRepoDelete';
+import { SessionActionsContextMenuItems } from './SessionActionsMenu';
 import {
   ContextMenu,
-  ContextMenuItem,
   ContextMenuPopup,
-  ContextMenuSeparator,
   ContextMenuTrigger,
 } from './ui/context-menu';
 import { ScrollArea } from './ui/scroll-area';
 import { Spinner } from './ui/spinner';
-import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogPopup,
-  AlertDialogTitle,
-  Button,
-  toastManager,
-} from './ui';
+import { Button, toastManager } from './ui';
 import { Accordion, AccordionItem, AccordionPanel } from './ui/accordion';
 import {
   Menu,
@@ -78,15 +67,7 @@ function formatRelativeTime(timestamp: number): string {
 const DEFAULT_SESSION_LIMIT = 5;
 const CHRONOLOGICAL_SESSION_LIMIT = 50;
 
-interface PinnedSessionListProps {
-  onDeleteSession: (
-    sessionId: string,
-    workspaceId: string,
-    summary: string,
-  ) => void;
-}
-
-const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
+const PinnedSessionList = () => {
   const workspaces = useStore((state) => state.workspaces);
   const sessions = useStore((state) => state.sessions);
   const pinnedSessions = useStore((state) => state.pinnedSessions);
@@ -101,9 +82,6 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
-    null,
-  );
 
   const pinnedSessionsData = Object.entries(sessions).flatMap(
     ([workspaceId, workspaceSessions]) => {
@@ -178,7 +156,6 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
                 selectWorkspace(workspaceId);
                 selectSession(session.sessionId);
               }}
-              onMouseLeave={() => setConfirmingDeleteId(null)}
             >
               <button
                 className="hidden group-hover:block"
@@ -232,78 +209,15 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
                     : session.modified,
                 )}
               </span>
-              {confirmingDeleteId === session.sessionId ? (
-                <button
-                  className="text-xs text-destructive bg-muted rounded px-2 py-0.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteSession(
-                      session.sessionId,
-                      workspaceId,
-                      session.summary || 'New Chat',
-                    );
-                    setConfirmingDeleteId(null);
-                  }}
-                >
-                  Confirm
-                </button>
-              ) : (
-                <button
-                  className="hidden group-hover:block rounded hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmingDeleteId(session.sessionId);
-                  }}
-                >
-                  <Trash2 size={14} strokeWidth={1.5} />
-                </button>
-              )}
             </ContextMenuTrigger>
             <ContextMenuPopup>
-              <ContextMenuItem
-                onClick={() =>
+              <SessionActionsContextMenuItems
+                sessionId={session.sessionId}
+                workspaceId={workspaceId}
+                onRenameStart={() =>
                   startRename(session.sessionId, session.summary || '')
                 }
-              >
-                Rename
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => togglePinSession(session.sessionId)}
-              >
-                Unpin
-              </ContextMenuItem>
-              <ContextMenuItem
-                className="text-red-500"
-                onClick={() =>
-                  onDeleteSession(
-                    session.sessionId,
-                    workspaceId,
-                    session.summary || 'New Chat',
-                  )
-                }
-              >
-                Delete
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                onClick={() => {
-                  const workspace = workspaces[workspaceId];
-                  if (workspace) {
-                    navigator.clipboard.writeText(workspace.worktreePath);
-                    toastManager.add({ title: 'Copied working directory' });
-                  }
-                }}
-              >
-                Copy working directory
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => {
-                  navigator.clipboard.writeText(session.sessionId);
-                  toastManager.add({ title: 'Copied session ID' });
-                }}
-              >
-                Copy session ID
-              </ContextMenuItem>
+              />
             </ContextMenuPopup>
           </ContextMenu>
         );
@@ -312,17 +226,7 @@ const PinnedSessionList = ({ onDeleteSession }: PinnedSessionListProps) => {
   );
 };
 
-interface ChronologicalSessionListProps {
-  onDeleteSession: (
-    sessionId: string,
-    workspaceId: string,
-    summary: string,
-  ) => void;
-}
-
-const ChronologicalSessionList = ({
-  onDeleteSession,
-}: ChronologicalSessionListProps) => {
+const ChronologicalSessionList = () => {
   const workspaces = useStore((state) => state.workspaces);
   const sessions = useStore((state) => state.sessions);
   const pinnedSessions = useStore((state) => state.pinnedSessions);
@@ -338,9 +242,6 @@ const ChronologicalSessionList = ({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
   const [showAll, setShowAll] = useState(false);
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
-    null,
-  );
 
   const flatSessions = Object.entries(sessions).flatMap(
     ([workspaceId, workspaceSessions]) => {
@@ -423,7 +324,6 @@ const ChronologicalSessionList = ({
                 selectWorkspace(workspaceId);
                 selectSession(session.sessionId);
               }}
-              onMouseLeave={() => setConfirmingDeleteId(null)}
             >
               <button
                 className="hidden group-hover:block"
@@ -477,78 +377,15 @@ const ChronologicalSessionList = ({
               <span className="text-sm text-muted-foreground group-hover:hidden">
                 {formatRelativeTime(session.modified)}
               </span>
-              {confirmingDeleteId === session.sessionId ? (
-                <button
-                  className="text-xs text-destructive bg-muted rounded px-2 py-0.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteSession(
-                      session.sessionId,
-                      workspaceId,
-                      session.summary || 'New Chat',
-                    );
-                    setConfirmingDeleteId(null);
-                  }}
-                >
-                  Confirm
-                </button>
-              ) : (
-                <button
-                  className="hidden group-hover:block rounded hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmingDeleteId(session.sessionId);
-                  }}
-                >
-                  <Trash2 size={14} strokeWidth={1.5} />
-                </button>
-              )}
             </ContextMenuTrigger>
             <ContextMenuPopup>
-              <ContextMenuItem
-                onClick={() =>
+              <SessionActionsContextMenuItems
+                sessionId={session.sessionId}
+                workspaceId={workspaceId}
+                onRenameStart={() =>
                   startRename(session.sessionId, session.summary || '')
                 }
-              >
-                Rename
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => togglePinSession(session.sessionId)}
-              >
-                Pin
-              </ContextMenuItem>
-              <ContextMenuItem
-                className="text-red-500"
-                onClick={() =>
-                  onDeleteSession(
-                    session.sessionId,
-                    workspaceId,
-                    session.summary || 'New Chat',
-                  )
-                }
-              >
-                Delete
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                onClick={() => {
-                  const workspace = workspaces[workspaceId];
-                  if (workspace) {
-                    navigator.clipboard.writeText(workspace.worktreePath);
-                    toastManager.add({ title: 'Copied working directory' });
-                  }
-                }}
-              >
-                Copy working directory
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => {
-                  navigator.clipboard.writeText(session.sessionId);
-                  toastManager.add({ title: 'Copied session ID' });
-                }}
-              >
-                Copy session ID
-              </ContextMenuItem>
+              />
             </ContextMenuPopup>
           </ContextMenu>
         );
@@ -567,14 +404,9 @@ const ChronologicalSessionList = ({
 
 interface RepoSessionListProps {
   repo: RepoData;
-  onDeleteSession: (
-    sessionId: string,
-    workspaceId: string,
-    summary: string,
-  ) => void;
 }
 
-const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
+const RepoSessionList = ({ repo }: RepoSessionListProps) => {
   const workspaces = useStore((state) => state.workspaces);
   const sessions = useStore((state) => state.sessions);
   const pinnedSessions = useStore((state) => state.pinnedSessions);
@@ -597,9 +429,6 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
-    null,
-  );
 
   const startRename = (sessionId: string, currentSummary: string) => {
     setEditingSessionId(sessionId);
@@ -703,7 +532,6 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                         selectWorkspace(workspaceId);
                         selectSession(session.sessionId);
                       }}
-                      onMouseLeave={() => setConfirmingDeleteId(null)}
                     >
                       <button
                         className="hidden group-hover:block"
@@ -767,77 +595,15 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                             : session.modified,
                         )}
                       </span>
-                      {confirmingDeleteId === session.sessionId ? (
-                        <button
-                          className="text-xs text-destructive bg-muted rounded px-2 py-0.5"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteSession(
-                              session.sessionId,
-                              workspaceId,
-                              session.summary || 'New Chat',
-                            );
-                            setConfirmingDeleteId(null);
-                          }}
-                        >
-                          Confirm
-                        </button>
-                      ) : (
-                        <button
-                          className="hidden group-hover:block rounded hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmingDeleteId(session.sessionId);
-                          }}
-                        >
-                          <Trash2 size={14} strokeWidth={1.5} />
-                        </button>
-                      )}
                     </ContextMenuTrigger>
                     <ContextMenuPopup>
-                      <ContextMenuItem
-                        onClick={() =>
+                      <SessionActionsContextMenuItems
+                        sessionId={session.sessionId}
+                        workspaceId={workspaceId}
+                        onRenameStart={() =>
                           startRename(session.sessionId, session.summary || '')
                         }
-                      >
-                        Rename
-                      </ContextMenuItem>
-                      <ContextMenuItem
-                        onClick={() => togglePinSession(session.sessionId)}
-                      >
-                        {isPinned ? 'Unpin' : 'Pin'}
-                      </ContextMenuItem>
-                      <ContextMenuItem
-                        className="text-red-500"
-                        onClick={() =>
-                          onDeleteSession(
-                            session.sessionId,
-                            workspaceId,
-                            session.summary || 'New Chat',
-                          )
-                        }
-                      >
-                        Delete
-                      </ContextMenuItem>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem
-                        onClick={() => {
-                          navigator.clipboard.writeText(workspace.worktreePath);
-                          toastManager.add({
-                            title: 'Copied working directory',
-                          });
-                        }}
-                      >
-                        Copy working directory
-                      </ContextMenuItem>
-                      <ContextMenuItem
-                        onClick={() => {
-                          navigator.clipboard.writeText(session.sessionId);
-                          toastManager.add({ title: 'Copied session ID' });
-                        }}
-                      >
-                        Copy session ID
-                      </ContextMenuItem>
+                      />
                     </ContextMenuPopup>
                   </ContextMenu>
                 );
@@ -1075,61 +841,15 @@ export const RepoSidebar = () => {
   const setOpenRepoAccordions = useStore(
     (state) => state.setOpenRepoAccordions,
   );
-  const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const selectSession = useStore((state) => state.selectSession);
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
   const sidebarOrganize = useStore((state) => state.sidebarOrganize);
   const repos = useStore((state) => state.repos);
   const selectedRepoPath = useStore((state) => state.selectedRepoPath);
-  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
-  const removeSession = useStore((state) => state.removeSession);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const createOrSelectEmptySession = useStore(
     (state) => state.createOrSelectEmptySession,
   );
-  const request = useStore((state) => state.request);
   const developerMode = useStore((state) => state.developerMode);
-
-  const handleDeleteSession = async (
-    sessionId: string,
-    workspaceId: string,
-  ) => {
-    const workspace = workspaces[workspaceId];
-    if (!workspace) return;
-
-    const session = (sessions[workspaceId] || []).find(
-      (s) => s.sessionId === sessionId,
-    );
-    const isLocalOnly = !session || session.messageCount === 0;
-
-    try {
-      if (!isLocalOnly) {
-        const result = await request('sessions.remove', {
-          cwd: workspace.worktreePath,
-          sessionId,
-        });
-
-        if (!result.success) {
-          console.error('Failed to delete session:', result.error);
-          return;
-        }
-      }
-
-      removeSession(workspaceId, sessionId);
-
-      if (selectedSessionId === sessionId) {
-        const remaining = (sessions[workspaceId] || [])
-          .filter((s) => s.sessionId !== sessionId)
-          .sort((a, b) => b.modified - a.modified);
-
-        selectSession(remaining.length > 0 ? remaining[0].sessionId : null);
-      }
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-    }
-  };
 
   const {
     deleteDialogOpen: repoDeleteDialogOpen,
@@ -1145,8 +865,8 @@ export const RepoSidebar = () => {
     : repoList.filter((repo) => repo.path === selectedRepoPath);
 
   return (
-    <div className="h-full flex flex-col pt-8 relative">
-      <PinnedSessionList onDeleteSession={handleDeleteSession} />
+    <div className="h-full flex flex-col">
+      <PinnedSessionList />
       <SidebarTitleBar />
 
       {developerMode && (
@@ -1181,7 +901,7 @@ export const RepoSidebar = () => {
             </EmptyHeader>
           </Empty>
         ) : sidebarOrganize === 'chronological' && multiProjectSupport ? (
-          <ChronologicalSessionList onDeleteSession={handleDeleteSession} />
+          <ChronologicalSessionList />
         ) : multiProjectSupport ? (
           <Accordion
             value={openRepos}
@@ -1242,21 +962,14 @@ export const RepoSidebar = () => {
                   </div>
                 </RepoAccordionTrigger>
                 <AccordionPanel>
-                  <RepoSessionList
-                    repo={repo}
-                    onDeleteSession={handleDeleteSession}
-                  />
+                  <RepoSessionList repo={repo} />
                 </AccordionPanel>
               </AccordionItem>
             ))}
           </Accordion>
         ) : (
           displayRepos.map((repo) => (
-            <RepoSessionList
-              key={repo.path}
-              repo={repo}
-              onDeleteSession={handleDeleteSession}
-            />
+            <RepoSessionList key={repo.path} repo={repo} />
           ))
         )}
       </ScrollArea>

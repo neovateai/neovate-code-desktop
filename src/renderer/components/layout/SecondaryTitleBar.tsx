@@ -1,10 +1,12 @@
 import { Settings01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useStore } from '../../store';
+import { OpenAppButton } from '../OpenAppButton';
 import { Button } from '../ui/button';
 
 export function SecondaryTitleBar() {
   const setShowSettings = useStore((s) => s.setShowSettings);
+  const selectedRepoPath = useStore((s) => s.selectedRepoPath);
 
   return (
     <div
@@ -15,12 +17,12 @@ export function SecondaryTitleBar() {
       {/* Drag region fills available space */}
       <div className="flex-1" />
 
-      {/* Settings button */}
       <div
-        className="flex items-center"
+        className="flex items-center gap-1"
         // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
         style={{ WebkitAppRegion: 'no-drag' }}
       >
+        {selectedRepoPath && <OpenAppButton cwd={selectedRepoPath} />}
         <Button
           variant="ghost"
           size="icon"
