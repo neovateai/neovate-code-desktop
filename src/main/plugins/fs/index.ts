@@ -41,6 +41,35 @@ export const fsPlugin: Plugin = {
           };
         }
       },
+      'fs.rename': async (data: { oldPath: string; newPath: string }) => {
+        try {
+          const { oldPath, newPath } = data || {};
+          if (!oldPath || !newPath) {
+            return {
+              success: false,
+              error: 'Both oldPath and newPath are required',
+            };
+          }
+          if (!fs.existsSync(oldPath)) {
+            return { success: false, error: 'Source file does not exist' };
+          }
+          if (fs.existsSync(newPath)) {
+            return { success: false, error: 'Target file already exists' };
+          }
+          const newDir = path.dirname(newPath);
+          if (!fs.existsSync(newDir)) {
+            fs.mkdirSync(newDir, { recursive: true });
+          }
+          fs.renameSync(oldPath, newPath);
+          return { success: true, data: {} };
+        } catch (error) {
+          return {
+            success: false,
+            error:
+              error instanceof Error ? error.message : 'Unknown error occurred',
+          };
+        }
+      },
       'editor.open': async (data: {
         cwd: string;
         filePath: string;
