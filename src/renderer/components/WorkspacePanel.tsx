@@ -1,10 +1,9 @@
 import { MessageSquare } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
 import { useNotification } from '../hooks';
-import { logger } from '../lib/logger';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
 import { SessionInfoBar } from './SessionInfoBar';
@@ -31,51 +30,32 @@ export const WorkspacePanel = ({
   workspace: WorkspaceData | null;
   emptyStateType: 'no-repos' | 'no-workspace' | null;
 }) => {
-  // Get store actions and state
   const request = useStore((state) => state.request);
   const setMessages = useStore((state) => state.setMessages);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
   const workspaces = useStore((state) => state.workspaces);
   const messagesMap = useStore((state) => state.messages);
-  const fetchSlashCommandList = useStore(
-    (state) => state.fetchSlashCommandList,
-  );
-  const cancelSession = useStore((state) => state.cancelSession);
   const getSessionInput = useStore((state) => state.getSessionInput);
   const setSessionInput = useStore((state) => state.setSessionInput);
-  const storeSendMessage = useStore((state) => state.sendMessage);
   const slashCommandJSXBySession = useStore(
     (state) => state.slashCommandJSXBySession,
   );
 
   useNotification(selectedSessionId, workspace?.worktreePath ?? '');
 
-  // Subscribe directly to sessionProcessing state for proper reactivity
-  const sessionProcessing = useStore((state) =>
-    selectedSessionId ? state.sessionProcessing[selectedSessionId] : null,
-  );
-
-  // Derive isLoading from per-session processing state
-  const isLoading = sessionProcessing?.status === 'processing';
-
-  // Fork modal state and actions
   const forkModalVisible = useStore((state) => state.forkModalVisible);
-  const showForkModal = useStore((state) => state.showForkModal);
   const hideForkModal = useStore((state) => state.hideForkModal);
   const fork = useStore((state) => state.fork);
 
-  // Get approval state for current session
   const approvalBySession = useStore((state) => state.approvalBySession);
   const currentApproval = selectedSessionId
     ? approvalBySession[selectedSessionId]
     : null;
   const hasApproval = !!currentApproval;
 
-  // Check if approval is for AskUserQuestion tool
   const isAskQuestion = currentApproval?.toolUse?.name === 'AskUserQuestion';
 
-  // Get slash command JSX for current session
   const slashCommandJSX = selectedSessionId
     ? slashCommandJSXBySession[selectedSessionId]
     : null;
@@ -92,7 +72,6 @@ export const WorkspacePanel = ({
 
   const connectionState = useStore((state) => state.state);
 
-  // Fetch sessions when selectedWorkspaceId changes
   useEffect(() => {
     if (connectionState !== 'connected') return;
     if (!selectedWorkspaceId) return;
@@ -100,7 +79,6 @@ export const WorkspacePanel = ({
     updateSessions(selectedWorkspaceId);
   }, [connectionState, selectedWorkspaceId, updateSessions]);
 
-  // Fetch messages when selectedSessionId changes
   useEffect(() => {
     if (connectionState !== 'connected') return;
     if (!selectedSessionId || !selectedWorkspaceId) return;
@@ -132,7 +110,6 @@ export const WorkspacePanel = ({
     setMessages,
   ]);
 
-  // Fetch model info once per session to initialize thinking state
   useEffect(() => {
     if (connectionState !== 'connected') return;
     if (!selectedSessionId || !selectedWorkspaceId) return;
@@ -140,7 +117,6 @@ export const WorkspacePanel = ({
     const workspace = workspaces[selectedWorkspaceId];
     if (!workspace) return;
 
-    // Check if already initialized for this session
     const sessionInput = getSessionInput(selectedSessionId);
     if (sessionInput.thinkingInitialized) return;
 
@@ -198,33 +174,6 @@ export const WorkspacePanel = ({
     setSessionInput,
   ]);
 
-  const sendMessage = useCallback(
-    async (content: string, images?: string[]) => {
-      if (!content.trim() || isLoading) return;
-
-      const inputState = getSessionInput(selectedSessionId || '');
-
-      await storeSendMessage({
-        message: content,
-        planMode: inputState.planMode,
-        think: inputState.thinking,
-        images,
-      });
-    },
-    [isLoading, selectedSessionId, getSessionInput, storeSendMessage],
-  );
-
-  const handleCancel = useCallback(() => {
-    if (selectedSessionId) {
-      cancelSession(selectedSessionId);
-    }
-  }, [selectedSessionId, cancelSession]);
-
-  const handleShowForkModal = useCallback(() => {
-    logger.debug('[UI]', 'handleShowForkModal called in WorkspacePanel');
-    showForkModal();
-  }, [showForkModal]);
-
   const handleForkSelect = useCallback(
     (uuid: string) => {
       fork(uuid);
@@ -232,19 +181,10 @@ export const WorkspacePanel = ({
     [fork],
   );
 
-  // Create wrapper functions that provide context for ChatInput
-  const fetchCommands = useCallback(async () => {
-    if (!selectedWorkspaceId) return [];
-    return fetchSlashCommandList(selectedWorkspaceId);
-  }, [selectedWorkspaceId, fetchSlashCommandList]);
-
-  // Ref for ChatInput to focus on session change
   const chatInputRef = useRef<ChatInputHandle>(null);
 
-  // Auto-focus ChatInput when session is selected
   useEffect(() => {
     if (selectedSessionId) {
-      // Small delay to ensure the component is rendered
       const timer = setTimeout(() => {
         chatInputRef.current?.focus();
       }, FOCUS_DELAY_MS);
@@ -334,19 +274,7 @@ export const WorkspacePanel = ({
               cwd={workspace.worktreePath}
             />
           ) : (
-            <ChatInput
-              ref={chatInputRef}
-              onSubmit={sendMessage}
-              onCancel={handleCancel}
-              onShowForkModal={handleShowForkModal}
-              fetchCommands={fetchCommands}
-              placeholder={'Ask anything, @ for context'}
-              modelName={workspace.context.settings?.model}
-              isProcessing={isLoading}
-              sessionId={selectedSessionId || undefined}
-              cwd={workspace.repoPath}
-              request={request}
-            />
+            <ChatInput ref={chatInputRef} />
           )}
           {slashCommandJSX}
         </div>
