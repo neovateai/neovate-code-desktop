@@ -339,6 +339,8 @@ export const WorkspacePanel = ({
     sendMessage,
   ]);
 
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+
   if (!workspace || !contextValue) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -385,8 +387,6 @@ export const WorkspacePanel = ({
       </div>
     );
   }
-
-  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
 
   return (
     <WorkspaceContext.Provider value={contextValue}>
