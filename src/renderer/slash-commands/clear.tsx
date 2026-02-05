@@ -3,12 +3,11 @@ import type { LocalJSXCommand } from './types';
 
 export const clearCommand: LocalJSXCommand = {
   name: 'clear',
-  description: 'Create a new session',
+  description: 'Start a new chat',
   type: 'local-jsx',
   async call(onDone) {
-    // Execute synchronously - no need for useEffect
-    const sessionId = useStore.getState().createSession();
-    onDone(`New session created: ${sessionId}`);
+    useStore.getState().clearSelectedSession();
+    onDone('Ready for new chat');
     return null;
   },
 };

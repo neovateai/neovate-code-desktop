@@ -15,6 +15,7 @@ export function useGlobalKeybindings(): void {
         showSettings,
         onboardingVisible,
         createOrSelectEmptySession,
+        clearSelectedSession,
         selectPrevSession,
         selectNextSession,
         workspaces,
@@ -31,7 +32,7 @@ export function useGlobalKeybindings(): void {
         e.preventDefault();
 
         if (selectedWorkspaceId) {
-          createOrSelectEmptySession();
+          clearSelectedSession();
 
           // Dispatch focus event for ChatInput to pick up
           window.dispatchEvent(new CustomEvent('chat-input:focus'));

@@ -56,6 +56,7 @@ export const ChatInput = memo(
     );
     const getSessionInput = useStore((state) => state.getSessionInput);
     const setSessionInput = useStore((state) => state.setSessionInput);
+    const createSession = useStore((state) => state.createSession);
 
     const sessionId = selectedSessionId;
     const workspaceId = selectedWorkspaceId;
@@ -91,7 +92,12 @@ export const ChatInput = memo(
       async (content: string, images?: string[]) => {
         if (!content.trim() || isProcessing) return;
 
-        const inputState = getSessionInput(sessionId || '');
+        let targetSessionId = sessionId;
+        if (!targetSessionId) {
+          targetSessionId = createSession();
+        }
+
+        const inputState = getSessionInput(targetSessionId);
 
         await storeSendMessage({
           message: content,
@@ -100,7 +106,13 @@ export const ChatInput = memo(
           images,
         });
       },
-      [isProcessing, sessionId, getSessionInput, storeSendMessage],
+      [
+        isProcessing,
+        sessionId,
+        createSession,
+        getSessionInput,
+        storeSendMessage,
+      ],
     );
 
     const handleCancel = useCallback(() => {
@@ -140,51 +152,48 @@ export const ChatInput = memo(
 
     const { planMode, thinking, togglePlanMode, toggleThinking } = inputState;
 
-    const handleModelChange = useCallback(
-      async (newModel: string) => {
-        if (!cwd || !sessionId) return;
+    const handleModelChange = useCallback(async () => {
+      if (!cwd || !sessionId) return;
 
-        try {
-          const modelInfoResponse = await request('session.getModel', {
-            cwd,
-            sessionId,
-            includeModelInfo: true,
-          });
+      try {
+        const modelInfoResponse = await request('session.getModel', {
+          cwd,
+          sessionId,
+          includeModelInfo: true,
+        });
 
-          if (
-            modelInfoResponse.success &&
-            'modelInfo' in modelInfoResponse.data &&
-            modelInfoResponse.data.modelInfo
-          ) {
-            const variants = modelInfoResponse.data.modelInfo.model?.variants;
-            const variantKeys =
-              variants && Object.keys(variants).length > 0
-                ? Object.keys(variants)
-                : [];
-            const hasThinking = variantKeys.length > 0;
-            setThinkingEnabled(hasThinking);
-            setThinkingVariants(variantKeys);
-            setThinking(hasThinking ? variantKeys[0] : null);
-          } else {
-            setThinkingEnabled(false);
-            setThinkingVariants([]);
-            setThinking(null);
-          }
-        } catch {
+        if (
+          modelInfoResponse.success &&
+          'modelInfo' in modelInfoResponse.data &&
+          modelInfoResponse.data.modelInfo
+        ) {
+          const variants = modelInfoResponse.data.modelInfo.model?.variants;
+          const variantKeys =
+            variants && Object.keys(variants).length > 0
+              ? Object.keys(variants)
+              : [];
+          const hasThinking = variantKeys.length > 0;
+          setThinkingEnabled(hasThinking);
+          setThinkingVariants(variantKeys);
+          setThinking(hasThinking ? variantKeys[0] : null);
+        } else {
           setThinkingEnabled(false);
           setThinkingVariants([]);
           setThinking(null);
         }
-      },
-      [
-        request,
-        cwd,
-        sessionId,
-        setThinkingEnabled,
-        setThinkingVariants,
-        setThinking,
-      ],
-    );
+      } catch {
+        setThinkingEnabled(false);
+        setThinkingVariants([]);
+        setThinking(null);
+      }
+    }, [
+      request,
+      cwd,
+      sessionId,
+      setThinkingEnabled,
+      setThinkingVariants,
+      setThinking,
+    ]);
 
     const { value } = inputState.state;
     const canSend = value.trim().length > 0;
@@ -328,7 +337,7 @@ export const ChatInput = memo(
             onKeyDown={handlers.onKeyDown}
             onPaste={handlers.onPaste}
             placeholder={DEFAULT_PLACEHOLDER}
-            disabled={!sessionId}
+            disabled={!workspaceId}
             rows={3}
           />
 
@@ -341,11 +350,11 @@ export const ChatInput = memo(
 
           <InputGroupAddon align="block-end" className="justify-between">
             <div className="flex items-center gap-1">
-              {cwd && sessionId && (
+              {cwd && (
                 <ModelSelector
-                  type="session"
+                  type={sessionId ? 'session' : 'project'}
                   cwd={cwd}
-                  sessionId={sessionId}
+                  sessionId={sessionId ?? undefined}
                   onModelChange={handleModelChange}
                   compact
                 />
@@ -417,7 +426,7 @@ export const ChatInput = memo(
                     type="button"
                     size="icon-sm"
                     onClick={handleSendClick}
-                    disabled={!canSend || !sessionId}
+                    disabled={!canSend}
                   >
                     <HugeiconsIcon icon={SentIcon} size={16} />
                   </Button>

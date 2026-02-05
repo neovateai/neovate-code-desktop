@@ -40,6 +40,7 @@ export interface EntitiesSliceActions {
   removeSession: (workspaceId: string, sessionId: string) => void;
   createSession: () => string;
   createOrSelectEmptySession: (workspaceId?: string) => string | null;
+  clearSelectedSession: () => void;
   selectPrevSession: () => void;
   selectNextSession: () => void;
 
@@ -341,6 +342,10 @@ export const createEntitiesSlice: StateCreator<
     } else {
       return createSession();
     }
+  },
+
+  clearSelectedSession: () => {
+    set({ selectedSessionId: null });
   },
 
   // Messages

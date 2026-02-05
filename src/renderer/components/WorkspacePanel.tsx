@@ -1,4 +1,3 @@
-import { MessageSquare } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
@@ -13,7 +12,6 @@ import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
 import { splitMessages } from './messages/messageHelpers';
-import { Button } from './ui/button';
 import {
   Empty,
   EmptyDescription,
@@ -213,29 +211,6 @@ export const WorkspacePanel = ({
                 : 'Select a workspace from the sidebar to start coding'}
             </EmptyDescription>
           </EmptyHeader>
-        </Empty>
-      </div>
-    );
-  }
-
-  if (!selectedSessionId) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <MessageSquare className="size-6" />
-            </EmptyMedia>
-            <EmptyTitle>Start a New Chat</EmptyTitle>
-            <EmptyDescription>
-              Begin a conversation to start coding with AI
-            </EmptyDescription>
-          </EmptyHeader>
-          <Button
-            onClick={() => createOrSelectEmptySession(selectedWorkspaceId!)}
-          >
-            New Chat
-          </Button>
         </Empty>
       </div>
     );
