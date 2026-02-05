@@ -15,6 +15,7 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import { useInputHandlers } from '../../hooks/useInputHandlers';
 import { cn } from '../../lib/utils';
@@ -31,6 +32,73 @@ import {
 } from '../ui';
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
+
+interface DevModeInfoProps {
+  sessionId: string | null;
+  cwd: string;
+  processingStatus: string | null;
+  thinking: string | null;
+  thinkingEnabled: boolean;
+  thinkingVariants: string[];
+}
+
+const DevModeInfo = memo(function DevModeInfo({
+  sessionId,
+  cwd,
+  processingStatus,
+  thinking,
+  thinkingEnabled,
+  thinkingVariants,
+}: DevModeInfoProps) {
+  const request = useStore((state) => state.request);
+  const [modelDebugInfo, setModelDebugInfo] = useState<{
+    session: string | null;
+    project: string | null;
+    global: string | null;
+  }>({ session: null, project: null, global: null });
+
+  useEffect(() => {
+    if (!cwd) return;
+
+    const fetchModelConfigs = async () => {
+      try {
+        const [globalRes, projectRes, sessionRes] = await Promise.all([
+          request('config.get', { cwd, isGlobal: true, key: 'model' }),
+          request('config.get', { cwd, isGlobal: false, key: 'model' }),
+          sessionId
+            ? request('session.config.get', { cwd, sessionId, key: 'model' })
+            : Promise.resolve({ data: { value: null } }),
+        ]);
+        setModelDebugInfo({
+          global: globalRes?.data?.value || null,
+          project: projectRes?.data?.value || null,
+          session: sessionRes?.data?.value || null,
+        });
+      } catch {
+        setModelDebugInfo({ session: null, project: null, global: null });
+      }
+    };
+
+    fetchModelConfigs();
+  }, [cwd, sessionId, request]);
+
+  return (
+    <div className="mb-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
+      <div>Session ID: {sessionId || 'null'}</div>
+      <div>CWD: {cwd || 'null'}</div>
+      <div>Processing: {processingStatus || 'null'}</div>
+      <div>
+        Thinking: {thinking || 'null'} | Enabled: {String(thinkingEnabled)} |
+        Variants: {JSON.stringify(thinkingVariants || [])}
+      </div>
+      <div>
+        Model: session={modelDebugInfo.session || 'null'} | project=
+        {modelDebugInfo.project || 'null'} | global=
+        {modelDebugInfo.global || 'null'}
+      </div>
+    </div>
+  );
+});
 
 const DEFAULT_PLACEHOLDER = 'Ask anything, @ for context';
 
@@ -55,7 +123,6 @@ export const ChatInput = memo(
       (state) => state.fetchSlashCommandList,
     );
     const getSessionInput = useStore((state) => state.getSessionInput);
-    const setSessionInput = useStore((state) => state.setSessionInput);
     const createSession = useStore((state) => state.createSession);
 
     const sessionId = selectedSessionId;
@@ -285,17 +352,14 @@ export const ChatInput = memo(
     return (
       <div className="relative">
         {developerMode && (
-          <div className="mb-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
-            <div>Session ID: {sessionId || 'null'}</div>
-            <div>CWD: {cwd || 'null'}</div>
-            <div>Processing: {processingState?.status || 'null'}</div>
-            <div>Thinking: {thinking || 'null'}</div>
-            <div>Thinking Enabled: {String(thinkingEnabled)}</div>
-            <div>
-              Thinking Variants:{' '}
-              {JSON.stringify(inputState.thinkingVariants || [])}
-            </div>
-          </div>
+          <DevModeInfo
+            sessionId={sessionId}
+            cwd={cwd}
+            processingStatus={processingState?.status || null}
+            thinking={thinking}
+            thinkingEnabled={thinkingEnabled}
+            thinkingVariants={inputState.thinkingVariants}
+          />
         )}
 
         {suggestions.type && (
