@@ -14,5 +14,15 @@
   "search.matchesCount": "{{count}} match",
   "search.matchesCount_plural": "{{count}} matches",
   "search.resultsFound": "{{count}} result found",
-  "search.resultsFound_plural": "{{count}} results found"
+  "search.resultsFound_plural": "{{count}} results found",
+  "git.selectWorkspace": "Please select a workspace",
+  "git.loadingStatus": "Loading Git status...",
+  "git.noChanges": "No changes detected",
+  "git.status": "Git Status",
+  "git.refreshStatus": "Refresh status",
+  "git.stagedChanges": "Staged Changes",
+  "git.workingChanges": "Working Changes",
+  "git.addToStage": "Add to stage",
+  "git.removeFromStage": "Remove from stage",
+  "git.revertFile": "Revert file"
 }

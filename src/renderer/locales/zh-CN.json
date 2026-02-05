@@ -14,5 +14,15 @@
   "search.matchesCount": "{{count}} 处匹配",
   "search.matchesCount_plural": "{{count}} 处匹配",
   "search.resultsFound": "找到 {{count}} 个结果",
-  "search.resultsFound_plural": "找到 {{count}} 个结果"
+  "search.resultsFound_plural": "找到 {{count}} 个结果",
+  "git.selectWorkspace": "请选择一个工作区",
+  "git.loadingStatus": "正在加载Git状态...",
+  "git.noChanges": "没有检测到变更的文件",
+  "git.status": "Git 状态",
+  "git.refreshStatus": "刷新状态",
+  "git.stagedChanges": "暂存区变更",
+  "git.workingChanges": "工作区变更",
+  "git.addToStage": "添加到暂存区",
+  "git.removeFromStage": "从暂存区移除",
+  "git.revertFile": "还原文件"
 }
