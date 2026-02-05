@@ -1,6 +1,6 @@
 import { MessageSquare } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { SessionData, WorkspaceData } from '../client/types/entities';
+import type { WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
 import { useNotification } from '../hooks';
@@ -22,7 +22,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from './ui/empty';
-import { Tooltip, TooltipPopup, TooltipTrigger } from './ui/tooltip';
 
 // Main component
 export const WorkspacePanel = ({
@@ -39,7 +38,6 @@ export const WorkspacePanel = ({
   const setMessages = useStore((state) => state.setMessages);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const selectSession = useStore((state) => state.selectSession);
   const workspaces = useStore((state) => state.workspaces);
   const sessionsMap = useStore((state) => state.sessions);
   const messagesMap = useStore((state) => state.messages);
@@ -101,9 +99,6 @@ export const WorkspacePanel = ({
     () => (selectedSessionId ? messagesMap[selectedSessionId] || [] : []),
     [selectedSessionId, messagesMap],
   );
-
-  const activeSession =
-    allSessions.find((s) => s.sessionId === selectedSessionId) || null;
 
   const connectionState = useStore((state) => state.state);
 
@@ -228,14 +223,6 @@ export const WorkspacePanel = ({
       setInputValue('');
     },
     [isLoading, selectedSessionId, getSessionInput, storeSendMessage],
-  );
-
-  const handleSelectSession = useCallback(
-    (id: string) => {
-      selectSession(id);
-      setInputValue('');
-    },
-    [selectSession],
   );
 
   const handleCancel = useCallback(() => {
@@ -387,7 +374,6 @@ export const WorkspacePanel = ({
   );
 };
 
-// Compound components
 WorkspacePanel.Header = function Header() {
   return (
     <div className="flex items-center justify-between h-12 px-4">
@@ -502,20 +488,6 @@ function BranchIcon() {
         fill="currentColor"
         d="M5 3a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM5 6h10v1H5V6z"
       />
-    </svg>
-  );
-}
-
-function StatusIcon({ status }: { status: string }) {
-  const color =
-    status === 'active'
-      ? '#10B981'
-      : status === 'archived'
-        ? '#6B7280'
-        : '#F59E0B';
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16">
-      <circle cx="8" cy="8" r="5" fill={color} />
     </svg>
   );
 }
