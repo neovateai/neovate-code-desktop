@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
 
 import { useStore } from '../../store';
+import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
 
 import './index.css';
 
@@ -165,6 +166,7 @@ export function FileTree() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [treeData, setTreeData] = useState<IFileTreeItem[]>([]);
 
+  const { isContentPanelCollapsed, toggleContentPanel } = useAppLayoutPanels();
   const { request } = useStore();
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
 
@@ -205,6 +207,9 @@ export function FileTree() {
     setSelectedKey(item.relPath);
     if (!item.isFolder) {
       console.log('OPEN FILE', item);
+      if (isContentPanelCollapsed()) {
+        toggleContentPanel();
+      }
       setPendingTabRequest({
         uri: item.fullPath,
         repoPath: cwd || '',

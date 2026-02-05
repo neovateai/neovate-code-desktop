@@ -16,6 +16,30 @@ export const fsPlugin: Plugin = {
           data: { tree: getFileTree(data?.cwd) },
         };
       },
+      'fs.delete': async (data: { path: string }) => {
+        try {
+          const { path } = data || {};
+          if (!path) {
+            return { success: false, error: 'Path is required' };
+          }
+          if (!fs.existsSync(path)) {
+            return { success: false, error: 'File does not exist' };
+          }
+          const stats = fs.statSync(path);
+          if (stats.isDirectory()) {
+            fs.rmSync(path, { recursive: true, force: true });
+          } else {
+            fs.unlinkSync(path);
+          }
+          return { success: true, data: {} };
+        } catch (error) {
+          return {
+            success: false,
+            error:
+              error instanceof Error ? error.message : 'Unknown error occurred',
+          };
+        }
+      },
       'editor.open': async (data: { cwd: string; filePath: string }) => {
         /** TODO: 先放这里，后面看是不是提取到另一个插件中 */
         const { cwd = '', filePath = '' } = data || {};

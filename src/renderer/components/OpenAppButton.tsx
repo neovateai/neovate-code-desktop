@@ -1,10 +1,11 @@
 import { ChevronDown, Copy, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/menu';
 import antigravityIcon from '../assets/icons/antigravity.png';
@@ -21,9 +22,6 @@ import zedIcon from '../assets/icons/zed.png';
 import type { App } from '../nodeBridge.types';
 import { useStore } from '../store';
 
-/**
- * User-friendly display names for apps
- */
 const APP_NAMES: Record<App, string> = {
   cursor: 'Cursor',
   vscode: 'VS Code',
@@ -57,20 +55,31 @@ interface OpenAppButtonProps {
   cwd: string;
 }
 
-/**
- * Button with dropdown menu to open the current workspace in an available app.
- * Detects available apps on click and displays user-friendly names.
- */
 export function OpenAppButton({ cwd }: OpenAppButtonProps) {
   const request = useStore((state) => state.request);
   const copyPathToClipboard = useStore((state) => state.copyPathToClipboard);
+  const defaultOpenApp = useStore((state) => state.defaultOpenApp);
+  const setDefaultOpenApp = useStore((state) => state.setDefaultOpenApp);
   const [apps, setApps] = useState<App[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    if (!defaultOpenApp && apps.length === 0) {
+      request('utils.detectApps', { cwd }).then((response) => {
+        if (response.success && response.data.apps.length > 0) {
+          setApps(response.data.apps);
+        }
+      });
+    }
+  }, [defaultOpenApp, apps.length, cwd, request]);
+
+  const effectiveDefault = defaultOpenApp ?? apps[0] ?? null;
+  const effectiveIcon = effectiveDefault
+    ? APP_ICON_SRC[effectiveDefault]
+    : null;
+
   const handleOpenChange = async (open: boolean) => {
     if (open) {
-      // it's too fast, don't add loading since it will be shown for a split second
-      // setIsLoading(true);
       try {
         const response = await request('utils.detectApps', { cwd });
         if (response.success) {
@@ -92,58 +101,96 @@ export function OpenAppButton({ cwd }: OpenAppButtonProps) {
     }
   };
 
+  const handleSelectApp = async (app: App) => {
+    setDefaultOpenApp(app);
+    await handleOpenApp(app);
+  };
+
+  const handleLeftClick = async () => {
+    if (effectiveDefault) {
+      await handleOpenApp(effectiveDefault);
+    }
+  };
+
   const handleCopyPath = () => {
     copyPathToClipboard(cwd);
   };
 
   return (
-    <DropdownMenu onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger
-        render={
-          <Button variant="outline" size="sm">
-            Open <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-        }
-      />
-      <DropdownMenuContent align="end">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-2 px-4">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span className="text-sm text-muted-foreground">
-              Detecting apps...
-            </span>
-          </div>
-        ) : apps.length === 0 ? (
-          <div className="py-2 px-4">
-            <span className="text-sm text-muted-foreground">
-              No apps detected
-            </span>
-          </div>
+    <div className="flex">
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 rounded-r-none border-r-0 px-2"
+        onClick={handleLeftClick}
+        disabled={!effectiveDefault}
+      >
+        {effectiveIcon ? (
+          <img
+            alt=""
+            className="size-4 shrink-0 pointer-events-none"
+            src={effectiveIcon}
+          />
         ) : (
-          apps.map((app) => {
-            const iconSrc = APP_ICON_SRC[app];
-            return (
-              <DropdownMenuItem key={app} onClick={() => handleOpenApp(app)}>
-                {iconSrc ? (
-                  <img
-                    alt=""
-                    className="size-4 shrink-0 pointer-events-none"
-                    src={iconSrc}
-                  />
-                ) : (
-                  <span className="size-4 shrink-0" />
-                )}
-                <span>{APP_NAMES[app]}</span>
-              </DropdownMenuItem>
-            );
-          })
+          <span className="text-xs">Open</span>
         )}
-        <DropdownMenuItem onClick={handleCopyPath}>
-          <Copy className="size-4 shrink-0" />
-          <span>Copy path</span>
-          <span className="ml-auto text-xs text-muted-foreground">⌘⇧C</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </Button>
+      <DropdownMenu onOpenChange={handleOpenChange}>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-l-none px-1.5"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-2 px-4">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span className="text-sm text-muted-foreground">
+                Detecting apps...
+              </span>
+            </div>
+          ) : apps.length === 0 ? (
+            <div className="py-2 px-4">
+              <span className="text-sm text-muted-foreground">
+                No apps detected
+              </span>
+            </div>
+          ) : (
+            apps.map((app) => {
+              const iconSrc = APP_ICON_SRC[app];
+              return (
+                <DropdownMenuItem
+                  key={app}
+                  onClick={() => handleSelectApp(app)}
+                >
+                  {iconSrc ? (
+                    <img
+                      alt=""
+                      className="size-4 shrink-0 pointer-events-none"
+                      src={iconSrc}
+                    />
+                  ) : (
+                    <span className="size-4 shrink-0" />
+                  )}
+                  <span>{APP_NAMES[app]}</span>
+                </DropdownMenuItem>
+              );
+            })
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleCopyPath} className="pl-3">
+            <Copy className="size-4 shrink-0" />
+            <span>Copy path</span>
+            <span className="ml-auto text-xs text-muted-foreground">⌘⇧C</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
