@@ -137,7 +137,7 @@ function MarkdownContent({
   const renderer = useMemo(
     () => ({
       link: (href: string, text: ReactNode) => (
-        <a href={href} onClick={(e) => handleLinkClick(e, href)}>
+        <a key={href} href={href} onClick={(e) => handleLinkClick(e, href)}>
           {text}
         </a>
       ),
