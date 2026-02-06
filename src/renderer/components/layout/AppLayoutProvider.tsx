@@ -1,58 +1,120 @@
 import {
   createContext,
   type ReactNode,
-  type RefObject,
   useCallback,
   useContext,
+  useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import {
-  type GroupImperativeHandle,
-  type Layout,
-  type PanelImperativeHandle,
-  useGroupRef,
-  usePanelRef,
-} from 'react-resizable-panels';
-import {
-  CONTENT_PANEL_MIN_SIZE,
-  DEFAULT_PANEL_EXPAND_SIZE,
+  ACTIVITY_BAR_WIDTH,
+  CHAT_PANEL_MIN_SIZE,
+  PANEL_CONFIG,
+  STORAGE_KEY_APP_LAYOUT,
 } from '../../constants';
 
-export const AppLayoutPanelId = {
-  PrimarySidebar: 'primary-sidebar',
-  ChatPanel: 'chat-panel',
-  ContentPanel: 'content-panel',
-  SecondarySidebar: 'secondary-sidebar',
-} as const;
+// =============================================================================
+// Types
+// =============================================================================
 
-export type AppLayoutPanelIdType =
-  (typeof AppLayoutPanelId)[keyof typeof AppLayoutPanelId];
+export type PanelId = keyof typeof PANEL_CONFIG;
 
-type PanelRefs = Record<
-  AppLayoutPanelIdType,
-  RefObject<PanelImperativeHandle | null>
->;
+export type PanelState = {
+  width: number;
+  visible: boolean;
+};
 
-interface AppLayoutPanelContextValue {
-  groupRef: RefObject<GroupImperativeHandle | null>;
-  panelRefs: PanelRefs;
+export type Layout = Record<PanelId, PanelState>;
+
+interface AppLayoutContextValue {
   layout: Layout;
-  setLayout: (layout: Layout) => void;
-  isPrimarySidebarCollapsed: () => boolean;
-  isContentPanelCollapsed: () => boolean;
-  isSecondarySidebarCollapsed: () => boolean;
-  togglePrimarySidebar: () => void;
-  toggleContentPanel: () => void;
-  toggleSecondarySidebar: () => void;
+  resizing: PanelId | null;
+
+  getPanel: (id: PanelId) => PanelState;
+  setWidth: (id: PanelId, width: number) => void;
+  toggle: (id: PanelId) => void;
+  startResize: (id: PanelId) => void;
 }
 
-const AppLayoutPanelContext = createContext<AppLayoutPanelContextValue | null>(
-  null,
-);
+// =============================================================================
+// Helpers
+// =============================================================================
+
+function getDefaultLayout(): Layout {
+  return {
+    primarySidebar: {
+      width: PANEL_CONFIG.primarySidebar.defaultWidth,
+      visible: PANEL_CONFIG.primarySidebar.defaultVisible,
+    },
+    contentPanel: {
+      width: PANEL_CONFIG.contentPanel.defaultWidth,
+      visible: PANEL_CONFIG.contentPanel.defaultVisible,
+    },
+    secondarySidebar: {
+      width: PANEL_CONFIG.secondarySidebar.defaultWidth,
+      visible: PANEL_CONFIG.secondarySidebar.defaultVisible,
+    },
+  };
+}
+
+function loadLayout(): Layout {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_APP_LAYOUT);
+    if (!stored) return getDefaultLayout();
+
+    const parsed = JSON.parse(stored) as Partial<Layout>;
+    const defaults = getDefaultLayout();
+
+    // Validate and merge with defaults
+    const layout: Layout = { ...defaults };
+    for (const key of Object.keys(defaults) as PanelId[]) {
+      if (parsed[key]) {
+        const config = PANEL_CONFIG[key];
+        const panelState = parsed[key];
+
+        // Validate width
+        const width =
+          typeof panelState.width === 'number' &&
+          !Number.isNaN(panelState.width) &&
+          panelState.width >= config.minWidth &&
+          panelState.width <= config.maxWidth
+            ? panelState.width
+            : config.defaultWidth;
+
+        // Validate visible
+        const visible =
+          typeof panelState.visible === 'boolean'
+            ? panelState.visible
+            : config.defaultVisible;
+
+        layout[key] = { width, visible };
+      }
+    }
+
+    return layout;
+  } catch {
+    return getDefaultLayout();
+  }
+}
+
+function saveLayout(layout: Layout): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_APP_LAYOUT, JSON.stringify(layout));
+  } catch (error) {
+    console.error('Failed to save layout:', error);
+  }
+}
+
+// =============================================================================
+// Context
+// =============================================================================
+
+const AppLayoutContext = createContext<AppLayoutContextValue | null>(null);
 
 export function useAppLayoutPanels() {
-  const context = useContext(AppLayoutPanelContext);
+  const context = useContext(AppLayoutContext);
   if (!context) {
     throw new Error(
       'useAppLayoutPanels must be used within AppLayoutPanelProvider',
@@ -61,199 +123,139 @@ export function useAppLayoutPanels() {
   return context;
 }
 
+// =============================================================================
+// Provider
+// =============================================================================
+
 export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
-  const groupRef = useGroupRef();
+  const [layout, setLayout] = useState<Layout>(loadLayout);
+  const [resizing, setResizing] = useState<PanelId | null>(null);
 
-  // All panel refs organized by panel ID
-  const panelRefs: PanelRefs = {
-    [AppLayoutPanelId.PrimarySidebar]: usePanelRef(),
-    [AppLayoutPanelId.ChatPanel]: usePanelRef(),
-    [AppLayoutPanelId.ContentPanel]: usePanelRef(),
-    [AppLayoutPanelId.SecondarySidebar]: usePanelRef(),
-  };
+  // Ref for layout to avoid stale closure in mouseup handler
+  const layoutRef = useRef(layout);
+  layoutRef.current = layout;
 
-  // Layout state synced from Group's onLayoutChanged
-  const [layout, setLayoutState] = useState<Layout>({});
+  const getPanel = useCallback(
+    (id: PanelId): PanelState => layout[id],
+    [layout],
+  );
 
-  const setLayout = useCallback((newLayout: Layout) => {
-    setLayoutState(newLayout);
+  const setWidth = useCallback((id: PanelId, width: number) => {
+    const config = PANEL_CONFIG[id];
+    const clamped = Math.max(config.minWidth, Math.min(config.maxWidth, width));
+    setLayout((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], width: clamped },
+    }));
   }, []);
 
-  // Derived collapsed state from layout
-  const isPrimarySidebarCollapsed = useCallback(
-    () => layout[AppLayoutPanelId.PrimarySidebar] === 0,
-    [layout],
-  );
-
-  const isContentPanelCollapsed = useCallback(
-    () => layout[AppLayoutPanelId.ContentPanel] === 0,
-    [layout],
-  );
-
-  const isSecondarySidebarCollapsed = useCallback(
-    () => layout[AppLayoutPanelId.SecondarySidebar] === 0,
-    [layout],
-  );
-
-  // Remember panel sizes before collapse
-  const contentPanelSizeRef = useRef(DEFAULT_PANEL_EXPAND_SIZE);
-  const secondarySidebarSizeRef = useRef(DEFAULT_PANEL_EXPAND_SIZE);
-  // Remember how much SecondarySidebar borrowed from ContentPanel when expanding
-  const borrowedFromContentPanelRef = useRef(0);
-
-  const togglePrimarySidebar = () => {
-    const panel = panelRefs[AppLayoutPanelId.PrimarySidebar].current;
-    if (!panel) return;
-    if (isPrimarySidebarCollapsed()) {
-      panel.expand();
-    } else {
-      panel.collapse();
-    }
-  };
-
-  const toggleContentPanel = () => {
-    const group = groupRef.current;
-    if (!group) return;
-
-    const currentLayout = group.getLayout();
-
-    if (isContentPanelCollapsed()) {
-      // Expand ContentPanel: borrow space only from ChatPanel
-      const expandSize = contentPanelSizeRef.current;
+  const toggle = useCallback((id: PanelId) => {
+    setLayout((prev) => {
       const newLayout = {
-        ...currentLayout,
-        [AppLayoutPanelId.ChatPanel]:
-          currentLayout[AppLayoutPanelId.ChatPanel] - expandSize,
-        [AppLayoutPanelId.ContentPanel]: expandSize,
+        ...prev,
+        [id]: { ...prev[id], visible: !prev[id].visible },
       };
-      group.setLayout(newLayout);
-    } else {
-      // Save current size before collapse
-      contentPanelSizeRef.current =
-        currentLayout[AppLayoutPanelId.ContentPanel];
-      // Collapse ContentPanel: return all space to ChatPanel
-      const newLayout = {
-        ...currentLayout,
-        [AppLayoutPanelId.ChatPanel]:
-          currentLayout[AppLayoutPanelId.ChatPanel] +
-          currentLayout[AppLayoutPanelId.ContentPanel],
-        [AppLayoutPanelId.ContentPanel]: 0,
-      };
-      group.setLayout(newLayout);
-    }
-  };
+      // Persist immediately on toggle
+      saveLayout(newLayout);
+      return newLayout;
+    });
+  }, []);
 
-  const toggleSecondarySidebar = () => {
-    const group = groupRef.current;
-    if (!group) return;
+  const startResize = useCallback((id: PanelId) => {
+    setResizing(id);
+  }, []);
 
-    const currentLayout = group.getLayout();
+  // Global drag listener
+  useEffect(() => {
+    if (!resizing) return;
 
-    if (isSecondarySidebarCollapsed()) {
-      // Expand SecondarySidebar
-      const expandSize = secondarySidebarSizeRef.current;
-      const contentPanelSize = currentLayout[AppLayoutPanelId.ContentPanel];
-      const contentPanelExpanded = contentPanelSize > 0;
+    const handleMouseMove = (e: MouseEvent) => {
+      const { minWidth, maxWidth } = PANEL_CONFIG[resizing];
 
-      let newLayout;
-      let borrowedFromContentPanel = 0;
-
-      if (contentPanelExpanded) {
-        // Both ChatPanel and ContentPanel are expanded, calculate how much to borrow from each
-        const halfSize = expandSize / 2;
-        // Get ContentPanel's actual pixel width to determine how much it can lend
-        const contentPanelCurrent =
-          panelRefs[AppLayoutPanelId.ContentPanel].current;
-        const contentPanelPixelSize =
-          contentPanelCurrent?.getSize().inPixels ?? 0;
-        // Space ContentPanel can lend (keeping minSize)
-        const contentPanelCanGive = Math.max(
-          0,
-          contentPanelPixelSize - CONTENT_PANEL_MIN_SIZE,
+      if (resizing === 'primarySidebar') {
+        setWidth(
+          'primarySidebar',
+          Math.min(Math.max(e.clientX, minWidth), maxWidth),
         );
-        // Convert to percentage (rough estimate)
-        const containerWidth = contentPanelPixelSize / (contentPanelSize / 100);
-        const contentPanelCanGivePercent =
-          (contentPanelCanGive / containerWidth) * 100;
-
-        if (contentPanelCanGivePercent >= halfSize) {
-          // ContentPanel can lend half, distribute evenly
-          borrowedFromContentPanel = halfSize;
-          newLayout = {
-            ...currentLayout,
-            [AppLayoutPanelId.ChatPanel]:
-              currentLayout[AppLayoutPanelId.ChatPanel] - halfSize,
-            [AppLayoutPanelId.ContentPanel]: contentPanelSize - halfSize,
-            [AppLayoutPanelId.SecondarySidebar]: expandSize,
-          };
-        } else {
-          // ContentPanel can't lend half, borrow what it can, rest from ChatPanel
-          borrowedFromContentPanel = contentPanelCanGivePercent;
-          const fromChatPanel = expandSize - borrowedFromContentPanel;
-          newLayout = {
-            ...currentLayout,
-            [AppLayoutPanelId.ChatPanel]:
-              currentLayout[AppLayoutPanelId.ChatPanel] - fromChatPanel,
-            [AppLayoutPanelId.ContentPanel]:
-              contentPanelSize - borrowedFromContentPanel,
-            [AppLayoutPanelId.SecondarySidebar]: expandSize,
-          };
-        }
-      } else {
-        // Only ChatPanel is expanded, borrow from ChatPanel
-        borrowedFromContentPanel = 0;
-        newLayout = {
-          ...currentLayout,
-          [AppLayoutPanelId.ChatPanel]:
-            currentLayout[AppLayoutPanelId.ChatPanel] - expandSize,
-          [AppLayoutPanelId.SecondarySidebar]: expandSize,
-        };
+      } else if (resizing === 'contentPanel') {
+        const primaryWidth = layoutRef.current.primarySidebar.visible
+          ? layoutRef.current.primarySidebar.width
+          : 0;
+        const secondaryWidth = layoutRef.current.secondarySidebar.visible
+          ? layoutRef.current.secondarySidebar.width
+          : 0;
+        // Calculate available space, ensuring chat panel keeps minimum size
+        const availableWidth =
+          window.innerWidth -
+          ACTIVITY_BAR_WIDTH -
+          primaryWidth -
+          secondaryWidth -
+          CHAT_PANEL_MIN_SIZE;
+        const dynamicMax = Math.min(maxWidth, availableWidth);
+        const rightBoundary =
+          window.innerWidth - ACTIVITY_BAR_WIDTH - secondaryWidth;
+        setWidth(
+          'contentPanel',
+          Math.min(Math.max(rightBoundary - e.clientX, minWidth), dynamicMax),
+        );
+      } else if (resizing === 'secondarySidebar') {
+        setWidth(
+          'secondarySidebar',
+          Math.min(
+            Math.max(
+              window.innerWidth - e.clientX - ACTIVITY_BAR_WIDTH,
+              minWidth,
+            ),
+            maxWidth,
+          ),
+        );
       }
+    };
 
-      // Remember how much was borrowed from ContentPanel
-      borrowedFromContentPanelRef.current = borrowedFromContentPanel;
-      group.setLayout(newLayout);
-    } else {
-      // Save current size before collapse
-      secondarySidebarSizeRef.current =
-        currentLayout[AppLayoutPanelId.SecondarySidebar];
+    const handleMouseUp = () => {
+      // Persist layout on drag end
+      saveLayout(layoutRef.current);
+      setResizing(null);
+    };
 
-      // Collapse SecondarySidebar: return space proportionally
-      const returnToContentPanel = borrowedFromContentPanelRef.current;
-      const returnToChatPanel =
-        currentLayout[AppLayoutPanelId.SecondarySidebar] - returnToContentPanel;
+    // Cancel drag if window loses focus (mouseup outside window)
+    const handleBlur = () => {
+      saveLayout(layoutRef.current);
+      setResizing(null);
+    };
 
-      const newLayout = {
-        ...currentLayout,
-        [AppLayoutPanelId.ChatPanel]:
-          currentLayout[AppLayoutPanelId.ChatPanel] + returnToChatPanel,
-        [AppLayoutPanelId.ContentPanel]:
-          currentLayout[AppLayoutPanelId.ContentPanel] + returnToContentPanel,
-        [AppLayoutPanelId.SecondarySidebar]: 0,
-      };
+    // Prevent text selection during drag
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
 
-      // Reset borrowed record
-      borrowedFromContentPanelRef.current = 0;
-      group.setLayout(newLayout);
-    }
-  };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [resizing, setWidth]);
+
+  const contextValue = useMemo(
+    () => ({
+      layout,
+      resizing,
+      getPanel,
+      setWidth,
+      toggle,
+      startResize,
+    }),
+    [layout, resizing, getPanel, setWidth, toggle, startResize],
+  );
 
   return (
-    <AppLayoutPanelContext.Provider
-      value={{
-        groupRef,
-        panelRefs,
-        layout,
-        setLayout,
-        isPrimarySidebarCollapsed,
-        isContentPanelCollapsed,
-        isSecondarySidebarCollapsed,
-        togglePrimarySidebar,
-        toggleContentPanel,
-        toggleSecondarySidebar,
-      }}
-    >
+    <AppLayoutContext.Provider value={contextValue}>
       {children}
-    </AppLayoutPanelContext.Provider>
+    </AppLayoutContext.Provider>
   );
 }

@@ -15,15 +15,10 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import { useInputHandlers } from '../../hooks/useInputHandlers';
-import type { SlashCommand } from '../../hooks/useSlashCommands';
 import { cn } from '../../lib/utils';
-import type {
-  HandlerInput,
-  HandlerMethod,
-  HandlerOutput,
-} from '../../nodeBridge.types';
 import { useStore } from '../../store';
 import { ModelSelector } from '../ModelSelector';
 import {
@@ -38,63 +33,108 @@ import {
 import { ImagePreview } from './ImagePreview';
 import { SuggestionDropdown } from './SuggestionDropdown';
 
-interface ChatInputProps {
-  onSubmit: (value: string, images?: string[]) => void;
-  onCancel?: () => void;
-  onShowForkModal?: () => void;
-  fetchCommands?: () => Promise<SlashCommand[]>;
-  placeholder?: string;
-  disabled?: boolean;
-  isProcessing?: boolean;
-  modelName?: string;
-  sessionId?: string | null;
-  workspaceId?: string | null;
-  cwd?: string;
-  request?: <K extends HandlerMethod>(
-    method: K,
-    params: HandlerInput<K>,
-  ) => Promise<HandlerOutput<K>>;
+interface DevModeInfoProps {
+  sessionId: string | null;
+  cwd: string;
+  processingStatus: string | null;
+  thinking: string | null;
+  thinkingEnabled: boolean;
+  thinkingVariants: string[];
 }
 
-// Default implementations
-const defaultFetchCommands = async () => [];
-const noop = () => {};
+const DevModeInfo = memo(function DevModeInfo({
+  sessionId,
+  cwd,
+  processingStatus,
+  thinking,
+  thinkingEnabled,
+  thinkingVariants,
+}: DevModeInfoProps) {
+  const request = useStore((state) => state.request);
+  const [modelDebugInfo, setModelDebugInfo] = useState<{
+    session: string | null;
+    project: string | null;
+    global: string | null;
+  }>({ session: null, project: null, global: null });
 
-// Handle type for parent to focus the input
+  useEffect(() => {
+    if (!cwd) return;
+
+    const fetchModelConfigs = async () => {
+      try {
+        const [globalRes, projectRes, sessionRes] = await Promise.all([
+          request('config.get', { cwd, isGlobal: true, key: 'model' }),
+          request('config.get', { cwd, isGlobal: false, key: 'model' }),
+          sessionId
+            ? request('session.config.get', { cwd, sessionId, key: 'model' })
+            : Promise.resolve({ data: { value: null } }),
+        ]);
+        setModelDebugInfo({
+          global: globalRes?.data?.value || null,
+          project: projectRes?.data?.value || null,
+          session: sessionRes?.data?.value || null,
+        });
+      } catch {
+        setModelDebugInfo({ session: null, project: null, global: null });
+      }
+    };
+
+    fetchModelConfigs();
+  }, [cwd, sessionId, request]);
+
+  return (
+    <div className="mb-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
+      <div>Session ID: {sessionId || 'null'}</div>
+      <div>CWD: {cwd || 'null'}</div>
+      <div>Processing: {processingStatus || 'null'}</div>
+      <div>
+        Thinking: {thinking || 'null'} | Enabled: {String(thinkingEnabled)} |
+        Variants: {JSON.stringify(thinkingVariants || [])}
+      </div>
+      <div>
+        Model: session={modelDebugInfo.session || 'null'} | project=
+        {modelDebugInfo.project || 'null'} | global=
+        {modelDebugInfo.global || 'null'}
+      </div>
+    </div>
+  );
+});
+
+const DEFAULT_PLACEHOLDER = 'Ask anything, @ for context';
+
 export interface ChatInputHandle {
   focus: () => void;
 }
 
 export const ChatInput = memo(
-  forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput(
-    {
-      onSubmit,
-      onCancel = noop,
-      onShowForkModal = noop,
-      fetchCommands = defaultFetchCommands,
-      placeholder = 'Type your message...',
-      disabled = false,
-      isProcessing = false,
-      sessionId = null,
-      workspaceId = null,
-      cwd,
-      request,
-    },
-    ref,
-  ) {
-    // Ref for textarea
+  forwardRef<ChatInputHandle>(function ChatInput(_props, ref) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Get store methods
+    const selectedSessionId = useStore((state) => state.selectedSessionId);
+    const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
+    const workspaces = useStore((state) => state.workspaces);
+    const request = useStore((state) => state.request);
     const sendMessageWith = useStore((state) => state.sendMessageWith);
     const developerMode = useStore((state) => state.developerMode);
+    const storeSendMessage = useStore((state) => state.sendMessage);
+    const cancelSession = useStore((state) => state.cancelSession);
+    const showForkModal = useStore((state) => state.showForkModal);
+    const fetchSlashCommandList = useStore(
+      (state) => state.fetchSlashCommandList,
+    );
+    const getSessionInput = useStore((state) => state.getSessionInput);
+    const createSession = useStore((state) => state.createSession);
 
-    // Subscribe directly to sessionProcessing state for proper reactivity
+    const sessionId = selectedSessionId;
+    const workspaceId = selectedWorkspaceId;
+    const workspace = workspaceId ? workspaces[workspaceId] : null;
+    const cwd = workspace?.worktreePath || '';
+
     const processingState = useStore((state) =>
       sessionId ? state.sessionProcessing[sessionId] : null,
     );
+    const isProcessing = processingState?.status === 'processing';
 
-    // Expose focus method to parent via ref
     useImperativeHandle(
       ref,
       () => ({
@@ -105,7 +145,6 @@ export const ChatInput = memo(
       [],
     );
 
-    // Listen for focus requests (e.g., from Cmd+N new chat)
     useEffect(() => {
       const handleFocusRequest = () => {
         textareaRef.current?.focus();
@@ -115,6 +154,44 @@ export const ChatInput = memo(
       return () =>
         window.removeEventListener('chat-input:focus', handleFocusRequest);
     }, []);
+
+    const handleSubmit = useCallback(
+      async (content: string, images?: string[]) => {
+        if (!content.trim() || isProcessing) return;
+
+        let targetSessionId = sessionId;
+        if (!targetSessionId) {
+          targetSessionId = createSession();
+        }
+
+        const inputState = getSessionInput(targetSessionId);
+
+        await storeSendMessage({
+          message: content,
+          planMode: inputState.planMode,
+          think: inputState.thinking,
+          images,
+        });
+      },
+      [
+        isProcessing,
+        sessionId,
+        createSession,
+        getSessionInput,
+        storeSendMessage,
+      ],
+    );
+
+    const handleCancel = useCallback(() => {
+      if (sessionId) {
+        cancelSession(sessionId);
+      }
+    }, [sessionId, cancelSession]);
+
+    const fetchCommands = useCallback(async () => {
+      if (!workspaceId) return [];
+      return fetchSlashCommandList(workspaceId);
+    }, [workspaceId, fetchSlashCommandList]);
 
     const {
       inputState,
@@ -130,64 +207,60 @@ export const ChatInput = memo(
     } = useInputHandlers({
       sessionId,
       workspaceId,
-      onSubmit,
-      onCancel,
-      onShowForkModal,
+      onSubmit: handleSubmit,
+      onCancel: handleCancel,
+      onShowForkModal: showForkModal,
       fetchCommands,
       isProcessing,
       sendMessageWith,
-      request: request!,
-      cwd: cwd || '',
+      request,
+      cwd,
     });
 
     const { planMode, thinking, togglePlanMode, toggleThinking } = inputState;
 
-    // Handle model change - update thinking state based on new model
-    const handleModelChange = useCallback(
-      async (newModel: string) => {
-        if (!request || !cwd || !sessionId) return;
+    const handleModelChange = useCallback(async () => {
+      if (!cwd || !sessionId) return;
 
-        try {
-          const modelInfoResponse = await request('session.getModel', {
-            cwd,
-            sessionId,
-            includeModelInfo: true,
-          });
+      try {
+        const modelInfoResponse = await request('session.getModel', {
+          cwd,
+          sessionId,
+          includeModelInfo: true,
+        });
 
-          if (
-            modelInfoResponse.success &&
-            'modelInfo' in modelInfoResponse.data &&
-            modelInfoResponse.data.modelInfo
-          ) {
-            const variants = modelInfoResponse.data.modelInfo.model?.variants;
-            const variantKeys =
-              variants && Object.keys(variants).length > 0
-                ? Object.keys(variants)
-                : [];
-            const hasThinking = variantKeys.length > 0;
-            setThinkingEnabled(hasThinking);
-            setThinkingVariants(variantKeys);
-            setThinking(hasThinking ? variantKeys[0] : null);
-          } else {
-            setThinkingEnabled(false);
-            setThinkingVariants([]);
-            setThinking(null);
-          }
-        } catch {
+        if (
+          modelInfoResponse.success &&
+          'modelInfo' in modelInfoResponse.data &&
+          modelInfoResponse.data.modelInfo
+        ) {
+          const variants = modelInfoResponse.data.modelInfo.model?.variants;
+          const variantKeys =
+            variants && Object.keys(variants).length > 0
+              ? Object.keys(variants)
+              : [];
+          const hasThinking = variantKeys.length > 0;
+          setThinkingEnabled(hasThinking);
+          setThinkingVariants(variantKeys);
+          setThinking(hasThinking ? variantKeys[0] : null);
+        } else {
           setThinkingEnabled(false);
           setThinkingVariants([]);
           setThinking(null);
         }
-      },
-      [
-        request,
-        cwd,
-        sessionId,
-        setThinkingEnabled,
-        setThinkingVariants,
-        setThinking,
-      ],
-    );
+      } catch {
+        setThinkingEnabled(false);
+        setThinkingVariants([]);
+        setThinking(null);
+      }
+    }, [
+      request,
+      cwd,
+      sessionId,
+      setThinkingEnabled,
+      setThinkingVariants,
+      setThinking,
+    ]);
 
     const { value } = inputState.state;
     const canSend = value.trim().length > 0;
@@ -228,9 +301,7 @@ export const ChatInput = memo(
     const isSuggestionVisible = suggestions.type !== null;
 
     const handleSendClick = () => {
-      // Prevent submission when suggestions are visible
-      // Allow clicks during processing (toast warning will be shown by handler)
-      if (canSend && (!disabled || isProcessing) && !isSuggestionVisible) {
+      if (canSend && !isSuggestionVisible) {
         const submitEvent = {
           key: 'Enter',
           preventDefault: () => {},
@@ -238,7 +309,6 @@ export const ChatInput = memo(
           metaKey: false,
           shiftKey: false,
           altKey: false,
-          // Required: onKeyDown checks isComposing to avoid submitting during IME composition (e.g., Chinese input)
           nativeEvent: { isComposing: false },
         } as React.KeyboardEvent<HTMLTextAreaElement>;
         handlers.onKeyDown(submitEvent);
@@ -246,10 +316,8 @@ export const ChatInput = memo(
     };
 
     const modeColorClass = useMemo(() => {
-      // Memory and bash input modes take precedence
       if (mode === 'memory') return 'border-violet-500 ring-violet-500/40';
       if (mode === 'bash') return 'border-orange-500 ring-orange-500/40';
-      // Plan mode colors
       if (planMode === 'plan') return 'border-blue-500 ring-blue-500/40';
       if (planMode === 'brainstorm')
         return 'border-violet-500 ring-violet-500/40';
@@ -283,22 +351,17 @@ export const ChatInput = memo(
 
     return (
       <div className="relative">
-        {/* Debug Info */}
         {developerMode && (
-          <div className="mb-2 px-3 py-2 rounded-md text-xs font-mono bg-muted border border-border text-muted-foreground">
-            <div>Session ID: {sessionId || 'null'}</div>
-            <div>CWD: {cwd || 'null'}</div>
-            <div>Processing: {processingState?.status || 'null'}</div>
-            <div>Thinking: {thinking || 'null'}</div>
-            <div>Thinking Enabled: {String(thinkingEnabled)}</div>
-            <div>
-              Thinking Variants:{' '}
-              {JSON.stringify(inputState.thinkingVariants || [])}
-            </div>
-          </div>
+          <DevModeInfo
+            sessionId={sessionId}
+            cwd={cwd}
+            processingStatus={processingState?.status || null}
+            thinking={thinking}
+            thinkingEnabled={thinkingEnabled}
+            thinkingVariants={inputState.thinkingVariants}
+          />
         )}
 
-        {/* Suggestion Dropdown */}
         {suggestions.type && (
           <SuggestionDropdown
             type={suggestions.type}
@@ -307,16 +370,13 @@ export const ChatInput = memo(
           />
         )}
 
-        {/* Searching indicator */}
         {isSearching && suggestions.items.length === 0 && (
           <div className="absolute bottom-full left-0 mb-1 px-3 py-2 text-sm rounded-md bg-muted border border-border text-muted-foreground">
             Searching...
           </div>
         )}
 
-        {/* Main Input Container */}
         <InputGroup className={modeColorClass}>
-          {/* Mode indicator */}
           {modeInfo && (
             <InputGroupAddon align="block-start" className="border-b">
               <HugeiconsIcon
@@ -333,7 +393,6 @@ export const ChatInput = memo(
             </InputGroupAddon>
           )}
 
-          {/* Textarea */}
           <InputGroupTextarea
             ref={textareaRef}
             value={displayValue}
@@ -341,12 +400,11 @@ export const ChatInput = memo(
             onSelect={handleSelect}
             onKeyDown={handlers.onKeyDown}
             onPaste={handlers.onPaste}
-            placeholder={placeholder}
-            disabled={disabled && !isProcessing}
+            placeholder={DEFAULT_PLACEHOLDER}
+            disabled={!workspaceId}
             rows={3}
           />
 
-          {/* Image Preview */}
           {pastedImages.length > 0 && (
             <ImagePreview
               images={pastedImages}
@@ -354,22 +412,18 @@ export const ChatInput = memo(
             />
           )}
 
-          {/* Bottom Toolbar */}
           <InputGroupAddon align="block-end" className="justify-between">
-            {/* Left side tools */}
             <div className="flex items-center gap-1">
-              {/* Model Selector */}
-              {cwd && sessionId && (
+              {cwd && (
                 <ModelSelector
-                  type="session"
+                  type={sessionId ? 'session' : 'project'}
                   cwd={cwd}
-                  sessionId={sessionId}
+                  sessionId={sessionId ?? undefined}
                   onModelChange={handleModelChange}
                   compact
                 />
               )}
 
-              {/* Plan/Brainstorm Mode Toggle */}
               <Tooltip>
                 <TooltipTrigger
                   render={
@@ -398,7 +452,6 @@ export const ChatInput = memo(
                 </TooltipPopup>
               </Tooltip>
 
-              {/* Thinking Toggle - only show when model supports thinking */}
               {thinkingEnabled && (
                 <Tooltip>
                   <TooltipTrigger
@@ -430,7 +483,6 @@ export const ChatInput = memo(
               )}
             </div>
 
-            {/* Right side - Send button */}
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -438,7 +490,7 @@ export const ChatInput = memo(
                     type="button"
                     size="icon-sm"
                     onClick={handleSendClick}
-                    disabled={!canSend || (disabled && !isProcessing)}
+                    disabled={!canSend}
                   >
                     <HugeiconsIcon icon={SentIcon} size={16} />
                   </Button>

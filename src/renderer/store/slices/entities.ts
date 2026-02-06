@@ -5,6 +5,7 @@ import type {
   WorkspaceData,
 } from '../../client/types/entities';
 import type { NormalizedMessage } from '../../client/types/message';
+import type { ContentPanelTabsState } from './ui';
 import { randomUUID } from '../../utils/uuid';
 
 type WorkspaceId = string;
@@ -40,6 +41,7 @@ export interface EntitiesSliceActions {
   removeSession: (workspaceId: string, sessionId: string) => void;
   createSession: () => string;
   createOrSelectEmptySession: (workspaceId?: string) => string | null;
+  clearSelectedSession: () => void;
   selectPrevSession: () => void;
   selectNextSession: () => void;
 
@@ -60,6 +62,12 @@ interface StoreWithSelections {
   selectedSessionId: string | null;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
+  pinnedSessions: string[];
+  sidebarOrganize: 'byProject' | 'chronological';
+  sidebarSortBy: 'created' | 'updated';
+  contentPanelTabs: ContentPanelTabsState;
+  selectRepo: (path: string | null) => void;
+  selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
   setSessionGroupExpanded: (workspaceId: string, expanded: boolean) => void;
 }
@@ -349,6 +357,10 @@ export const createEntitiesSlice: StateCreator<
     }
   },
 
+  clearSelectedSession: () => {
+    set({ selectedSessionId: null });
+  },
+
   // Messages
   addMessage: (
     sessionId: string,
@@ -377,21 +389,74 @@ export const createEntitiesSlice: StateCreator<
       selectedWorkspaceId,
       selectedSessionId,
       sessions,
+      pinnedSessions,
+      sidebarOrganize,
+      sidebarSortBy,
+      selectRepo,
+      selectWorkspace,
       selectSession,
       expandedSessionGroups,
       setSessionGroupExpanded,
+      workspaces,
     } = get();
 
-    if (!selectedWorkspaceId) return;
+    const isPinnedCurrent = selectedSessionId
+      ? pinnedSessions.includes(selectedSessionId)
+      : false;
 
-    const workspaceSessions = (sessions[selectedWorkspaceId] || [])
-      .slice()
-      .sort((a, b) => b.modified - a.modified);
+    if (!selectedWorkspaceId && !isPinnedCurrent) return;
 
-    if (workspaceSessions.length === 0) return;
+    let navigableSessions: Array<{
+      session: SessionData;
+      workspaceId: string;
+    }> = [];
 
-    const currentIndex = workspaceSessions.findIndex(
-      (s) => s.sessionId === selectedSessionId,
+    if (sidebarOrganize === 'chronological') {
+      const onlyPinned = isPinnedCurrent;
+      navigableSessions = Object.entries(sessions).flatMap(
+        ([workspaceId, workspaceSessions]) =>
+          workspaceSessions
+            .filter((session) =>
+              onlyPinned
+                ? pinnedSessions.includes(session.sessionId)
+                : !pinnedSessions.includes(session.sessionId),
+            )
+            .map((session) => ({ session, workspaceId })),
+      );
+
+      navigableSessions.sort((a, b) => {
+        if (sidebarSortBy === 'created') {
+          return b.session.created - a.session.created;
+        }
+        return b.session.modified - a.session.modified;
+      });
+    } else {
+      if (isPinnedCurrent) {
+        navigableSessions = Object.entries(sessions).flatMap(
+          ([workspaceId, workspaceSessions]) =>
+            workspaceSessions
+              .filter((session) => pinnedSessions.includes(session.sessionId))
+              .map((session) => ({ session, workspaceId })),
+        );
+        navigableSessions.sort(
+          (a, b) => b.session.modified - a.session.modified,
+        );
+      } else {
+        navigableSessions = (sessions[selectedWorkspaceId || ''] || [])
+          .slice()
+          .sort((a, b) => b.modified - a.modified)
+          .filter((session) => !pinnedSessions.includes(session.sessionId))
+          .map((session) => ({
+            session,
+            workspaceId: selectedWorkspaceId || '',
+          }));
+      }
+    }
+
+    if (navigableSessions.length === 0) return;
+
+    const currentIndex = navigableSessions.findIndex(
+      ({ session }) => session.sessionId === selectedSessionId,
     );
 
     // At first session or no session selected, do nothing
@@ -402,13 +467,21 @@ export const createEntitiesSlice: StateCreator<
     // Auto-expand session list if target is beyond visible limit (5)
     const SESSION_LIMIT = 5;
     if (
+      !isPinnedCurrent &&
+      sidebarOrganize !== 'chronological' &&
       prevIndex >= SESSION_LIMIT &&
+      selectedWorkspaceId &&
       !expandedSessionGroups[selectedWorkspaceId]
     ) {
       setSessionGroupExpanded(selectedWorkspaceId, true);
     }
 
-    selectSession(workspaceSessions[prevIndex].sessionId);
+    const target = navigableSessions[prevIndex];
+    if (target.workspaceId && workspaces[target.workspaceId]) {
+      selectRepo(workspaces[target.workspaceId].repoPath);
+      selectWorkspace(target.workspaceId);
+    }
+    selectSession(target.session.sessionId);
   },
 
   selectNextSession: () => {
@@ -416,25 +489,78 @@ export const createEntitiesSlice: StateCreator<
       selectedWorkspaceId,
       selectedSessionId,
       sessions,
+      pinnedSessions,
+      sidebarOrganize,
+      sidebarSortBy,
+      selectRepo,
+      selectWorkspace,
       selectSession,
       expandedSessionGroups,
       setSessionGroupExpanded,
+      workspaces,
     } = get();
 
-    if (!selectedWorkspaceId) return;
+    const isPinnedCurrent = selectedSessionId
+      ? pinnedSessions.includes(selectedSessionId)
+      : false;
 
-    const workspaceSessions = (sessions[selectedWorkspaceId] || [])
-      .slice()
-      .sort((a, b) => b.modified - a.modified);
+    if (!selectedWorkspaceId && !isPinnedCurrent) return;
 
-    if (workspaceSessions.length === 0) return;
+    let navigableSessions: Array<{
+      session: SessionData;
+      workspaceId: string;
+    }> = [];
 
-    const currentIndex = workspaceSessions.findIndex(
-      (s) => s.sessionId === selectedSessionId,
+    if (sidebarOrganize === 'chronological') {
+      const onlyPinned = isPinnedCurrent;
+      navigableSessions = Object.entries(sessions).flatMap(
+        ([workspaceId, workspaceSessions]) =>
+          workspaceSessions
+            .filter((session) =>
+              onlyPinned
+                ? pinnedSessions.includes(session.sessionId)
+                : !pinnedSessions.includes(session.sessionId),
+            )
+            .map((session) => ({ session, workspaceId })),
+      );
+
+      navigableSessions.sort((a, b) => {
+        if (sidebarSortBy === 'created') {
+          return b.session.created - a.session.created;
+        }
+        return b.session.modified - a.session.modified;
+      });
+    } else {
+      if (isPinnedCurrent) {
+        navigableSessions = Object.entries(sessions).flatMap(
+          ([workspaceId, workspaceSessions]) =>
+            workspaceSessions
+              .filter((session) => pinnedSessions.includes(session.sessionId))
+              .map((session) => ({ session, workspaceId })),
+        );
+        navigableSessions.sort(
+          (a, b) => b.session.modified - a.session.modified,
+        );
+      } else {
+        navigableSessions = (sessions[selectedWorkspaceId || ''] || [])
+          .slice()
+          .sort((a, b) => b.modified - a.modified)
+          .filter((session) => !pinnedSessions.includes(session.sessionId))
+          .map((session) => ({
+            session,
+            workspaceId: selectedWorkspaceId || '',
+          }));
+      }
+    }
+
+    if (navigableSessions.length === 0) return;
+
+    const currentIndex = navigableSessions.findIndex(
+      ({ session }) => session.sessionId === selectedSessionId,
     );
 
     // At last session, do nothing
-    if (currentIndex >= workspaceSessions.length - 1) return;
+    if (currentIndex >= navigableSessions.length - 1) return;
 
     // No session selected, select first
     const nextIndex = currentIndex < 0 ? 0 : currentIndex + 1;
@@ -442,12 +568,20 @@ export const createEntitiesSlice: StateCreator<
     // Auto-expand session list if target is beyond visible limit (5)
     const SESSION_LIMIT = 5;
     if (
+      !isPinnedCurrent &&
+      sidebarOrganize !== 'chronological' &&
       nextIndex >= SESSION_LIMIT &&
+      selectedWorkspaceId &&
       !expandedSessionGroups[selectedWorkspaceId]
     ) {
       setSessionGroupExpanded(selectedWorkspaceId, true);
     }
 
-    selectSession(workspaceSessions[nextIndex].sessionId);
+    const target = navigableSessions[nextIndex];
+    if (target.workspaceId && workspaces[target.workspaceId]) {
+      selectRepo(workspaces[target.workspaceId].repoPath);
+      selectWorkspace(target.workspaceId);
+    }
+    selectSession(target.session.sessionId);
   },
 });

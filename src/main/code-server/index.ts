@@ -9,6 +9,7 @@ import {
 import { installExtension } from './installer';
 import { overrideCodeServerSettings } from './settings';
 import { codeServerStarter } from './starter';
+import { injectStyle } from './injector';
 
 export class CodeServerStartError extends Error {
   constructor(
@@ -112,6 +113,8 @@ class CodeServerManager {
       await bridgeServer.start();
       // preset extension
       await installExtension();
+      // overwrite vscode dist style
+      injectStyle();
     } catch (e) {
       console.warn(`Extension Service failed`, e);
     }

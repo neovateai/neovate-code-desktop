@@ -1,115 +1,242 @@
 import { cn } from '../../lib/utils';
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { motion } from 'motion/react';
 import {
-  Group,
-  Panel,
-  Separator,
-  useDefaultLayout,
-} from 'react-resizable-panels';
-import {
+  ACTIVITY_BAR_WIDTH,
   CHAT_PANEL_MIN_SIZE,
-  CONTENT_PANEL_MIN_SIZE,
-  PRIMARY_SIDEBAR_DEFAULT_SIZE,
-  PRIMARY_SIDEBAR_MIN_SIZE,
-  SECONDARY_SIDEBAR_MAX_SIZE,
-  SECONDARY_SIDEBAR_MIN_SIZE,
-  STORAGE_KEY_APP_LAYOUT,
+  PANEL_PANEL_SPACING,
+  PANEL_WINDOW_EDGE_SPACING,
+  TITLEBAR_SIDEBAR_TOGGLE_WIDTH,
+  TRAFFIC_LIGHTS_SPACER_WIDTH,
 } from '../../constants';
 import {
-  AppLayoutPanelId,
+  type PanelId,
   AppLayoutPanelProvider,
   useAppLayoutPanels,
 } from './AppLayoutProvider';
+import { useResizeGradient } from './useResizeGradient';
+
+// Spring transition - critically damped (no bounce, fast response)
+const springTransition = {
+  type: 'spring' as const,
+  stiffness: 600,
+  damping: 49,
+};
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return <AppLayoutPanelProvider>{children}</AppLayoutPanelProvider>;
 }
 
-export function AppLayoutPanelGroup({ children }: { children: ReactNode }) {
-  const { groupRef, setLayout } = useAppLayoutPanels();
-
-  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: STORAGE_KEY_APP_LAYOUT,
-    panelIds: [
-      AppLayoutPanelId.PrimarySidebar,
-      AppLayoutPanelId.ChatPanel,
-      AppLayoutPanelId.ContentPanel,
-      AppLayoutPanelId.SecondarySidebar,
-    ],
-  });
-
-  const handleLayoutChanged = (layout: Record<string, number>) => {
-    onLayoutChanged(layout);
-    setLayout(layout);
-  };
-
+/**
+ * Outer layout container
+ */
+export function AppLayoutRoot({ children }: { children: ReactNode }) {
   return (
-    <Group
-      orientation="horizontal"
-      className="flex-1"
-      data-app-layout
-      groupRef={groupRef}
-      defaultLayout={defaultLayout}
-      onLayoutChanged={handleLayoutChanged}
-    >
+    <div className="h-full flex items-stretch relative" data-app-layout-group>
       {children}
-    </Group>
+    </div>
   );
 }
 
+// Derived constant
+const COLLAPSED_TITLEBAR_LEFT_PADDING =
+  TRAFFIC_LIGHTS_SPACER_WIDTH + TITLEBAR_SIDEBAR_TOGGLE_WIDTH;
+
+/**
+ * Primary sidebar with custom resize and collapse
+ * Uses framer-motion for smooth animations
+ */
 export function AppLayoutPrimarySidebar({ children }: { children: ReactNode }) {
-  const { panelRefs } = useAppLayoutPanels();
+  const { getPanel, resizing, startResize } = useAppLayoutPanels();
+  const panel = getPanel('primarySidebar');
+
+  const { ref, handlers, gradientStyle } = useResizeGradient('primarySidebar');
 
   return (
     <>
-      <Panel
-        id={AppLayoutPanelId.PrimarySidebar}
-        collapsible
-        collapsedSize={0}
-        defaultSize={PRIMARY_SIDEBAR_DEFAULT_SIZE}
-        minSize={PRIMARY_SIDEBAR_MIN_SIZE}
-        panelRef={panelRefs[AppLayoutPanelId.PrimarySidebar]}
+      {/* Animated width container */}
+      <motion.div
+        initial={false}
+        animate={{
+          width: panel.visible ? panel.width : 0,
+        }}
+        transition={
+          resizing === 'primarySidebar' ? { duration: 0 } : springTransition
+        }
+        className="h-full overflow-hidden shrink-0"
+        style={{
+          paddingLeft: PANEL_WINDOW_EDGE_SPACING,
+          paddingTop: PANEL_WINDOW_EDGE_SPACING,
+          paddingBottom: PANEL_WINDOW_EDGE_SPACING,
+        }}
       >
-        <div className="px-2 h-full">{children}</div>
-      </Panel>
-      <PanelSeparator />
+        {/* Inner content with fixed width (prevents reflow during animation) */}
+        <div
+          style={{
+            width:
+              panel.width - PANEL_WINDOW_EDGE_SPACING - PANEL_PANEL_SPACING / 2,
+          }}
+          className="h-full flex flex-col"
+        >
+          {/* Card container with shadow and rounded corners */}
+          <div
+            className={cn(
+              'flex-1 flex flex-col min-h-0',
+              'bg-card rounded-l-[14px] rounded-r-[10px]',
+              'shadow-[0_0_6px_rgba(0,0,0,0.06)]',
+            )}
+          >
+            {children}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Resize handle - absolutely positioned */}
+      <div
+        className={cn(
+          'absolute top-0 w-3 h-full cursor-col-resize z-10 flex justify-center',
+          !panel.visible && 'pointer-events-none opacity-0',
+        )}
+        style={{
+          left: panel.visible ? panel.width - 6 : -6,
+          transition:
+            resizing === 'primarySidebar' ? undefined : 'left 0.15s ease-out',
+        }}
+      >
+        {/* Touch area container - 12px total hit area */}
+        <div
+          ref={ref}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            startResize('primarySidebar');
+          }}
+          onMouseMove={handlers.onMouseMove}
+          onMouseLeave={handlers.onMouseLeave}
+          className="absolute inset-y-0 -left-1.5 -right-1.5 flex justify-center cursor-col-resize"
+        >
+          {/* Gradient overlay - fades in on hover, follows cursor */}
+          <div
+            className="absolute inset-y-0 left-[calc(50%+3px)] -translate-x-1/2 w-0.5"
+            style={gradientStyle}
+          />
+        </div>
+      </div>
     </>
   );
 }
 
-export function AppLayoutChatPanel({ children }: { children: ReactNode }) {
-  const { panelRefs } = useAppLayoutPanels();
+export function AppLayoutRightContainer({ children }: { children: ReactNode }) {
+  return <div className="flex-1 h-full flex flex-col min-w-0">{children}</div>;
+}
+
+export function AppLayoutTitleBar({ children }: { children: ReactNode }) {
+  const { getPanel } = useAppLayoutPanels();
+  const panel = getPanel('primarySidebar');
 
   return (
-    <Panel
-      id={AppLayoutPanelId.ChatPanel}
-      minSize={CHAT_PANEL_MIN_SIZE}
-      panelRef={panelRefs[AppLayoutPanelId.ChatPanel]}
-      className="overflow-hidden"
+    <div
+      className="h-11 flex items-center select-none shrink-0 transition-[padding-left] duration-150 ease-out"
+      style={{
+        paddingLeft: panel.visible ? 0 : COLLAPSED_TITLEBAR_LEFT_PADDING,
+        marginLeft: panel.visible ? -(PANEL_PANEL_SPACING / 2) : 0,
+      }}
     >
-      <div className="ml-2 h-full rounded-lg bg-card pb-2">{children}</div>
-    </Panel>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Inner panel group: ChatPanel + ContentPanel + SecondarySidebar
+ * Uses flex layout with motion-based panels
+ */
+export function AppLayoutPanelRow({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="flex flex-1 h-full min-w-0 overflow-hidden"
+      data-app-panels-group
+    >
+      {children}
+    </div>
+  );
+}
+
+export function AppLayoutChatPanel({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="flex-1 overflow-hidden"
+      style={{ minWidth: CHAT_PANEL_MIN_SIZE }}
+    >
+      <div
+        className="h-full rounded-lg bg-card pb-2"
+        style={{ marginLeft: PANEL_PANEL_SPACING / 2 }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Reusable resize handle component
+ * Width matches PANEL_PANEL_SPACING (5px) with expanded hit area via padding
+ */
+function ResizeHandle({ panelId }: { panelId: PanelId }) {
+  const { getPanel, resizing, startResize } = useAppLayoutPanels();
+  const panel = getPanel(panelId);
+  const { ref, handlers, gradientStyle } = useResizeGradient(panelId);
+
+  if (!panel.visible) return null;
+
+  return (
+    <div
+      ref={ref}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        startResize(panelId);
+      }}
+      onMouseMove={handlers.onMouseMove}
+      onMouseLeave={handlers.onMouseLeave}
+      className="h-full cursor-col-resize shrink-0 relative px-1"
+      style={{ width: PANEL_PANEL_SPACING }}
+    >
+      {/* Gradient overlay */}
+      <div
+        className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5"
+        style={{
+          ...gradientStyle,
+          transition:
+            resizing === panelId ? undefined : 'opacity 0.15s ease-out',
+        }}
+      />
+    </div>
   );
 }
 
 export function AppLayoutContentPanel({ children }: { children: ReactNode }) {
-  const { panelRefs } = useAppLayoutPanels();
+  const { getPanel, resizing } = useAppLayoutPanels();
+  const panel = getPanel('contentPanel');
 
   return (
     <>
-      <PanelSeparator />
-      <Panel
-        id={AppLayoutPanelId.ContentPanel}
-        collapsible
-        collapsedSize={0}
-        defaultSize={0}
-        minSize={CONTENT_PANEL_MIN_SIZE}
-        panelRef={panelRefs[AppLayoutPanelId.ContentPanel]}
+      <ResizeHandle panelId="contentPanel" />
+      <motion.div
+        initial={false}
+        animate={{
+          width: panel.visible ? panel.width : 0,
+        }}
+        transition={
+          resizing === 'contentPanel' ? { duration: 0 } : springTransition
+        }
+        className="h-full overflow-hidden shrink-0"
       >
-        <div className="ml-2 h-full overflow-hidden rounded-lg bg-card pb-2">
-          {children}
+        {/* Inner content with fixed width */}
+        <div style={{ width: panel.width }} className="h-full">
+          <div className="h-full overflow-hidden rounded-lg bg-card pb-2">
+            {children}
+          </div>
         </div>
-      </Panel>
+      </motion.div>
     </>
   );
 }
@@ -119,55 +246,37 @@ export function AppLayoutSecondarySidebar({
 }: {
   children: ReactNode;
 }) {
-  const { panelRefs } = useAppLayoutPanels();
+  const { getPanel, resizing } = useAppLayoutPanels();
+  const panel = getPanel('secondarySidebar');
 
   return (
     <>
-      <PanelSeparator />
-      <Panel
-        id={AppLayoutPanelId.SecondarySidebar}
-        collapsible
-        collapsedSize={0}
-        defaultSize={0}
-        minSize={SECONDARY_SIDEBAR_MIN_SIZE}
-        maxSize={SECONDARY_SIDEBAR_MAX_SIZE}
-        panelRef={panelRefs[AppLayoutPanelId.SecondarySidebar]}
+      <ResizeHandle panelId="secondarySidebar" />
+      <motion.div
+        initial={false}
+        animate={{
+          width: panel.visible ? panel.width : 0,
+        }}
+        transition={
+          resizing === 'secondarySidebar' ? { duration: 0 } : springTransition
+        }
+        className="h-full overflow-hidden shrink-0"
       >
-        <div className="ml-2 h-full overflow-hidden rounded-lg bg-card pb-2">
-          {children}
+        {/* Inner content with fixed width */}
+        <div style={{ width: panel.width }} className="h-full">
+          <div className="h-full overflow-hidden rounded-lg bg-card pb-2">
+            {children}
+          </div>
         </div>
-      </Panel>
+      </motion.div>
     </>
   );
 }
 
 export function AppLayoutActivityBar({ children }: { children: ReactNode }) {
-  return <>{children}</>;
-}
-
-export function AppLayoutTitleBar({ children }: { children: ReactNode }) {
   return (
-    <div
-      className="h-11 flex items-center px-3 select-none shrink-0"
-      // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
-      style={{ WebkitAppRegion: 'drag' }}
-    >
+    <div className="shrink-0 h-full" style={{ width: ACTIVITY_BAR_WIDTH }}>
       {children}
     </div>
-  );
-}
-
-function PanelSeparator({ className }: { className?: string }) {
-  return (
-    <Separator
-      className={cn(
-        'w-0 relative data-[orientation=horizontal]:h-full',
-        'before:absolute before:inset-y-0 before:w-0.5 before:left-0.75',
-        'before:bg-transparent before:transition-colors',
-        'before:mask-[linear-gradient(to_bottom,transparent,black_35%,black_65%,transparent)]',
-        'data-[separator=hover]:before:bg-primary/50 data-[separator=active]:before:bg-primary',
-        className,
-      )}
-    />
   );
 }

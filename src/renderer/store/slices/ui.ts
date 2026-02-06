@@ -5,7 +5,8 @@ import type {
 } from '../../components/ContentPanel/types';
 import { generateTabId } from '../../lib/utils';
 
-export type SecondarySidebarTab = 'files' | 'git';
+export type ContentPanelTab = 'terminal';
+export type SecondarySidebarTab = string;
 export type SidebarOrganize = 'byProject' | 'chronological';
 export type SidebarSortBy = 'created' | 'updated';
 

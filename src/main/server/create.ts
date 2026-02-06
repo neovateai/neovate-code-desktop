@@ -5,7 +5,8 @@ import { app } from 'electron';
 import portfinder from 'portfinder';
 import { isDev } from '../env';
 import { examplePlugin } from '../plugins/example';
-import { fsPlugin } from './../plugins/fs';
+import { scmPlugin } from './../plugins/scm';
+import { fsPlugin } from '../plugins/fs';
 import {
   POLL_INTERVAL_MS,
   PORT_RANGE_END,
@@ -71,7 +72,7 @@ export async function createNeovateServer(
   const { shutdown } = await runNeovate({
     productName: 'neovate', // should be neovate to use same config with neovate cli
     version: app.getVersion(),
-    plugins: [examplePlugin, fsPlugin, ...(plugins || [])],
+    plugins: [examplePlugin, fsPlugin, scmPlugin, ...(plugins || [])],
     argv,
   });
 

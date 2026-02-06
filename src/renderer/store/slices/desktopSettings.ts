@@ -4,6 +4,7 @@ import {
   DEFAULT_KEYBINDINGS,
   type KeybindingAction,
 } from '../../lib/keybindings';
+import type { App } from '../../nodeBridge.types';
 
 // Types
 export type ThemeValue = 'light' | 'dark' | 'system';
@@ -20,6 +21,7 @@ export interface DesktopSettingsSliceState {
   runOnStartup: boolean;
   locale: Locales;
   multiProjectSupport: boolean;
+  defaultOpenApp: App | null;
 }
 
 export interface DesktopSettingsSliceActions {
@@ -33,6 +35,7 @@ export interface DesktopSettingsSliceActions {
   setRunOnStartup: (enabled: boolean) => void;
   setLocale: (locale: Locales) => void;
   setMultiProjectSupport: (enabled: boolean) => void;
+  setDefaultOpenApp: (app: App | null) => void;
 }
 
 export type DesktopSettingsSlice = DesktopSettingsSliceState &
@@ -49,6 +52,7 @@ export const defaultDesktopSettings: DesktopSettingsSliceState = {
   runOnStartup: false,
   locale: 'en-US',
   multiProjectSupport: false,
+  defaultOpenApp: null,
 };
 
 export const createDesktopSettingsSlice: StateCreator<
@@ -104,5 +108,9 @@ export const createDesktopSettingsSlice: StateCreator<
 
   setMultiProjectSupport: (multiProjectSupport: boolean) => {
     set({ multiProjectSupport });
+  },
+
+  setDefaultOpenApp: (defaultOpenApp: App | null) => {
+    set({ defaultOpenApp });
   },
 });

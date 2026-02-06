@@ -23,7 +23,7 @@ function ContextMenuPopup({
           )}
         >
           <ContextMenuPrimitive.Popup
-            className="max-h-(--available-height) not-[class*='w-']:min-w-32 overflow-y-auto p-1"
+            className="max-h-(--available-height) not-[class*='w-']:min-w-32 overflow-y-auto p-1 focus-visible:outline-none"
             data-slot="context-menu-popup"
             {...props}
           />

@@ -1,28 +1,17 @@
-import { MessageSquare } from 'lucide-react';
-import {
-  createContext,
-  memo,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import type { SessionData, WorkspaceData } from '../client/types/entities';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import type { WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
 import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
 import { useNotification } from '../hooks';
-import { logger } from '../lib/logger';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
+import { SessionInfoBar } from './SessionInfoBar';
 import { ApprovalPanel } from './ApprovalPanel';
 import { AskQuestionPanel } from './AskQuestionPanel';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
 import { splitMessages } from './messages/messageHelpers';
-import { Button } from './ui/button';
 import {
   Empty,
   EmptyDescription,
@@ -30,35 +19,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from './ui/empty';
-import { Tooltip, TooltipPopup, TooltipTrigger } from './ui/tooltip';
-
-// Define the context type
-interface WorkspaceContextType {
-  workspace: WorkspaceData;
-  activeSession: SessionData | null;
-  allSessions: SessionData[];
-  selectedSessionId: string | null;
-  selectSession: (id: string) => void;
-  messages: NormalizedMessage[];
-  inputValue: string;
-  isLoading: boolean;
-  sendMessage: (content: string) => Promise<void>;
-  setInputValue: (value: string) => void;
-}
-
-// Create the context
-const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
-  undefined,
-);
-
-// Custom hook to use the context
-export function useWorkspaceContext() {
-  const context = useContext(WorkspaceContext);
-  if (!context) {
-    throw new Error('useWorkspaceContext must be used within WorkspacePanel');
-  }
-  return context;
-}
+import { WelcomePanel } from './WelcomePanel';
 
 // Main component
 export const WorkspacePanel = ({
@@ -68,56 +29,32 @@ export const WorkspacePanel = ({
   workspace: WorkspaceData | null;
   emptyStateType: 'no-repos' | 'no-workspace' | null;
 }) => {
-  const [inputValue, setInputValue] = useState('');
-
-  // Get store actions and state
   const request = useStore((state) => state.request);
   const setMessages = useStore((state) => state.setMessages);
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const selectSession = useStore((state) => state.selectSession);
   const workspaces = useStore((state) => state.workspaces);
-  const sessionsMap = useStore((state) => state.sessions);
   const messagesMap = useStore((state) => state.messages);
-  const fetchSlashCommandList = useStore(
-    (state) => state.fetchSlashCommandList,
-  );
-  const cancelSession = useStore((state) => state.cancelSession);
   const getSessionInput = useStore((state) => state.getSessionInput);
   const setSessionInput = useStore((state) => state.setSessionInput);
-  const storeSendMessage = useStore((state) => state.sendMessage);
   const slashCommandJSXBySession = useStore(
     (state) => state.slashCommandJSXBySession,
   );
-  const developerMode = useStore((state) => state.developerMode);
 
   useNotification(selectedSessionId, workspace?.worktreePath ?? '');
 
-  // Subscribe directly to sessionProcessing state for proper reactivity
-  const sessionProcessing = useStore((state) =>
-    selectedSessionId ? state.sessionProcessing[selectedSessionId] : null,
-  );
-
-  // Derive isLoading from per-session processing state
-  const isLoading = sessionProcessing?.status === 'processing';
-
-  // Fork modal state and actions
   const forkModalVisible = useStore((state) => state.forkModalVisible);
-  const showForkModal = useStore((state) => state.showForkModal);
   const hideForkModal = useStore((state) => state.hideForkModal);
   const fork = useStore((state) => state.fork);
 
-  // Get approval state for current session
   const approvalBySession = useStore((state) => state.approvalBySession);
   const currentApproval = selectedSessionId
     ? approvalBySession[selectedSessionId]
     : null;
   const hasApproval = !!currentApproval;
 
-  // Check if approval is for AskUserQuestion tool
   const isAskQuestion = currentApproval?.toolUse?.name === 'AskUserQuestion';
 
-  // Get slash command JSX for current session
   const slashCommandJSX = selectedSessionId
     ? slashCommandJSXBySession[selectedSessionId]
     : null;
@@ -127,23 +64,13 @@ export const WorkspacePanel = ({
     (state) => state.createOrSelectEmptySession,
   );
 
-  // Get sessions and messages for the current workspace from store - memoized to avoid infinite loop
-  const allSessions = useMemo(
-    () => (selectedWorkspaceId ? sessionsMap[selectedWorkspaceId] || [] : []),
-    [selectedWorkspaceId, sessionsMap],
-  );
-
   const messages = useMemo(
     () => (selectedSessionId ? messagesMap[selectedSessionId] || [] : []),
     [selectedSessionId, messagesMap],
   );
 
-  const activeSession =
-    allSessions.find((s) => s.sessionId === selectedSessionId) || null;
-
   const connectionState = useStore((state) => state.state);
 
-  // Fetch sessions when selectedWorkspaceId changes
   useEffect(() => {
     if (connectionState !== 'connected') return;
     if (!selectedWorkspaceId) return;
@@ -151,7 +78,6 @@ export const WorkspacePanel = ({
     updateSessions(selectedWorkspaceId);
   }, [connectionState, selectedWorkspaceId, updateSessions]);
 
-  // Fetch messages when selectedSessionId changes
   useEffect(() => {
     if (connectionState !== 'connected') return;
     if (!selectedSessionId || !selectedWorkspaceId) return;
@@ -183,7 +109,6 @@ export const WorkspacePanel = ({
     setMessages,
   ]);
 
-  // Fetch model info once per session to initialize thinking state
   useEffect(() => {
     if (connectionState !== 'connected') return;
     if (!selectedSessionId || !selectedWorkspaceId) return;
@@ -191,7 +116,6 @@ export const WorkspacePanel = ({
     const workspace = workspaces[selectedWorkspaceId];
     if (!workspace) return;
 
-    // Check if already initialized for this session
     const sessionInput = getSessionInput(selectedSessionId);
     if (sessionInput.thinkingInitialized) return;
 
@@ -249,42 +173,6 @@ export const WorkspacePanel = ({
     setSessionInput,
   ]);
 
-  const sendMessage = useCallback(
-    async (content: string, images?: string[]) => {
-      if (!content.trim() || isLoading) return;
-
-      const inputState = getSessionInput(selectedSessionId || '');
-
-      await storeSendMessage({
-        message: content,
-        planMode: inputState.planMode,
-        think: inputState.thinking,
-        images,
-      });
-      setInputValue('');
-    },
-    [isLoading, selectedSessionId, getSessionInput, storeSendMessage],
-  );
-
-  const handleSelectSession = useCallback(
-    (id: string) => {
-      selectSession(id);
-      setInputValue('');
-    },
-    [selectSession],
-  );
-
-  const handleCancel = useCallback(() => {
-    if (selectedSessionId) {
-      cancelSession(selectedSessionId);
-    }
-  }, [selectedSessionId, cancelSession]);
-
-  const handleShowForkModal = useCallback(() => {
-    logger.debug('[UI]', 'handleShowForkModal called in WorkspacePanel');
-    showForkModal();
-  }, [showForkModal]);
-
   const handleForkSelect = useCallback(
     (uuid: string) => {
       fork(uuid);
@@ -292,19 +180,10 @@ export const WorkspacePanel = ({
     [fork],
   );
 
-  // Create wrapper functions that provide context for ChatInput
-  const fetchCommands = useCallback(async () => {
-    if (!selectedWorkspaceId) return [];
-    return fetchSlashCommandList(selectedWorkspaceId);
-  }, [selectedWorkspaceId, fetchSlashCommandList]);
-
-  // Ref for ChatInput to focus on session change
   const chatInputRef = useRef<ChatInputHandle>(null);
 
-  // Auto-focus ChatInput when session is selected
   useEffect(() => {
     if (selectedSessionId) {
-      // Small delay to ensure the component is rendered
       const timer = setTimeout(() => {
         chatInputRef.current?.focus();
       }, FOCUS_DELAY_MS);
@@ -312,33 +191,9 @@ export const WorkspacePanel = ({
     }
   }, [selectedSessionId]);
 
-  const contextValue: WorkspaceContextType | null = useMemo(() => {
-    if (!workspace) return null;
-    return {
-      workspace,
-      activeSession,
-      allSessions,
-      selectedSessionId,
-      selectSession: handleSelectSession,
-      messages,
-      inputValue,
-      isLoading,
-      sendMessage,
-      setInputValue,
-    };
-  }, [
-    workspace,
-    activeSession,
-    allSessions,
-    selectedSessionId,
-    handleSelectSession,
-    messages,
-    inputValue,
-    isLoading,
-    sendMessage,
-  ]);
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
 
-  if (!workspace || !contextValue) {
+  if (!workspace) {
     return (
       <div className="flex items-center justify-center h-full">
         <Empty>
@@ -362,33 +217,10 @@ export const WorkspacePanel = ({
     );
   }
 
-  if (!selectedSessionId) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <MessageSquare className="size-6" />
-            </EmptyMedia>
-            <EmptyTitle>Start a New Chat</EmptyTitle>
-            <EmptyDescription>
-              Begin a conversation to start coding with AI
-            </EmptyDescription>
-          </EmptyHeader>
-          <Button
-            onClick={() => createOrSelectEmptySession(selectedWorkspaceId!)}
-          >
-            New Chat
-          </Button>
-        </Empty>
-      </div>
-    );
-  }
-
   return (
-    <WorkspaceContext.Provider value={contextValue}>
+    <>
       <div className="flex flex-col h-full">
-        <WorkspacePanel.Header />
+        {!multiProjectSupport && <WorkspacePanel.Header />}
         <WorkspacePanel.Messages />
         <div className="p-4 flex flex-col gap-3">
           <ActivityIndicator sessionId={selectedSessionId} />
@@ -418,19 +250,7 @@ export const WorkspacePanel = ({
               cwd={workspace.worktreePath}
             />
           ) : (
-            <ChatInput
-              ref={chatInputRef}
-              onSubmit={sendMessage}
-              onCancel={handleCancel}
-              onShowForkModal={handleShowForkModal}
-              fetchCommands={fetchCommands}
-              placeholder={'Ask anything, @ for context'}
-              modelName={workspace.context.settings?.model}
-              isProcessing={isLoading}
-              sessionId={selectedSessionId || undefined}
-              cwd={workspace.repoPath}
-              request={request}
-            />
+            <ChatInput ref={chatInputRef} />
           )}
           {slashCommandJSX}
         </div>
@@ -443,63 +263,25 @@ export const WorkspacePanel = ({
         messages={messages}
         onSelect={handleForkSelect}
       />
-    </WorkspaceContext.Provider>
+    </>
   );
 };
 
-// Compound components
 WorkspacePanel.Header = function Header() {
-  const { workspace, activeSession } = useWorkspaceContext();
-  const createOrSelectEmptySession = useStore(
-    (state) => state.createOrSelectEmptySession,
-  );
-  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
-  const selectWorkspace = useStore((state) => state.selectWorkspace);
-
-  const handleNewChat = () => {
-    if (selectedWorkspaceId) {
-      selectWorkspace(selectedWorkspaceId);
-      createOrSelectEmptySession(selectedWorkspaceId);
-    }
-  };
-
-  const displayTitle =
-    activeSession?.summary || workspace.repoPath.split('/').pop();
-
   return (
     <div className="flex items-center justify-between h-12 px-4">
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <h2 className="text-base font-semibold text-foreground truncate pr-2 cursor-default">
-              {displayTitle}
-            </h2>
-          }
-        ></TooltipTrigger>
-        <TooltipPopup>{displayTitle}</TooltipPopup>
-      </Tooltip>
-      {/* <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleNewChat}
-        className="gap-2 shrink-0"
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path
-            d="M8 3.33334V12.6667M3.33334 8H12.6667"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-        New Chat
-      </Button> */}
+      <SessionInfoBar showProjectName={false} draggable={false} />
     </div>
   );
 };
 
 WorkspacePanel.Messages = function Messages() {
-  const { messages, selectedSessionId } = useWorkspaceContext();
+  const selectedSessionId = useStore((state) => state.selectedSessionId);
+  const messagesMap = useStore((state) => state.messages);
+  const messages = useMemo(
+    () => (selectedSessionId ? messagesMap[selectedSessionId] || [] : []),
+    [selectedSessionId, messagesMap],
+  );
 
   // Refs for auto-scroll functionality
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -535,9 +317,7 @@ WorkspacePanel.Messages = function Messages() {
   return (
     <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-4 min-w-0">
       {messages.length === 0 ? (
-        <div className="text-center mt-8" style={{ color: '#999' }}>
-          No messages yet. Start a conversation!
-        </div>
+        <WelcomePanel />
       ) : (
         <div className="min-w-0">
           {/* Completed messages (memoized to prevent re-renders) */}
@@ -599,20 +379,6 @@ function BranchIcon() {
         fill="currentColor"
         d="M5 3a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM5 6h10v1H5V6z"
       />
-    </svg>
-  );
-}
-
-function StatusIcon({ status }: { status: string }) {
-  const color =
-    status === 'active'
-      ? '#10B981'
-      : status === 'archived'
-        ? '#6B7280'
-        : '#F59E0B';
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16">
-      <circle cx="8" cy="8" r="5" fill={color} />
     </svg>
   );
 }

@@ -4,6 +4,7 @@ import { PERSISTENCE_DEBOUNCE_MS } from './constants';
 import { DEFAULT_LOCALE, type Locales } from './core/i18n';
 import { DEFAULT_KEYBINDINGS } from './lib/keybindings';
 import { logger } from './lib/logger';
+import type { App } from './nodeBridge.types';
 import type {
   KeybindingsConfig,
   SendMessageWith,
@@ -35,6 +36,7 @@ interface PersistedState {
   sessions: Record<string, any>;
   openRepoAccordions: string[];
   expandedSessionGroups: Record<string, boolean>;
+  pinnedSessions: string[];
   // Settings state
   showSettings: boolean;
   settingsActiveTab: SettingsActiveTab;
@@ -58,6 +60,7 @@ interface PersistedState {
   runOnStartup: boolean;
   locale: Locales;
   multiProjectSupport: boolean;
+  defaultOpenApp: App | null;
 }
 
 // Debounce helper
@@ -111,6 +114,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       sessions: state.sessions || {},
       openRepoAccordions: state.openRepoAccordions || [],
       expandedSessionGroups: state.expandedSessionGroups || {},
+      pinnedSessions: state.pinnedSessions || [],
       // Settings state
       showSettings: state.showSettings ?? false,
       settingsActiveTab: state.settingsActiveTab ?? 'preferences',
@@ -134,6 +138,7 @@ export function setupPersistence(store: StoreApi<any>): void {
       runOnStartup: state.runOnStartup ?? false,
       locale: state.locale ?? DEFAULT_LOCALE,
       multiProjectSupport: state.multiProjectSupport ?? true,
+      defaultOpenApp: state.defaultOpenApp ?? null,
     };
   };
 
@@ -187,6 +192,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       sessions = {},
       openRepoAccordions = [],
       expandedSessionGroups = {},
+      pinnedSessions = [],
       // Settings state
       showSettings = false,
       settingsActiveTab = 'preferences',
@@ -207,6 +213,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       runOnStartup = false,
       locale = DEFAULT_LOCALE,
       multiProjectSupport = true,
+      defaultOpenApp = null,
     } = persistedState;
 
     // Validate selections exist in loaded entities
@@ -239,6 +246,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         sessions,
         openRepoAccordions,
         expandedSessionGroups,
+        pinnedSessions,
         // Settings state
         showSettings,
         settingsActiveTab,
@@ -276,6 +284,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         runOnStartup,
         locale,
         multiProjectSupport,
+        defaultOpenApp,
       },
       false,
     );

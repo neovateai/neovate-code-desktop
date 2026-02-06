@@ -1,4 +1,6 @@
+import type { FitAddon } from '@xterm/addon-fit';
 import type { SerializeAddon } from '@xterm/addon-serialize';
+import type { Terminal as XTerm } from '@xterm/xterm';
 import {
   createContext,
   type ReactNode,
@@ -6,10 +8,8 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import type { Terminal as XTerm } from 'xterm';
-import type { FitAddon } from 'xterm-addon-fit';
 import type { ContentTab } from './types';
-import { type UseContentTabsReturn, useContentTabs } from './useContentTabs';
+import { useContentTabs, type UseContentTabsReturn } from './useContentTabs';
 
 // Terminal runtime instance (not serialized)
 export interface TerminalInstance {

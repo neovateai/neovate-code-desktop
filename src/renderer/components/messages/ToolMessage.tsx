@@ -120,7 +120,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
   return (
     <div>
       {/* Tool header */}
-      <div className="flex items-center mb-2">
+      <div className="flex items-center mb-2 min-w-0">
         <HugeiconsIcon
           icon={toolIcon}
           size={16}
@@ -131,7 +131,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
           {displayName}
         </span>
         {toolUse.description && (
-          <span className="text-[13px] text-muted-foreground ml-2">
+          <span className="text-[13px] text-muted-foreground ml-2 truncate">
             {toolUse.description}
           </span>
         )}
@@ -235,7 +235,7 @@ export function ToolMessage({ pair }: ToolMessageProps) {
           {!toolResult.result.isError &&
             (!toolResult.result.returnDisplay ||
               typeof toolResult.result.returnDisplay === 'string') && (
-              <div className="text-[13px] text-foreground whitespace-pre-wrap font-mono bg-card px-2 pb-2 rounded">
+              <div className="text-[13px] text-foreground whitespace-pre-wrap font-mono bg-card px-2 pb-2 rounded overflow-x-auto">
                 {getResultText(toolResult.result)}
               </div>
             )}

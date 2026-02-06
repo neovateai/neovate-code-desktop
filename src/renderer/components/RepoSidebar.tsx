@@ -11,32 +11,29 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { CheckIcon, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import {
+  CheckIcon,
+  ChevronDown,
+  ChevronRight,
+  Pin,
+  PinOff,
+  Trash2,
+} from 'lucide-react';
 import { memo, useState } from 'react';
 import type { RepoData } from '../client/types/entities';
 import { cn } from '../lib/utils';
 import { useStore } from '../store';
 import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
 import { useRepoDelete } from './Repo/useRepoDelete';
+import { SessionActionsContextMenuItems } from './SessionActionsMenu';
 import {
   ContextMenu,
-  ContextMenuItem,
   ContextMenuPopup,
   ContextMenuTrigger,
 } from './ui/context-menu';
 import { ScrollArea } from './ui/scroll-area';
 import { Spinner } from './ui/spinner';
-import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogPopup,
-  AlertDialogTitle,
-  Button,
-  toastManager,
-} from './ui';
+import { Button, toastManager } from './ui';
 import { Accordion, AccordionItem, AccordionPanel } from './ui/accordion';
 import {
   Menu,
@@ -68,23 +65,356 @@ function formatRelativeTime(timestamp: number): string {
 }
 
 const DEFAULT_SESSION_LIMIT = 5;
+const CHRONOLOGICAL_SESSION_LIMIT = 50;
+
+const PinnedSessionList = () => {
+  const workspaces = useStore((state) => state.workspaces);
+  const sessions = useStore((state) => state.sessions);
+  const pinnedSessions = useStore((state) => state.pinnedSessions);
+  const selectedSessionId = useStore((state) => state.selectedSessionId);
+  const sessionProcessing = useStore((state) => state.sessionProcessing);
+  const sidebarSortBy = useStore((state) => state.sidebarSortBy);
+  const selectWorkspace = useStore((state) => state.selectWorkspace);
+  const selectSession = useStore((state) => state.selectSession);
+  const updateSession = useStore((state) => state.updateSession);
+  const togglePinSession = useStore((state) => state.togglePinSession);
+  const request = useStore((state) => state.request);
+
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+
+  const pinnedSessionsData = Object.entries(sessions).flatMap(
+    ([workspaceId, workspaceSessions]) => {
+      const workspace = workspaces[workspaceId];
+      if (!workspace) return [];
+      return workspaceSessions
+        .filter((session) => pinnedSessions.includes(session.sessionId))
+        .map((session) => ({
+          session,
+          workspaceId,
+        }));
+    },
+  );
+
+  const startRename = (sessionId: string, currentSummary: string) => {
+    setEditingSessionId(sessionId);
+    setEditingValue(currentSummary || 'New Chat');
+  };
+
+  const saveRename = async (workspaceId: string, sessionId: string) => {
+    const trimmed = editingValue.trim();
+    if (trimmed) {
+      const workspace = workspaces[workspaceId];
+      if (workspace) {
+        try {
+          await request('session.config.setSummary', {
+            cwd: workspace.worktreePath,
+            sessionId,
+            summary: trimmed,
+          });
+          updateSession(workspaceId, sessionId, { summary: trimmed });
+        } catch (error) {
+          console.error('Failed to rename session:', error);
+        }
+      }
+    }
+    setEditingSessionId(null);
+  };
+
+  const cancelRename = () => {
+    setEditingSessionId(null);
+  };
+
+  if (pinnedSessionsData.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-1 px-2 pb-2">
+      {pinnedSessionsData.map(({ session, workspaceId }) => {
+        const isSessionSelected = selectedSessionId === session.sessionId;
+        const isEditing = editingSessionId === session.sessionId;
+        const displaySummary = session.summary || 'New Chat';
+        const processing = sessionProcessing[session.sessionId] || {
+          status: 'idle',
+        };
+        const isProcessing = processing.status === 'processing';
+        const isAwaitingApproval = processing.status === 'awaiting_approval';
+        const isFailed = processing.status === 'failed';
+
+        return (
+          <ContextMenu key={session.sessionId}>
+            <ContextMenuTrigger
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
+                isSessionSelected
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                isFailed && 'text-destructive-foreground',
+              )}
+              onClick={() => {
+                selectWorkspace(workspaceId);
+                selectSession(session.sessionId);
+              }}
+            >
+              <button
+                className="hidden group-hover:block"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePinSession(session.sessionId);
+                }}
+              >
+                <PinOff size={14} strokeWidth={1.5} />
+              </button>
+              <div className="group-hover:hidden">
+                {isProcessing ? (
+                  <Spinner className="size-3.5" />
+                ) : isAwaitingApproval ? (
+                  <HugeiconsIcon
+                    icon={HelpCircleIcon}
+                    size={14}
+                    strokeWidth={1.5}
+                    className="text-warning-foreground"
+                  />
+                ) : (
+                  <Pin size={14} strokeWidth={1.5} />
+                )}
+              </div>
+              {isEditing ? (
+                <input
+                  className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
+                  value={editingValue}
+                  onChange={(e) => setEditingValue(e.target.value)}
+                  onBlur={() => saveRename(workspaceId, session.sessionId)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      saveRename(workspaceId, session.sessionId);
+                    } else if (e.key === 'Escape') {
+                      cancelRename();
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                  onFocus={(e) => e.target.select()}
+                />
+              ) : (
+                <span className="flex-1 text-sm truncate">
+                  {displaySummary}
+                </span>
+              )}
+              <span className="text-sm text-muted-foreground group-hover:hidden">
+                {formatRelativeTime(
+                  sidebarSortBy === 'created'
+                    ? session.created
+                    : session.modified,
+                )}
+              </span>
+            </ContextMenuTrigger>
+            <ContextMenuPopup>
+              <SessionActionsContextMenuItems
+                sessionId={session.sessionId}
+                workspaceId={workspaceId}
+                onRenameStart={() =>
+                  startRename(session.sessionId, session.summary || '')
+                }
+              />
+            </ContextMenuPopup>
+          </ContextMenu>
+        );
+      })}
+    </div>
+  );
+};
+
+const ChronologicalSessionList = () => {
+  const workspaces = useStore((state) => state.workspaces);
+  const sessions = useStore((state) => state.sessions);
+  const pinnedSessions = useStore((state) => state.pinnedSessions);
+  const sidebarSortBy = useStore((state) => state.sidebarSortBy);
+  const selectedSessionId = useStore((state) => state.selectedSessionId);
+  const sessionProcessing = useStore((state) => state.sessionProcessing);
+  const selectWorkspace = useStore((state) => state.selectWorkspace);
+  const selectSession = useStore((state) => state.selectSession);
+  const updateSession = useStore((state) => state.updateSession);
+  const togglePinSession = useStore((state) => state.togglePinSession);
+  const request = useStore((state) => state.request);
+
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [showAll, setShowAll] = useState(false);
+
+  const flatSessions = Object.entries(sessions).flatMap(
+    ([workspaceId, workspaceSessions]) => {
+      const workspace = workspaces[workspaceId];
+      if (!workspace) return [];
+      return workspaceSessions
+        .filter((session) => !pinnedSessions.includes(session.sessionId))
+        .map((session) => ({
+          session,
+          workspaceId,
+        }));
+    },
+  );
+
+  const sortedSessions = flatSessions.slice().sort((a, b) => {
+    if (sidebarSortBy === 'created') {
+      return b.session.created - a.session.created;
+    }
+    return b.session.modified - a.session.modified;
+  });
+
+  const visibleSessions = showAll
+    ? sortedSessions
+    : sortedSessions.slice(0, CHRONOLOGICAL_SESSION_LIMIT);
+  const hiddenCount = sortedSessions.length - CHRONOLOGICAL_SESSION_LIMIT;
+
+  const startRename = (sessionId: string, currentSummary: string) => {
+    setEditingSessionId(sessionId);
+    setEditingValue(currentSummary || 'New Chat');
+  };
+
+  const saveRename = async (workspaceId: string, sessionId: string) => {
+    const trimmed = editingValue.trim();
+    if (trimmed) {
+      const workspace = workspaces[workspaceId];
+      if (workspace) {
+        try {
+          await request('session.config.setSummary', {
+            cwd: workspace.worktreePath,
+            sessionId,
+            summary: trimmed,
+          });
+          updateSession(workspaceId, sessionId, { summary: trimmed });
+        } catch (error) {
+          console.error('Failed to rename session:', error);
+        }
+      }
+    }
+    setEditingSessionId(null);
+  };
+
+  const cancelRename = () => {
+    setEditingSessionId(null);
+  };
+
+  return (
+    <div className="space-y-1">
+      {visibleSessions.map(({ session, workspaceId }) => {
+        const isSessionSelected = selectedSessionId === session.sessionId;
+        const isEditing = editingSessionId === session.sessionId;
+        const displaySummary = session.summary || 'New Chat';
+        const processing = sessionProcessing[session.sessionId] || {
+          status: 'idle',
+        };
+        const isProcessing = processing.status === 'processing';
+        const isAwaitingApproval = processing.status === 'awaiting_approval';
+        const isFailed = processing.status === 'failed';
+
+        return (
+          <ContextMenu key={session.sessionId}>
+            <ContextMenuTrigger
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
+                isSessionSelected
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                isFailed && 'text-destructive-foreground',
+              )}
+              onClick={() => {
+                selectWorkspace(workspaceId);
+                selectSession(session.sessionId);
+              }}
+            >
+              <button
+                className="hidden group-hover:block"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePinSession(session.sessionId);
+                }}
+              >
+                <Pin size={14} strokeWidth={1.5} />
+              </button>
+              <div className="group-hover:hidden">
+                {isProcessing ? (
+                  <Spinner className="size-3.5" />
+                ) : isAwaitingApproval ? (
+                  <HugeiconsIcon
+                    icon={HelpCircleIcon}
+                    size={14}
+                    strokeWidth={1.5}
+                    className="text-warning-foreground"
+                  />
+                ) : (
+                  <HugeiconsIcon
+                    icon={Comment01Icon}
+                    size={14}
+                    strokeWidth={1.5}
+                  />
+                )}
+              </div>
+              {isEditing ? (
+                <input
+                  className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
+                  value={editingValue}
+                  onChange={(e) => setEditingValue(e.target.value)}
+                  onBlur={() => saveRename(workspaceId, session.sessionId)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      saveRename(workspaceId, session.sessionId);
+                    } else if (e.key === 'Escape') {
+                      cancelRename();
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                  onFocus={(e) => e.target.select()}
+                />
+              ) : (
+                <span className="flex-1 text-sm truncate">
+                  {displaySummary}
+                </span>
+              )}
+              <span className="text-sm text-muted-foreground group-hover:hidden">
+                {formatRelativeTime(session.modified)}
+              </span>
+            </ContextMenuTrigger>
+            <ContextMenuPopup>
+              <SessionActionsContextMenuItems
+                sessionId={session.sessionId}
+                workspaceId={workspaceId}
+                onRenameStart={() =>
+                  startRename(session.sessionId, session.summary || '')
+                }
+              />
+            </ContextMenuPopup>
+          </ContextMenu>
+        );
+      })}
+      {hiddenCount > 0 && (
+        <button
+          className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll ? 'Show less' : `Show ${hiddenCount} more`}
+        </button>
+      )}
+    </div>
+  );
+};
 
 interface RepoSessionListProps {
   repo: RepoData;
-  onDeleteSession: (
-    sessionId: string,
-    workspaceId: string,
-    summary: string,
-  ) => void;
 }
 
-const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
+const RepoSessionList = ({ repo }: RepoSessionListProps) => {
   const workspaces = useStore((state) => state.workspaces);
   const sessions = useStore((state) => state.sessions);
+  const pinnedSessions = useStore((state) => state.pinnedSessions);
   const expandedSessions = useStore((state) => state.expandedSessionGroups);
   const selectedSessionId = useStore((state) => state.selectedSessionId);
   const sessionProcessing = useStore((state) => state.sessionProcessing);
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const sidebarSortBy = useStore((state) => state.sidebarSortBy);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const selectSession = useStore((state) => state.selectSession);
   const createOrSelectEmptySession = useStore(
@@ -93,6 +423,7 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
   const toggleSessionGroupExpanded = useStore(
     (state) => state.toggleSessionGroupExpanded,
   );
+  const togglePinSession = useStore((state) => state.togglePinSession);
   const updateSession = useStore((state) => state.updateSession);
   const request = useStore((state) => state.request);
 
@@ -135,9 +466,15 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
         if (!workspace) return null;
 
         const workspaceSessions = (sessions[workspaceId] || [])
+          .filter((s) => !pinnedSessions.includes(s.sessionId))
           .slice()
-          // .filter((item) => item.messageCount > 0)
-          .sort((a, b) => b.modified - a.modified);
+          .sort((a, b) => {
+            if (sidebarSortBy === 'created') {
+              return b.created - a.created;
+            }
+            return b.modified - a.modified;
+          });
+
         const expandKey = `${workspaceId}`;
         const isExpanded = expandedSessions[expandKey] ?? false;
         const visibleSessions = isExpanded
@@ -179,12 +516,13 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                 const isAwaitingApproval =
                   processing.status === 'awaiting_approval';
                 const isFailed = processing.status === 'failed';
+                const isPinned = pinnedSessions.includes(session.sessionId);
 
                 return (
                   <ContextMenu key={session.sessionId}>
                     <ContextMenuTrigger
                       className={cn(
-                        'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors',
+                        'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
                         isSessionSelected
                           ? 'bg-accent text-foreground'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground',
@@ -195,22 +533,37 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                         selectSession(session.sessionId);
                       }}
                     >
-                      {isProcessing ? (
-                        <Spinner className="size-3.5" />
-                      ) : isAwaitingApproval ? (
-                        <HugeiconsIcon
-                          icon={HelpCircleIcon}
-                          size={14}
-                          strokeWidth={1.5}
-                          className="text-warning-foreground"
-                        />
-                      ) : (
-                        <HugeiconsIcon
-                          icon={Comment01Icon}
-                          size={14}
-                          strokeWidth={1.5}
-                        />
-                      )}
+                      <button
+                        className="hidden group-hover:block"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          togglePinSession(session.sessionId);
+                        }}
+                      >
+                        {isPinned ? (
+                          <PinOff size={14} strokeWidth={1.5} />
+                        ) : (
+                          <Pin size={14} strokeWidth={1.5} />
+                        )}
+                      </button>
+                      <div className="group-hover:hidden">
+                        {isProcessing ? (
+                          <Spinner className="size-3.5" />
+                        ) : isAwaitingApproval ? (
+                          <HugeiconsIcon
+                            icon={HelpCircleIcon}
+                            size={14}
+                            strokeWidth={1.5}
+                            className="text-warning-foreground"
+                          />
+                        ) : (
+                          <HugeiconsIcon
+                            icon={Comment01Icon}
+                            size={14}
+                            strokeWidth={1.5}
+                          />
+                        )}
+                      </div>
                       {isEditing ? (
                         <input
                           className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
@@ -235,30 +588,22 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
                           {displaySummary}
                         </span>
                       )}
-                      <span className="text-sm text-muted-foreground">
-                        {formatRelativeTime(session.modified)}
+                      <span className="text-sm text-muted-foreground group-hover:hidden">
+                        {formatRelativeTime(
+                          sidebarSortBy === 'created'
+                            ? session.created
+                            : session.modified,
+                        )}
                       </span>
                     </ContextMenuTrigger>
                     <ContextMenuPopup>
-                      <ContextMenuItem
-                        onClick={() =>
+                      <SessionActionsContextMenuItems
+                        sessionId={session.sessionId}
+                        workspaceId={workspaceId}
+                        onRenameStart={() =>
                           startRename(session.sessionId, session.summary || '')
                         }
-                      >
-                        Rename
-                      </ContextMenuItem>
-                      <ContextMenuItem
-                        className="text-red-500"
-                        onClick={() =>
-                          onDeleteSession(
-                            session.sessionId,
-                            workspaceId,
-                            session.summary || 'New Chat',
-                          )
-                        }
-                      >
-                        Delete
-                      </ContextMenuItem>
+                      />
                     </ContextMenuPopup>
                   </ContextMenu>
                 );
@@ -284,29 +629,129 @@ const RepoSessionList = ({ repo, onDeleteSession }: RepoSessionListProps) => {
 };
 
 const SidebarTitleBar = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
   const sidebarOrganize = useStore((state) => state.sidebarOrganize);
   const sidebarSortBy = useStore((state) => state.sidebarSortBy);
   const setSidebarOrganize = useStore((state) => state.setSidebarOrganize);
   const setSidebarSortBy = useStore((state) => state.setSidebarSortBy);
+  const request = useStore((state) => state.request);
+  const addRepo = useStore((state) => state.addRepo);
+  const addWorkspace = useStore((state) => state.addWorkspace);
+  const repos = useStore((state) => state.repos);
+  const selectWorkspace = useStore((state) => state.selectWorkspace);
 
   const handleOpenProject = async () => {
-    const electron = window.electron;
-    if (!electron?.selectDirectory) {
+    if (isLoading) {
       return;
     }
-    await electron.selectDirectory();
+
+    let loadingToastId: string | undefined;
+
+    const closeLoadingToast = () => {
+      if (loadingToastId) {
+        toastManager.close(loadingToastId);
+        loadingToastId = undefined;
+      }
+    };
+
+    try {
+      const electron = window.electron;
+      if (!electron?.selectDirectory) {
+        console.error('Directory selection is not available');
+        return;
+      }
+      const selectedPath = await electron.selectDirectory();
+
+      if (!selectedPath) {
+        return;
+      }
+
+      if (repos[selectedPath]) {
+        toastManager.add({
+          title: 'Repository already exists',
+          description: `The repository at ${selectedPath} is already added.`,
+          type: 'error',
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      loadingToastId = toastManager.add({
+        title: 'Adding repository',
+        description: 'Loading repository information...',
+        type: 'loading',
+      });
+
+      const response = await request('project.getRepoInfo', {
+        cwd: selectedPath,
+      });
+
+      if (response.success && response.data?.repoData) {
+        const repoData = response.data.repoData;
+
+        addRepo(repoData);
+
+        try {
+          const workspacesResponse = await request('project.workspaces.list', {
+            cwd: selectedPath,
+          });
+
+          if (
+            workspacesResponse.success &&
+            workspacesResponse.data?.workspaces
+          ) {
+            const workspaces = workspacesResponse.data.workspaces;
+            for (const workspace of workspaces) {
+              addWorkspace(workspace);
+            }
+            if (workspaces.length > 0) {
+              selectWorkspace(workspaces[0].id);
+            }
+          } else if (!workspacesResponse.success) {
+            console.warn(
+              'Failed to fetch workspaces:',
+              workspacesResponse.error || 'Unknown error',
+            );
+          }
+        } catch (workspaceError) {
+          console.warn('Error fetching workspaces:', workspaceError);
+        }
+
+        closeLoadingToast();
+
+        toastManager.add({
+          title: 'Repository added',
+          description: `Successfully added ${repoData.name}`,
+          type: 'success',
+        });
+      } else {
+        closeLoadingToast();
+
+        const errorMessage = response.error || 'Invalid response from server';
+        toastManager.add({
+          title: 'Failed to add repository',
+          description: errorMessage,
+          type: 'error',
+        });
+      }
+    } catch (error) {
+      closeLoadingToast();
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Could not connect to server';
+
+      toastManager.add({
+        title: 'Failed to add repository',
+        description: errorMessage,
+        type: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOrganizeChange = (value: string) => {
-    if (value === 'chronological') {
-      toastManager.add({
-        type: 'info',
-        title: 'Coming soon',
-        description: 'Chronological list view is not implemented yet',
-      });
-      return;
-    }
     setSidebarOrganize(value as 'byProject' | 'chronological');
   };
 
@@ -348,11 +793,19 @@ const SidebarTitleBar = () => {
                 <span className="flex-1">By project</span>
                 {sidebarOrganize === 'byProject' && <CheckIcon size={12} />}
               </MenuItem>
-              <MenuItem onClick={() => handleOrganizeChange('chronological')}>
-                <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={1.5} />
-                <span className="flex-1">Chronological list</span>
-                {sidebarOrganize === 'chronological' && <CheckIcon size={12} />}
-              </MenuItem>
+              {multiProjectSupport && (
+                <MenuItem onClick={() => handleOrganizeChange('chronological')}>
+                  <HugeiconsIcon
+                    icon={Clock01Icon}
+                    size={14}
+                    strokeWidth={1.5}
+                  />
+                  <span className="flex-1">Chronological list</span>
+                  {sidebarOrganize === 'chronological' && (
+                    <CheckIcon size={12} />
+                  )}
+                </MenuItem>
+              )}
             </MenuGroup>
             <MenuSeparator />
             <MenuGroup>
@@ -388,37 +841,15 @@ export const RepoSidebar = () => {
   const setOpenRepoAccordions = useStore(
     (state) => state.setOpenRepoAccordions,
   );
-  const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const selectSession = useStore((state) => state.selectSession);
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+  const sidebarOrganize = useStore((state) => state.sidebarOrganize);
   const repos = useStore((state) => state.repos);
   const selectedRepoPath = useStore((state) => state.selectedRepoPath);
-  const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
-  const removeSession = useStore((state) => state.removeSession);
   const selectWorkspace = useStore((state) => state.selectWorkspace);
   const createOrSelectEmptySession = useStore(
     (state) => state.createOrSelectEmptySession,
   );
-  const request = useStore((state) => state.request);
   const developerMode = useStore((state) => state.developerMode);
-
-  const [sessionAlertOpen, setSessionAlertOpen] = useState(false);
-  const [sessionToDelete, setSessionToDelete] = useState<{
-    sessionId: string;
-    workspaceId: string;
-    summary: string;
-  } | null>(null);
-
-  const handleDeleteSessionClick = (
-    sessionId: string,
-    workspaceId: string,
-    summary: string,
-  ) => {
-    setSessionToDelete({ sessionId, workspaceId, summary });
-    setSessionAlertOpen(true);
-  };
 
   const {
     deleteDialogOpen: repoDeleteDialogOpen,
@@ -428,50 +859,6 @@ export const RepoSidebar = () => {
     handleCancelDelete: handleRepoCancelDelete,
   } = useRepoDelete();
 
-  const handleConfirmDeleteSession = async () => {
-    if (!sessionToDelete) return;
-
-    const { sessionId, workspaceId } = sessionToDelete;
-    const workspace = workspaces[workspaceId];
-    if (!workspace) return;
-
-    const session = (sessions[workspaceId] || []).find(
-      (s) => s.sessionId === sessionId,
-    );
-    const isLocalOnly = !session || session.messageCount === 0;
-
-    try {
-      if (!isLocalOnly) {
-        const result = await request('sessions.remove', {
-          cwd: workspace.worktreePath,
-          sessionId,
-        });
-
-        if (!result.success) {
-          console.error('Failed to delete session:', result.error);
-          setSessionAlertOpen(false);
-          setSessionToDelete(null);
-          return;
-        }
-      }
-
-      removeSession(workspaceId, sessionId);
-
-      if (selectedSessionId === sessionId) {
-        const remaining = (sessions[workspaceId] || [])
-          .filter((s) => s.sessionId !== sessionId)
-          .sort((a, b) => b.modified - a.modified);
-
-        selectSession(remaining.length > 0 ? remaining[0].sessionId : null);
-      }
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-    }
-
-    setSessionAlertOpen(false);
-    setSessionToDelete(null);
-  };
-
   const repoList = Object.values(repos);
   const displayRepos = multiProjectSupport
     ? repoList
@@ -479,6 +866,7 @@ export const RepoSidebar = () => {
 
   return (
     <div className="h-full flex flex-col">
+      <PinnedSessionList />
       <SidebarTitleBar />
 
       {developerMode && (
@@ -512,6 +900,8 @@ export const RepoSidebar = () => {
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
+        ) : sidebarOrganize === 'chronological' && multiProjectSupport ? (
+          <ChronologicalSessionList />
         ) : multiProjectSupport ? (
           <Accordion
             value={openRepos}
@@ -572,21 +962,14 @@ export const RepoSidebar = () => {
                   </div>
                 </RepoAccordionTrigger>
                 <AccordionPanel>
-                  <RepoSessionList
-                    repo={repo}
-                    onDeleteSession={handleDeleteSessionClick}
-                  />
+                  <RepoSessionList repo={repo} />
                 </AccordionPanel>
               </AccordionItem>
             ))}
           </Accordion>
         ) : (
           displayRepos.map((repo) => (
-            <RepoSessionList
-              key={repo.path}
-              repo={repo}
-              onDeleteSession={handleDeleteSessionClick}
-            />
+            <RepoSessionList key={repo.path} repo={repo} />
           ))
         )}
       </ScrollArea>
@@ -601,31 +984,6 @@ export const RepoSidebar = () => {
         repo={repoToDeleteInfo}
         onConfirm={handleRepoConfirmDelete}
       />
-
-      <AlertDialog open={sessionAlertOpen} onOpenChange={setSessionAlertOpen}>
-        <AlertDialogPopup>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete "{sessionToDelete?.summary}". This action cannot
-              be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>
-              <Button variant="outline">Cancel</Button>
-            </AlertDialogClose>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDeleteSession}
-              className="gap-2"
-            >
-              <Trash2 size={16} strokeWidth={1.5} />
-              Delete
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogPopup>
-      </AlertDialog>
     </div>
   );
 };

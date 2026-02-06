@@ -1,49 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Plugin } from '@neovate/code';
 import { minimatch } from 'minimatch';
-import { bridgeServer } from '../code-server/bridge';
 
-export const fsPlugin: Plugin = {
-  name: 'fs',
-
-  nodeBridgeHandler() {
-    return {
-      'fs.tree': async (data: { cwd: string }) => {
-        /** TODO: 后续考虑大项目的性能问题 */
-        return {
-          success: true,
-          data: { tree: getFileTree(data?.cwd) },
-        };
-      },
-      'editor.open': async (data: { cwd: string; filePath: string }) => {
-        /** TODO: 先放这里，后面看是不是提取到另一个插件中 */
-        const { cwd = '', filePath = '' } = data || {};
-        bridgeServer.send(
-          { operationType: 'editor.open', params: { filePath } },
-          cwd,
-        );
-        return {
-          success: true,
-          data: {},
-        };
-      },
-      'editor.theme.set': (data: { cwd: string; theme: string }) => {
-        const { cwd = '', theme = '' } = data || {};
-        bridgeServer.send(
-          { operationType: 'editor.theme.set', params: { theme } },
-          cwd,
-        );
-        return {
-          success: true,
-          data: {},
-        };
-      },
-    } as ReturnType<NonNullable<Plugin['nodeBridgeHandler']>>;
-  },
-};
-
-interface FileTreeNode {
+export interface FileTreeNode {
   fileName: string;
   fullPath: string;
   isFolder: boolean;
@@ -68,7 +27,7 @@ function getExcludePatterns(): string[] {
   return [...new Set(allPatterns)];
 }
 
-function getFileTree(parent: string, root?: string): FileTreeNode[] {
+export function getFileTree(parent: string, root?: string): FileTreeNode[] {
   const includePatterns: string[] = [];
   const actualRoot = root || parent;
 

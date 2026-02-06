@@ -35,7 +35,7 @@ class ExtensionBridgeServer extends EventEmitter {
         socket.on('data', async (raw) => {
           try {
             const data = JSON.parse(raw.toString());
-            console.log('get data', data);
+            console.log('ExtensionBridgeServer Received', data);
             const { operationType, params, cwd } = data || {};
             if (!operationType || !cwd) {
               return;

@@ -1,4 +1,3 @@
-import { Agentation } from 'agentation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppLoading } from './components/AppLoading';
 import { ContentPanel } from './components/ContentPanel';
@@ -8,13 +7,19 @@ import {
   AppLayoutActivityBar,
   AppLayoutChatPanel,
   AppLayoutContentPanel,
+  AppLayoutPanelRow,
   AppLayoutPrimarySidebar,
+  AppLayoutRightContainer,
+  AppLayoutRoot,
   AppLayoutSecondarySidebar,
   AppLayoutTitleBar,
+  PrimaryTitleBar,
+  SecondaryTitleBar,
   SecondarySidebar,
+  SecondarySidebarToggles,
+  StatusBar,
+  TrafficLightsSection,
 } from './components/layout';
-import { AppLayoutPanelGroup } from './components/layout/AppLayout';
-import { TitleBar } from './components/layout/TitleBar';
 import { OnboardingModal } from './components/Onboarding';
 import { RepoSidebar } from './components/RepoSidebar';
 import { ServerErrorDialog } from './components/ServerErrorDialog';
@@ -33,8 +38,6 @@ function App() {
   const workspaces = useStore((s) => s.workspaces);
   const selectedRepoPath = useStore((s) => s.selectedRepoPath);
   const selectedWorkspaceId = useStore((s) => s.selectedWorkspaceId);
-  const selectRepo = useStore((s) => s.selectRepo);
-  const selectWorkspace = useStore((s) => s.selectWorkspace);
   const showSettings = useStore((s) => s.showSettings);
   const setShowSettings = useStore((s) => s.setShowSettings);
   const theme = useStore((s) => s.theme);
@@ -45,6 +48,16 @@ function App() {
   // Minimum display time for loading animation
   const loadStartTime = useRef(Date.now());
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+  useEffect(() => {
+    if (
+      import.meta.env.DEV &&
+      process.env.NODE_ENV !== 'production' &&
+      developerMode
+    ) {
+      void import('react-grab');
+    }
+  }, [developerMode]);
 
   useEffect(() => {
     const elapsed = Date.now() - loadStartTime.current;
@@ -200,50 +213,60 @@ function App() {
           className="h-full flex flex-col"
           style={{ display: showSettings ? 'none' : 'flex' }}
         >
-          {/* Custom Title Bar */}
-          <AppLayoutTitleBar>
-            <TitleBar />
-          </AppLayoutTitleBar>
+          <AppLayoutRoot>
+            {/* Traffic Lights + Toggle - fixed position, always visible */}
+            <TrafficLightsSection />
 
-          <div className="flex-1 flex flex-row min-h-0">
-            <AppLayoutPanelGroup>
-              {/* Tasks Panel (left sidebar) */}
-              <AppLayoutPrimarySidebar>
-                <RepoSidebar />
-              </AppLayoutPrimarySidebar>
+            {/* Primary Sidebar (left, full height) */}
+            <AppLayoutPrimarySidebar>
+              <RepoSidebar />
+            </AppLayoutPrimarySidebar>
 
-              {/* Chat Panel (main content) */}
-              <AppLayoutChatPanel>
-                <WorkspacePanel
-                  workspace={selectedWorkspace}
-                  emptyStateType={emptyStateType}
-                />
-              </AppLayoutChatPanel>
+            {/* Right Container (title row + panels + status bar) */}
+            <AppLayoutRightContainer>
+              {/* Title Bar */}
+              <TitleBar />
 
-              {/* Tabs Panel (terminal, logs - conditional) */}
-              <AppLayoutContentPanel>
-                <div className="h-full flex flex-col">
-                  {visitedRepoPathsArray.map((repoPath) => (
-                    <ContentPanel
-                      key={repoPath}
-                      repoPath={repoPath}
-                      hidden={repoPath !== selectedRepoPath}
+              {/* Panel Area */}
+              <div className="flex-1 flex min-h-0">
+                <AppLayoutPanelRow>
+                  {/* Chat Panel (main content) */}
+                  <AppLayoutChatPanel>
+                    <WorkspacePanel
+                      workspace={selectedWorkspace}
+                      emptyStateType={emptyStateType}
                     />
-                  ))}
-                </div>
-              </AppLayoutContentPanel>
+                  </AppLayoutChatPanel>
 
-              {/* Secondary Sidebar (files, git - conditional) */}
-              <AppLayoutSecondarySidebar>
-                <SecondarySidebar />
-              </AppLayoutSecondarySidebar>
-            </AppLayoutPanelGroup>
+                  {/* Content Panel (terminal, logs) */}
+                  <AppLayoutContentPanel>
+                    <div className="h-full flex flex-col">
+                      {visitedRepoPathsArray.map((repoPath) => (
+                        <ContentPanel
+                          key={repoPath}
+                          repoPath={repoPath}
+                          hidden={repoPath !== selectedRepoPath}
+                        />
+                      ))}
+                    </div>
+                  </AppLayoutContentPanel>
 
-            {/* Activity Bar (always visible) */}
-            <AppLayoutActivityBar>
-              <ActivityBar />
-            </AppLayoutActivityBar>
-          </div>
+                  {/* Secondary Sidebar (files, git) */}
+                  <AppLayoutSecondarySidebar>
+                    <SecondarySidebar />
+                  </AppLayoutSecondarySidebar>
+                </AppLayoutPanelRow>
+
+                {/* Activity Bar (always visible, fixed width) */}
+                <AppLayoutActivityBar>
+                  <ActivityBar />
+                </AppLayoutActivityBar>
+              </div>
+
+              {/* Status Bar */}
+              <StatusBar />
+            </AppLayoutRightContainer>
+          </AppLayoutRoot>
 
           <TestComponent />
         </div>
@@ -252,8 +275,20 @@ function App() {
       {/* Onboarding Modal - renders on top when visible */}
       <OnboardingModal />
       <UpdaterToast />
-      {process.env.NODE_ENV !== 'production' && developerMode && <Agentation />}
     </>
+  );
+}
+
+/**
+ * Title Bar component
+ */
+function TitleBar() {
+  return (
+    <AppLayoutTitleBar>
+      <PrimaryTitleBar />
+      <SecondaryTitleBar />
+      <SecondarySidebarToggles />
+    </AppLayoutTitleBar>
   );
 }
 

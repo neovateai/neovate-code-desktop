@@ -5,6 +5,8 @@ export {
   SuggestionDropdown,
 } from './ChatInput';
 export { RepoSidebar } from './RepoSidebar';
+export { SessionActionsMenu } from './SessionActionsMenu';
+export { SessionInfoBar } from './SessionInfoBar';
 export { Terminal } from './Terminal';
 // Test components
 export { DirectoryList, SystemInfo } from './test';
