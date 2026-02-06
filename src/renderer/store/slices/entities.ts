@@ -133,12 +133,23 @@ export const createEntitiesSlice: StateCreator<
         selectedSessionId = null;
       }
 
+      // Clean up tabs for the deleted repo
+      const { [path]: _removedTabs, ...newTabsByRepo } =
+        state.contentPanelTabs.tabsByRepo;
+      const { [path]: _removedActiveTab, ...newActiveTabIdByRepo } =
+        state.contentPanelTabs.activeTabIdByRepo;
+
       return {
         repos: newRepos,
         workspaces: newWorkspaces,
         selectedRepoPath,
         selectedWorkspaceId,
         selectedSessionId,
+        contentPanelTabs: {
+          ...state.contentPanelTabs,
+          tabsByRepo: newTabsByRepo,
+          activeTabIdByRepo: newActiveTabIdByRepo,
+        },
       };
     });
   },
