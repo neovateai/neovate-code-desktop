@@ -60,6 +60,9 @@ export class RendererApp {
    *   focuses the existing window instead of creating a duplicate. Different
    *   `windowId` values with the same `windowType` open independent windows
    *   that render the same component.
+   *   focuses the existing window instead of creating a duplicate. Different
+   *   `windowId` values with the same `windowType` open independent windows
+   *   that render the same component.
    *
    * Flow: `app.window.open(...)` → IPC → BrowserWindowManager creates
    * BrowserWindow with `?windowId=xxx&windowType=yyy` → renderer loads →

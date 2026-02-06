@@ -109,7 +109,6 @@ describe('BrowserWindowManager', () => {
       parent: mainWin,
     });
   });
-
   it('should close existing window', async () => {
     const { browserWindowManager } = await import('./browser-window-manager');
 
