@@ -35,7 +35,9 @@ export const ActivityBar = function ActivityBar() {
   };
 
   // Get plugin activity bar items
-  const pluginItems = app.contributions.activityBarItems ?? [];
+  const pluginItems = app.contributions.flatMap(
+    (c) => c.activityBarItems ?? [],
+  );
 
   return (
     <div className="w-12 flex flex-col items-center py-2 shrink-0 h-full">

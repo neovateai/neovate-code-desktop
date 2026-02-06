@@ -38,8 +38,10 @@ function SecondarySidebarPluginPane({ panelId }: { panelId: string }) {
   const app = useRendererApp();
   const descriptor = useMemo(
     () =>
-      app.contributions.secondarySidebarPanels?.find((p) => p.id === panelId),
-    [app.contributions.secondarySidebarPanels, panelId],
+      app.contributions
+        .flatMap((c) => c.secondarySidebarPanels ?? [])
+        .find((p) => p.id === panelId),
+    [app.contributions, panelId],
   );
 
   if (!descriptor) {
@@ -62,11 +64,11 @@ export function SecondarySidebar() {
     if (secondarySidebarTab === 'files') return 'Files';
     if (secondarySidebarTab === 'git') return 'Git';
     if (secondarySidebarTab === 'search') return 'Search';
-    const descriptor = app.contributions.secondarySidebarPanels?.find(
-      (p) => p.id === secondarySidebarTab,
-    );
+    const descriptor = app.contributions
+      .flatMap((c) => c.secondarySidebarPanels ?? [])
+      .find((p) => p.id === secondarySidebarTab);
     return descriptor?.title ?? 'Unknown';
-  }, [secondarySidebarTab, app.contributions.secondarySidebarPanels]);
+  }, [secondarySidebarTab, app.contributions]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden">

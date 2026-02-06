@@ -2,6 +2,7 @@ import { StrictMode, createContext, lazy, Suspense, useContext } from 'react';
 import ReactDOM from 'react-dom/client';
 import { ErrorBoundary } from 'react-error-boundary';
 import { I18nextProvider } from 'react-i18next';
+import { ipcMainCaller } from '../lib/ipc';
 import { ToastProvider } from '../components/ui/toast';
 import { hydrateStore, setupPersistence } from '../persistence';
 import { useStore } from '../store';
@@ -44,10 +45,31 @@ export class RendererApp {
   readonly i18nManager: I18nManager;
 
   /** Plugin UI contributions collected at startup */
-  contributions: PluginConfigContribution = {};
+  contributions: PluginConfigContribution[] = [];
 
   /** UI operations namespace - TODO: add panel APIs after tabManager refactor */
   readonly ui = {};
+
+  /**
+   * Window operations namespace for plugins.
+   *
+   * Sub-window routing:
+   * - `windowType` determines which component to render. It matches against
+   *   `WindowConfig.windowType` registered in `RendererApp({ windows: [...] })`.
+   * - `windowId` is the instance dedup key. Opening the same `windowId` twice
+   *   focuses the existing window instead of creating a duplicate. Different
+   *   `windowId` values with the same `windowType` open independent windows
+   *   that render the same component.
+   *
+   * Flow: `app.window.open(...)` → IPC → BrowserWindowManager creates
+   * BrowserWindow with `?windowId=xxx&windowType=yyy` → renderer loads →
+   * `matchWindowBySearchParams()` matches `windowType` to a `WindowConfig` →
+   * renders the matched component.
+   */
+  readonly window = {
+    open: ipcMainCaller.window.open,
+    close: ipcMainCaller.window.close,
+  };
 
   constructor(options?: RendererAppOptions) {
     this.windows = options?.windows ?? [];
@@ -81,10 +103,12 @@ export class RendererApp {
     this.i18nManager.setupLazyNamespaces(lazyNamespaceConfigs);
 
     // Collect plugin UI contributions
-    this.contributions = await this.pluginManager.applySeriesMerge(
+    const results = await this.pluginManager.applyParallel(
       'configContributes',
       { app: this },
-      {},
+    );
+    this.contributions = results.filter(
+      (r): r is PluginConfigContribution => r != null,
     );
 
     await this.pluginManager.applySeries(
@@ -117,14 +141,14 @@ export class RendererApp {
   }
 
   /**
-   * Match window config by windowId query param.
-   * Note: Main window (no windowId param) always uses default App component.
+   * Match window config by windowType query param.
+   * Note: Main window (no windowType param) always uses default App component.
    * The windows config is intentionally for sub-windows only.
    */
   private matchWindowBySearchParams(): WindowConfig | undefined {
     if (!this.windows.length) return undefined;
-    const windowId = new URLSearchParams(location.search).get('windowId');
-    if (!windowId) return undefined;
-    return this.windows.find((w) => w.windowId === windowId);
+    const windowType = new URLSearchParams(location.search).get('windowType');
+    if (!windowType) return undefined;
+    return this.windows.find((w) => w.windowType === windowType);
   }
 }

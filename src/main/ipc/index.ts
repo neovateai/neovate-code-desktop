@@ -1,4 +1,8 @@
 import { app } from 'electron';
+import {
+  browserWindowManager,
+  type WindowOpenOptions,
+} from '../browser-window-manager';
 import { createMainHandler } from '../../shared/lib/ipc/main';
 import { codeServerManager } from '../code-server';
 import { ptyManager } from '../pty';
@@ -86,6 +90,15 @@ export const ipcMainHandlers = {
   },
 
   updater: updaterService.mainHandlers,
+
+  window: {
+    open: createMainHandler<WindowOpenOptions, void>(async ({ input }) => {
+      browserWindowManager.open(input);
+    }),
+    close: createMainHandler<{ windowId: string }, void>(async ({ input }) => {
+      browserWindowManager.close(input.windowId);
+    }),
+  },
 
   codeServer: {
     start: createMainHandler<{ folderPath?: string }, { url: string }>(

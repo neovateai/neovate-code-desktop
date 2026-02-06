@@ -82,8 +82,11 @@ const ContentPanelPluginPane = memo(function ContentPanelPluginPane({
 }) {
   const app = useRendererApp();
   const descriptor = useMemo(
-    () => app.contributions.contentPanels?.find((p) => p.id === tab.panelId),
-    [app.contributions.contentPanels, tab.panelId],
+    () =>
+      app.contributions
+        .flatMap((c) => c.contentPanels ?? [])
+        .find((p) => p.id === tab.panelId),
+    [app.contributions, tab.panelId],
   );
 
   if (!descriptor) {

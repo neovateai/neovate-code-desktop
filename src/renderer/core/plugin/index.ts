@@ -5,4 +5,6 @@ export type {
   PluginConfigContribution,
   SecondarySidebarPanelDescriptor,
   SidebarPanelProps,
+  TitlebarItemDescriptor,
+  TitlebarItemProps,
 } from './contributions';

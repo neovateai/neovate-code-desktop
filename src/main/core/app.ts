@@ -14,6 +14,7 @@ import {
   Tray,
 } from 'electron';
 import { registerMainHandlers } from '../../shared/lib/ipc/main';
+import { browserWindowManager } from '../browser-window-manager';
 import { codeServerManager } from '../code-server';
 import { ipcMainHandlers } from '../ipc';
 import { bridgeServer } from '../code-server/bridge';
@@ -297,8 +298,9 @@ export class MainApp {
       },
     });
 
-    // Initialize updater service after window is created
+    // Initialize services after window is created
     if (this.mainWindow) {
+      browserWindowManager.setMainWindow(this.mainWindow);
       updaterService.init(this.mainWindow);
       // 设置 bridgeServer 的 webContents，以便 extension 可以通知 renderer
       bridgeServer.connect2renderer(this.mainWindow.webContents);
@@ -315,6 +317,7 @@ export class MainApp {
     // Updates are checked when renderer calls updater.check
     this.mainWindow.on('closed', () => {
       this.mainWindow = null;
+      browserWindowManager.setMainWindow(null);
     });
   }
 
@@ -326,7 +329,7 @@ export class MainApp {
     });
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
+      if (this.mainWindow === null) {
         this.createWindow();
       }
     });
@@ -349,6 +352,7 @@ export class MainApp {
       this.tray.destroy();
       this.tray = null;
     }
+    browserWindowManager.destroyAll();
     updaterService.destroy();
     ptyManager.destroyAll();
     codeServerManager.stop();

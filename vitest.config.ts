@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: [
+      'src/main/**/*.{test,spec}.{ts,tsx}',
       'src/renderer/**/*.{test,spec}.{ts,tsx}',
       'src/shared/**/*.{test,spec}.{ts,tsx}',
     ],

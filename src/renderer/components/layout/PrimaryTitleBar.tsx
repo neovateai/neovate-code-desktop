@@ -1,16 +1,22 @@
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useRendererApp } from '../../core/app';
 import { useStore } from '../../store';
 import { AddRepoMenu } from '../AddRepoMenu';
 import { SessionInfoBar } from '../SessionInfoBar';
 import { Button } from '../ui/button';
+import { PluginTitlebarItem } from './PluginTitlebarItem';
 
 export function PrimaryTitleBar() {
+  const app = useRendererApp();
   const multiProjectSupport = useStore((s) => s.multiProjectSupport);
   const repos = useStore((s) => s.repos);
   const selectedRepoPath = useStore((s) => s.selectedRepoPath);
 
   const selectedRepo = selectedRepoPath ? repos[selectedRepoPath] : null;
+  const pluginItems = app.contributions.flatMap(
+    (c) => c.primaryTitlebarItems ?? [],
+  );
 
   if (multiProjectSupport) {
     return (
@@ -20,6 +26,9 @@ export function PrimaryTitleBar() {
         style={{ WebkitAppRegion: 'no-drag' }}
       >
         <SessionInfoBar />
+        {pluginItems?.map((item) => (
+          <PluginTitlebarItem key={item.id} item={item} app={app} />
+        ))}
       </div>
     );
   }
@@ -47,6 +56,9 @@ export function PrimaryTitleBar() {
           />
         </Button>
       </AddRepoMenu>
+      {pluginItems?.map((item) => (
+        <PluginTitlebarItem key={item.id} item={item} app={app} />
+      ))}
     </div>
   );
 }
