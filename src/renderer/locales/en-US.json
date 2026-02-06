@@ -24,5 +24,15 @@
   "git.workingChanges": "Working Changes",
   "git.addToStage": "Add to stage",
   "git.removeFromStage": "Remove from stage",
-  "git.revertFile": "Revert file"
+  "git.revertFile": "Revert file",
+  "fileTree.rename": "Rename",
+  "fileTree.delete": "Delete",
+  "fileTree.copyPath": "Copy path",
+  "fileTree.deleteFolder": "Delete folder?",
+  "fileTree.deleteFile": "Delete file?",
+  "fileTree.folder": "folder",
+  "fileTree.file": "file",
+  "fileTree.deleteConfirmation": "Are you sure you want to permanently delete the {{type}} \"{{name}}\"? This action cannot be undone.",
+  "common.cancel": "Cancel",
+  "common.delete": "Delete"
 }
