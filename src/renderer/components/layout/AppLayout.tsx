@@ -8,7 +8,7 @@ import {
   PANEL_WINDOW_EDGE_SPACING,
   TITLEBAR_SIDEBAR_TOGGLE_WIDTH,
   TRAFFIC_LIGHTS_SPACER_WIDTH,
-} from '../../constants';
+} from '../../../shared/layout';
 import {
   type PanelId,
   AppLayoutPanelProvider,
@@ -32,7 +32,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
  */
 export function AppLayoutRoot({ children }: { children: ReactNode }) {
   return (
-    <div className="h-full flex items-stretch relative" data-app-layout-group>
+    <div
+      className="h-full flex items-stretch relative"
+      style={{ paddingLeft: PANEL_WINDOW_EDGE_SPACING }}
+      data-app-layout-group
+    >
       {children}
     </div>
   );
@@ -43,14 +47,49 @@ const COLLAPSED_TITLEBAR_LEFT_PADDING =
   TRAFFIC_LIGHTS_SPACER_WIDTH + TITLEBAR_SIDEBAR_TOGGLE_WIDTH;
 
 /**
+ * Reusable resize handle component
+ * Width matches PANEL_PANEL_SPACING (5px) with expanded hit area via padding
+ */
+function ResizeHandle({ panelId }: { panelId: PanelId }) {
+  const { getPanel, resizing, startResize } = useAppLayoutPanels();
+  const panel = getPanel(panelId);
+  const { ref, handlers, gradientStyle } = useResizeGradient(panelId);
+
+  if (panel.collapsed) return null;
+
+  return (
+    <div
+      ref={ref}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        startResize(panelId);
+      }}
+      onMouseMove={handlers.onMouseMove}
+      onMouseLeave={handlers.onMouseLeave}
+      className="h-full cursor-col-resize shrink-0 relative"
+      style={{ width: PANEL_PANEL_SPACING }}
+    >
+      <div className="absolute inset-y-0 -inset-x-1" />
+      {/* Gradient overlay */}
+      <div
+        className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5"
+        style={{
+          ...gradientStyle,
+          transition:
+            resizing === panelId ? undefined : 'opacity 0.15s ease-out',
+        }}
+      />
+    </div>
+  );
+}
+
+/**
  * Primary sidebar with custom resize and collapse
  * Uses framer-motion for smooth animations
  */
 export function AppLayoutPrimarySidebar({ children }: { children: ReactNode }) {
-  const { getPanel, resizing, startResize } = useAppLayoutPanels();
+  const { getPanel, resizing } = useAppLayoutPanels();
   const panel = getPanel('primarySidebar');
-
-  const { ref, handlers, gradientStyle } = useResizeGradient('primarySidebar');
 
   return (
     <>
@@ -58,75 +97,45 @@ export function AppLayoutPrimarySidebar({ children }: { children: ReactNode }) {
       <motion.div
         initial={false}
         animate={{
-          width: panel.visible ? panel.width : 0,
+          width: panel.collapsed ? 0 : panel.width,
         }}
         transition={
           resizing === 'primarySidebar' ? { duration: 0 } : springTransition
         }
         className="h-full overflow-hidden shrink-0"
         style={{
-          paddingLeft: PANEL_WINDOW_EDGE_SPACING,
           paddingTop: PANEL_WINDOW_EDGE_SPACING,
           paddingBottom: PANEL_WINDOW_EDGE_SPACING,
         }}
       >
-        {/* Inner content with fixed width (prevents reflow during animation) */}
+        {/* Card container with fixed width (prevents reflow during animation) */}
         <div
-          style={{
-            width:
-              panel.width - PANEL_WINDOW_EDGE_SPACING - PANEL_PANEL_SPACING / 2,
-          }}
-          className="h-full flex flex-col"
+          style={{ width: panel.width }}
+          className={cn(
+            'h-full flex flex-col min-h-0 pt-8 relative',
+            'bg-card rounded-l-[14px] rounded-r-[10px]',
+            'shadow-[0_0_6px_rgba(0,0,0,0.06)]',
+          )}
         >
-          {/* Card container with shadow and rounded corners */}
-          <div
-            className={cn(
-              'flex-1 flex flex-col min-h-0',
-              'bg-card rounded-l-[14px] rounded-r-[10px]',
-              'shadow-[0_0_6px_rgba(0,0,0,0.06)]',
-            )}
-          >
-            {children}
-          </div>
+          {children}
         </div>
       </motion.div>
 
-      {/* Resize handle - absolutely positioned */}
-      <div
-        className={cn(
-          'absolute top-0 w-3 h-full cursor-col-resize z-10 flex justify-center',
-          !panel.visible && 'pointer-events-none opacity-0',
-        )}
-        style={{
-          left: panel.visible ? panel.width - 6 : -6,
-          transition:
-            resizing === 'primarySidebar' ? undefined : 'left 0.15s ease-out',
-        }}
-      >
-        {/* Touch area container - 12px total hit area */}
-        <div
-          ref={ref}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            startResize('primarySidebar');
-          }}
-          onMouseMove={handlers.onMouseMove}
-          onMouseLeave={handlers.onMouseLeave}
-          className="absolute inset-y-0 -left-1.5 -right-1.5 flex justify-center cursor-col-resize"
-        >
-          {/* Gradient overlay - fades in on hover, follows cursor */}
-          <div
-            className="absolute inset-y-0 left-[calc(50%+3px)] -translate-x-1/2 w-0.5"
-            style={gradientStyle}
-          />
-        </div>
-      </div>
+      {/* Resize handle */}
+      <ResizeHandle panelId="primarySidebar" />
     </>
   );
 }
 
 export function AppLayoutRightContainer({ children }: { children: ReactNode }) {
-  return <div className="flex-1 h-full flex flex-col min-w-0">{children}</div>;
+  return (
+    <div
+      className="flex-1 h-full flex flex-col min-w-0"
+      style={{ paddingBottom: PANEL_WINDOW_EDGE_SPACING }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function AppLayoutTitleBar({ children }: { children: ReactNode }) {
@@ -137,8 +146,7 @@ export function AppLayoutTitleBar({ children }: { children: ReactNode }) {
     <div
       className="h-11 flex items-center select-none shrink-0 transition-[padding-left] duration-150 ease-out"
       style={{
-        paddingLeft: panel.visible ? 0 : COLLAPSED_TITLEBAR_LEFT_PADDING,
-        marginLeft: panel.visible ? -(PANEL_PANEL_SPACING / 2) : 0,
+        paddingLeft: panel.collapsed ? COLLAPSED_TITLEBAR_LEFT_PADDING : 0,
       }}
     >
       {children}
@@ -167,48 +175,7 @@ export function AppLayoutChatPanel({ children }: { children: ReactNode }) {
       className="flex-1 overflow-hidden"
       style={{ minWidth: CHAT_PANEL_MIN_SIZE }}
     >
-      <div
-        className="h-full rounded-lg bg-card pb-2"
-        style={{ marginLeft: PANEL_PANEL_SPACING / 2 }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Reusable resize handle component
- * Width matches PANEL_PANEL_SPACING (5px) with expanded hit area via padding
- */
-function ResizeHandle({ panelId }: { panelId: PanelId }) {
-  const { getPanel, resizing, startResize } = useAppLayoutPanels();
-  const panel = getPanel(panelId);
-  const { ref, handlers, gradientStyle } = useResizeGradient(panelId);
-
-  if (!panel.visible) return null;
-
-  return (
-    <div
-      ref={ref}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        startResize(panelId);
-      }}
-      onMouseMove={handlers.onMouseMove}
-      onMouseLeave={handlers.onMouseLeave}
-      className="h-full cursor-col-resize shrink-0 relative px-1"
-      style={{ width: PANEL_PANEL_SPACING }}
-    >
-      {/* Gradient overlay */}
-      <div
-        className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5"
-        style={{
-          ...gradientStyle,
-          transition:
-            resizing === panelId ? undefined : 'opacity 0.15s ease-out',
-        }}
-      />
+      <div className="h-full rounded-lg bg-card pb-2">{children}</div>
     </div>
   );
 }
@@ -223,7 +190,7 @@ export function AppLayoutContentPanel({ children }: { children: ReactNode }) {
       <motion.div
         initial={false}
         animate={{
-          width: panel.visible ? panel.width : 0,
+          width: panel.collapsed ? 0 : panel.width,
         }}
         transition={
           resizing === 'contentPanel' ? { duration: 0 } : springTransition
@@ -255,7 +222,7 @@ export function AppLayoutSecondarySidebar({
       <motion.div
         initial={false}
         animate={{
-          width: panel.visible ? panel.width : 0,
+          width: panel.collapsed ? 0 : panel.width,
         }}
         transition={
           resizing === 'secondarySidebar' ? { duration: 0 } : springTransition
