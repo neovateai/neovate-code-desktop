@@ -121,14 +121,11 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
     };
   }, []);
 
-  // Start editor when pane becomes active
   useEffect(() => {
-    if (!isActive) return;
     if (initRef.current && status === 'ready') return;
-
     initRef.current = true;
     startEditor();
-  }, [isActive]);
+  }, []);
 
   // Focus iframe when active
   useEffect(() => {

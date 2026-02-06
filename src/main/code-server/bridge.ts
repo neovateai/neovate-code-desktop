@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import net from 'net';
 import type { WebContents } from 'electron';
+import { randomUUID } from 'node:crypto';
 import { getRendererCaller } from '../../shared/lib/ipc/main';
 import type { IPCRendererHandlers } from '../ipc';
 
@@ -22,6 +23,14 @@ class ExtensionBridgeServer extends EventEmitter {
     ) => Promise<any>
   >();
   private webContents?: WebContents;
+  private pendingRequests = new Map<
+    string,
+    {
+      resolve: (value: any) => void;
+      reject: (error: any) => void;
+      timeout: NodeJS.Timeout;
+    }
+  >();
 
   connect2renderer(webContents: WebContents) {
     this.webContents = webContents;
@@ -36,7 +45,23 @@ class ExtensionBridgeServer extends EventEmitter {
           try {
             const data = JSON.parse(raw.toString());
             console.log('ExtensionBridgeServer Received', data);
-            const { operationType, params, cwd } = data || {};
+            const { operationType, params, cwd, result, requestId } =
+              data || {};
+
+            // 处理响应（包含requestId的是响应消息）
+            if (requestId && this.pendingRequests.has(requestId)) {
+              const pending = this.pendingRequests.get(requestId);
+              if (pending) {
+                clearTimeout(pending.timeout);
+                this.pendingRequests.delete(requestId);
+                pending.resolve(
+                  result as { success: boolean; data: Record<string, any> },
+                );
+                return;
+              }
+            }
+
+            // 处理请求（包含operationType的是请求消息）
             if (!operationType || !cwd) {
               return;
             }
@@ -54,12 +79,16 @@ class ExtensionBridgeServer extends EventEmitter {
             if (handler) {
               try {
                 const result = await handler(params, cwd, this.webContents);
-                const response = JSON.stringify(result);
+                const response = JSON.stringify({
+                  ...result,
+                  requestId: data.requestId,
+                });
                 socket.write(Buffer.from(response));
               } catch (error) {
                 const response = JSON.stringify({
                   success: false,
                   error: error instanceof Error ? error.message : String(error),
+                  requestId: data.requestId,
                 });
                 socket.write(Buffer.from(response));
               }
@@ -67,6 +96,7 @@ class ExtensionBridgeServer extends EventEmitter {
               const response = JSON.stringify({
                 success: false,
                 error: `No handler registered for operation: ${operationType}`,
+                requestId: data.requestId,
               });
               socket.write(Buffer.from(response));
             }
@@ -83,6 +113,12 @@ class ExtensionBridgeServer extends EventEmitter {
           if (currentCwd) {
             this.clients.delete(currentCwd);
           }
+          // 清理该cwd相关的所有pending请求
+          for (const [requestId, pending] of this.pendingRequests.entries()) {
+            pending.reject(new Error('Connection closed'));
+            clearTimeout(pending.timeout);
+            this.pendingRequests.delete(requestId);
+          }
         });
       });
       this.server.listen(port, () => {
@@ -95,13 +131,46 @@ class ExtensionBridgeServer extends EventEmitter {
     });
   }
 
-  send(request: Omit<IBridgeRequestParams, 'cwd'>, cwd: string) {
-    const data = Buffer.from(JSON.stringify(request));
+  send<T extends Record<string, any>>(
+    request: Omit<IBridgeRequestParams, 'cwd'>,
+    cwd: string,
+    timeoutMs: number = 5000,
+  ): Promise<{
+    success: boolean;
+    data: T;
+  }> {
+    return new Promise((resolve, reject) => {
+      const requestId = randomUUID();
+      const data = Buffer.from(
+        JSON.stringify({
+          ...request,
+          requestId,
+          cwd,
+        }),
+      );
 
-    const client = this.clients.get(cwd);
-    if (client && !client.destroyed) {
+      const client = this.clients.get(cwd);
+      if (!client || client.destroyed) {
+        reject(new Error(`No active client for cwd: ${cwd}`));
+        return;
+      }
+
+      // 设置超时
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(requestId);
+        reject(new Error(`Request timeout after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      // 存储pending请求
+      this.pendingRequests.set(requestId, {
+        resolve,
+        reject,
+        timeout,
+      });
+
+      // 发送请求
       client.write(data);
-    }
+    });
   }
 
   register<T>(
@@ -123,6 +192,13 @@ class ExtensionBridgeServer extends EventEmitter {
       });
       this.clients.clear();
       this.handlers.clear();
+
+      // 清理所有pending请求
+      for (const [requestId, pending] of this.pendingRequests.entries()) {
+        pending.reject(new Error('Server stopped'));
+        clearTimeout(pending.timeout);
+        this.pendingRequests.delete(requestId);
+      }
     }
   }
 }
@@ -131,10 +207,6 @@ export const bridgeServer = new ExtensionBridgeServer();
 
 bridgeServer.register('ping', async () => {
   return { success: true, data: { msg: 'connect success' } };
-});
-bridgeServer.register('file.change', async (params) => {
-  console.log('file change', params);
-  // TODO: When file change, do sth
 });
 /** trigger by click link in editor */
 bridgeServer.register('link.open', async (params, cwd, webContents) => {

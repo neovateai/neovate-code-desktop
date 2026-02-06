@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from '@neovate/code';
+
+import { editorControllers } from './editor';
 import { getFileTree } from './tree';
 import { searchFiles } from './search';
-import { bridgeServer } from '../../code-server/bridge';
 
 export const fsPlugin: Plugin = {
   name: 'fs',
@@ -70,33 +71,6 @@ export const fsPlugin: Plugin = {
           };
         }
       },
-      'editor.open': async (data: {
-        cwd: string;
-        filePath: string;
-        line?: number;
-      }) => {
-        /** TODO: 先放这里，后面看是不是提取到另一个插件中 */
-        const { cwd = '', filePath = '', line } = data || {};
-        bridgeServer.send(
-          { operationType: 'editor.open', params: { filePath, line } },
-          cwd,
-        );
-        return {
-          success: true,
-          data: {},
-        };
-      },
-      'editor.theme.set': (data: { cwd: string; theme: string }) => {
-        const { cwd = '', theme = '' } = data || {};
-        bridgeServer.send(
-          { operationType: 'editor.theme.set', params: { theme } },
-          cwd,
-        );
-        return {
-          success: true,
-          data: {},
-        };
-      },
       'keyword.search': async (data: {
         cwd: string;
         query: string;
@@ -128,6 +102,7 @@ export const fsPlugin: Plugin = {
           };
         }
       },
+      ...editorControllers,
     } as ReturnType<NonNullable<Plugin['nodeBridgeHandler']>>;
   },
 };

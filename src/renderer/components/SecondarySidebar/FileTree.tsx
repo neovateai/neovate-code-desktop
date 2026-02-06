@@ -74,7 +74,6 @@ export function FileTree() {
   const handleSelect = (item: IFileTreeItem) => {
     setSelectedKey(item.fullPath);
     if (!item.isFolder) {
-      console.log('OPEN FILE', item);
       if (!getPanel('contentPanel').visible) {
         toggle('contentPanel');
       }
