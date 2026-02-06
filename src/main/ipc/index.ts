@@ -1,8 +1,9 @@
-import { app } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import { createMainHandler } from '../../shared/lib/ipc/main';
 import { codeServerManager } from '../code-server';
 import { ptyManager } from '../pty';
 import { neovateServerManager } from '../server';
+import { computeEnsuredWindowWidth } from '../../shared/layout/windowSizing';
 import {
   deleteTerminalState,
   getPtyCwd,
@@ -121,6 +122,34 @@ export const ipcMainHandlers = {
 
     getVersion: createMainHandler<void, { version: string }>(async () => {
       return { version: app.getVersion() };
+    }),
+  },
+
+  window: {
+    ensureWidth: createMainHandler<
+      { minWidth: number },
+      { appliedWidth: number; maxWidth: number }
+    >(async ({ input }) => {
+      const win =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+      if (!win) return { appliedWidth: 0, maxWidth: 0 };
+
+      const display = screen.getDisplayMatching(win.getBounds());
+      const maxWidth = display.workAreaSize.width;
+      const [curW, curH] = win.getSize();
+      const [, minH] = win.getMinimumSize();
+      const { target, appliedWidth } = computeEnsuredWindowWidth({
+        currentWidth: curW,
+        minWidth: input.minWidth,
+        maxWidth,
+      });
+
+      win.setMinimumSize(target, minH);
+      if (curW < target) {
+        win.setSize(target, curH);
+      }
+
+      return { appliedWidth, maxWidth };
     }),
   },
 };

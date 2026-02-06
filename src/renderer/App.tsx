@@ -263,8 +263,8 @@ function App() {
                 </AppLayoutActivityBar>
               </div>
 
-              {/* Status Bar */}
-              <StatusBar />
+              {/* Status Bar - hidden for now */}
+              {/* <StatusBar /> */}
             </AppLayoutRightContainer>
           </AppLayoutRoot>
 

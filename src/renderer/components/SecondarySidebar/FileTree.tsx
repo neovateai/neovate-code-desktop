@@ -74,7 +74,8 @@ export function FileTree() {
   const handleSelect = (item: IFileTreeItem) => {
     setSelectedKey(item.fullPath);
     if (!item.isFolder) {
-      if (!getPanel('contentPanel').visible) {
+      console.log('OPEN FILE', item);
+      if (getPanel('contentPanel').collapsed) {
         toggle('contentPanel');
       }
       setPendingTabRequest({
