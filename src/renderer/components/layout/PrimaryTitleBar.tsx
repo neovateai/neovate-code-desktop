@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRendererApp } from '../../core/app';
@@ -14,8 +15,9 @@ export function PrimaryTitleBar() {
   const selectedRepoPath = useStore((s) => s.selectedRepoPath);
 
   const selectedRepo = selectedRepoPath ? repos[selectedRepoPath] : null;
-  const pluginItems = app.contributions.flatMap(
-    (c) => c.primaryTitlebarItems ?? [],
+  const pluginItems = useMemo(
+    () => app.contributions.flatMap((c) => c.primaryTitlebarItems ?? []),
+    [app.contributions],
   );
 
   if (multiProjectSupport) {
@@ -26,7 +28,7 @@ export function PrimaryTitleBar() {
         style={{ WebkitAppRegion: 'no-drag' }}
       >
         <SessionInfoBar />
-        {pluginItems?.map((item) => (
+        {pluginItems.map((item) => (
           <PluginTitlebarItem key={item.id} item={item} app={app} />
         ))}
       </div>
@@ -56,7 +58,7 @@ export function PrimaryTitleBar() {
           />
         </Button>
       </AddRepoMenu>
-      {pluginItems?.map((item) => (
+      {pluginItems.map((item) => (
         <PluginTitlebarItem key={item.id} item={item} app={app} />
       ))}
     </div>

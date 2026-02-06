@@ -5,7 +5,7 @@ import {
   Search01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import type { ComponentType } from 'react';
+import { useMemo, type ComponentType } from 'react';
 import { useRendererApp } from '../../core/app';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store';
@@ -35,8 +35,9 @@ export const ActivityBar = function ActivityBar() {
   };
 
   // Get plugin activity bar items
-  const pluginItems = app.contributions.flatMap(
-    (c) => c.activityBarItems ?? [],
+  const pluginItems = useMemo(
+    () => app.contributions.flatMap((c) => c.activityBarItems ?? []),
+    [app.contributions],
   );
 
   return (
