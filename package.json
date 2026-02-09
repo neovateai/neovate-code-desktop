@@ -16,6 +16,7 @@
     "package:dev": "npm run build && BUILD_ENV=dev electron-builder --mac --config configs/electron-builder.mjs",
     "package:local": "npm run build && BUILD_ENV=dev electron-builder --mac --config configs/electron-builder.local.mjs",
     "postinstall": "electron-builder install-app-deps",
+    "build:vs": "cd vscode-extension && npm run build",
     "prepare": "husky",
     "preinstall": "npx only-allow npm",
     "release": "npx bumpp",
