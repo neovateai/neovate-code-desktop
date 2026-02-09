@@ -23,10 +23,10 @@ export const scmPlugin: Plugin = {
           };
         }
       },
-      'scm.add': async (data: { cwd: string; fullPath: string }) => {
+      'scm.add': async (data: { cwd: string; files: string[] }) => {
         try {
           const gitClient = git(data.cwd);
-          await gitClient.add(data.fullPath);
+          await gitClient.add(data.files);
 
           return { success: true, data: {} };
         } catch (error) {
@@ -37,10 +37,10 @@ export const scmPlugin: Plugin = {
           };
         }
       },
-      'scm.reset': async (data: { cwd: string; fullPath: string }) => {
+      'scm.reset': async (data: { cwd: string; files: string[] }) => {
         try {
           const gitClient = git(data.cwd);
-          await gitClient.reset(['HEAD', data.fullPath]);
+          await gitClient.reset(['HEAD', ...data.files]);
 
           return { success: true, data: {} };
         } catch (error) {
@@ -51,10 +51,10 @@ export const scmPlugin: Plugin = {
           };
         }
       },
-      'scm.checkout': async (data: { cwd: string; fullPath: string }) => {
+      'scm.checkout': async (data: { cwd: string; files: string[] }) => {
         try {
           const gitClient = git(data.cwd);
-          await gitClient.checkout([data.fullPath]);
+          await gitClient.checkout(data.files);
 
           return { success: true, data: {} };
         } catch (error) {

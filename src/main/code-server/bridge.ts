@@ -205,8 +205,13 @@ class ExtensionBridgeServer extends EventEmitter {
 
 export const bridgeServer = new ExtensionBridgeServer();
 
-bridgeServer.register('ping', async () => {
-  return { success: true, data: { msg: 'connect success' } };
+bridgeServer.register('ping', async (params, cwd, webContents) => {
+  if (webContents) {
+    const caller = getRendererCaller<IPCRendererHandlers>(webContents);
+    caller.extension.ready.send();
+    return { success: true, data: { msg: 'connect success' } };
+  }
+  return { success: false, data: {}, errorMsg: `WebContents not found` };
 });
 /** trigger by click link in editor */
 bridgeServer.register('link.open', async (params, cwd, webContents) => {

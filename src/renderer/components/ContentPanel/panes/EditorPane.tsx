@@ -57,6 +57,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   const { request } = useStore();
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
   const theme = useStore((state) => state.theme);
+  const [extensionReady, setExtensionReady] = useState(false);
 
   const startEditor = async () => {
     if (status === 'starting') return;
@@ -108,16 +109,26 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   }, [pendingTabUri]);
 
   useEffect(() => {
-    request<any>('editor.theme.set', { cwd: repoPath, theme });
-  }, [theme]);
+    if (extensionReady) {
+      request<any>('editor.theme.set', { cwd: repoPath, theme });
+    }
+  }, [theme, extensionReady]);
 
-  // editor extension 劫持了https 链接，使用内置browser打开
   useEffect(() => {
-    const unsub = ipcRendererHandler.browser.open.listen((url) => {
-      setPendingTabRequest({ type: 'browser', uri: url, repoPath });
-    });
+    const unsubs = [
+      // editor extension 劫持了https 链接，使用内置browser打开
+      ipcRendererHandler.browser.open.listen((url) => {
+        setPendingTabRequest({ type: 'browser', uri: url, repoPath });
+      }),
+      // 插件就绪
+      ipcRendererHandler.extension.ready.listen(() => {
+        setExtensionReady(true);
+      }),
+    ];
     return () => {
-      unsub();
+      unsubs.forEach((fn) => {
+        fn();
+      });
     };
   }, []);
 

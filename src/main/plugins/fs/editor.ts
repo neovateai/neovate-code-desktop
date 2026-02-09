@@ -29,4 +29,12 @@ export const editorControllers = {
     );
     return res;
   },
+  'editor.diff': (data: { cwd: string; filePath: string }) => {
+    const { cwd = '', filePath = '' } = data || {};
+    const res = bridgeServer.send(
+      { operationType: 'git.diff', params: { filePath } },
+      cwd,
+    );
+    return res;
+  },
 };
