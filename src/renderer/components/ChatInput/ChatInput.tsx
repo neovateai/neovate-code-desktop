@@ -5,6 +5,7 @@ import {
   NoteIcon,
   SentIcon,
 } from '@hugeicons/core-free-icons';
+import { Square } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import type React from 'react';
 import {
@@ -489,15 +490,23 @@ export const ChatInput = memo(
                   <Button
                     type="button"
                     size="icon-sm"
-                    onClick={handleSendClick}
-                    disabled={!canSend}
+                    onClick={isProcessing ? handleCancel : handleSendClick}
+                    disabled={isProcessing ? false : !canSend}
                   >
-                    <HugeiconsIcon icon={SentIcon} size={16} />
+                    {isProcessing ? (
+                      <Square size={16} fill="currentColor" />
+                    ) : (
+                      <HugeiconsIcon icon={SentIcon} size={16} />
+                    )}
                   </Button>
                 }
               />
               <TooltipPopup>
-                {canSend ? 'Send message (Enter)' : 'Type a message to send'}
+                {isProcessing
+                  ? 'Cancel (Esc)'
+                  : canSend
+                    ? 'Send message (Enter)'
+                    : 'Type a message to send'}
               </TooltipPopup>
             </Tooltip>
           </InputGroupAddon>
