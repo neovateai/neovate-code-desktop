@@ -9,6 +9,8 @@ export interface PluginConfigContribution {
   activityBarItems?: ActivityBarItemDescriptor[];
   secondarySidebarPanels?: SecondarySidebarPanelDescriptor[];
   contentPanels?: ContentPanelDescriptor[];
+  primaryTitlebarItems?: TitlebarItemDescriptor[];
+  secondaryTitlebarItems?: TitlebarItemDescriptor[];
 }
 
 // ============================================
@@ -64,4 +66,18 @@ export interface ContentPanelDescriptor {
   componentLoader: () => Promise<{ default: ComponentType<ContentPanelProps> }>;
   /** If true, only one instance allowed */
   singleton?: boolean;
+}
+
+// ============================================
+// Titlebar
+// ============================================
+export interface TitlebarItemProps {
+  app: RendererApp;
+}
+
+export interface TitlebarItemDescriptor {
+  /** Unique identifier */
+  id: string;
+  /** Lazy component loader */
+  componentLoader: () => Promise<{ default: ComponentType<TitlebarItemProps> }>;
 }

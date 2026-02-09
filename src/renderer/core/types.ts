@@ -56,6 +56,6 @@ export type RendererPlugin = DefinePlugin<
  * Configuration for a window type
  */
 export interface WindowConfig {
-  windowId: string;
+  windowType: string;
   componentLoader: () => Promise<{ default: ComponentType }>;
 }

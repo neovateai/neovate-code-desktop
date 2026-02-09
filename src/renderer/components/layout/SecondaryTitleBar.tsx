@@ -1,12 +1,20 @@
+import { useMemo } from 'react';
 import { Settings01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useRendererApp } from '../../core/app';
 import { useStore } from '../../store';
 import { OpenAppButton } from '../OpenAppButton';
 import { Button } from '../ui/button';
+import { PluginTitlebarItem } from './PluginTitlebarItem';
 
 export function SecondaryTitleBar() {
+  const app = useRendererApp();
   const setShowSettings = useStore((s) => s.setShowSettings);
   const selectedRepoPath = useStore((s) => s.selectedRepoPath);
+  const pluginItems = useMemo(
+    () => app.contributions.flatMap((c) => c.secondaryTitlebarItems ?? []),
+    [app.contributions],
+  );
 
   return (
     <div
@@ -22,6 +30,9 @@ export function SecondaryTitleBar() {
         // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
         style={{ WebkitAppRegion: 'no-drag' }}
       >
+        {pluginItems.map((item) => (
+          <PluginTitlebarItem key={item.id} item={item} app={app} />
+        ))}
         {selectedRepoPath && <OpenAppButton cwd={selectedRepoPath} />}
         <Button
           variant="ghost"
