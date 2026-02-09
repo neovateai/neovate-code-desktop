@@ -11,11 +11,11 @@ import type {
   ThemeValue,
 } from './store/slices/desktopSettings';
 import type {
-  ContentPanelTab,
   SecondarySidebarTab,
   SidebarOrganize,
   SidebarSortBy,
 } from './store/slices/ui';
+import type { ContentTab } from './components/ContentPanel/types';
 
 // Settings active tab type
 type SettingsActiveTab =
@@ -41,8 +41,10 @@ interface PersistedState {
   showSettings: boolean;
   settingsActiveTab: SettingsActiveTab;
   // UISlice state
-  contentPanelTabs: ContentPanelTab[];
-  contentPanelActiveTab: ContentPanelTab | null;
+  contentPanelTabs: {
+    tabsByRepo: Record<string, ContentTab[]>;
+    activeTabIdByRepo: Record<string, string | null>;
+  };
   secondarySidebarTab: SecondarySidebarTab;
   sidebarOrganize: SidebarOrganize;
   sidebarSortBy: SidebarSortBy;
@@ -117,8 +119,10 @@ export function setupPersistence(store: StoreApi<any>): void {
       showSettings: state.showSettings ?? false,
       settingsActiveTab: state.settingsActiveTab ?? 'preferences',
       // UISlice state
-      contentPanelTabs: state.contentPanelTabs ?? ['terminal'],
-      contentPanelActiveTab: state.contentPanelActiveTab ?? 'terminal',
+      contentPanelTabs: {
+        tabsByRepo: state.contentPanelTabs?.tabsByRepo ?? {},
+        activeTabIdByRepo: state.contentPanelTabs?.activeTabIdByRepo ?? {},
+      },
       secondarySidebarTab: state.secondarySidebarTab ?? 'files',
       sidebarOrganize: state.sidebarOrganize ?? 'byProject',
       sidebarSortBy: state.sidebarSortBy ?? 'updated',
@@ -193,8 +197,7 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
       showSettings = false,
       settingsActiveTab = 'preferences',
       // UISlice state
-      contentPanelTabs = ['terminal'],
-      contentPanelActiveTab = 'terminal',
+      contentPanelTabs = { tabsByRepo: {}, activeTabIdByRepo: {} },
       secondarySidebarTab = 'files',
       sidebarOrganize = 'byProject',
       sidebarSortBy = 'updated',
@@ -247,9 +250,12 @@ export async function hydrateStore(store: StoreApi<any>): Promise<boolean> {
         // Settings state
         showSettings,
         settingsActiveTab,
-        // UISlice state
-        contentPanelTabs,
-        contentPanelActiveTab,
+        // UISlice state - merge persisted data into contentPanelTabs namespace
+        contentPanelTabs: {
+          ...store.getState().contentPanelTabs,
+          tabsByRepo: contentPanelTabs.tabsByRepo,
+          activeTabIdByRepo: contentPanelTabs.activeTabIdByRepo,
+        },
         secondarySidebarTab,
         sidebarOrganize,
         sidebarSortBy,

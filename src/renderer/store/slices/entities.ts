@@ -5,6 +5,7 @@ import type {
   WorkspaceData,
 } from '../../client/types/entities';
 import type { NormalizedMessage } from '../../client/types/message';
+import type { ContentPanelTabsState } from './ui';
 import { randomUUID } from '../../utils/uuid';
 
 type WorkspaceId = string;
@@ -64,6 +65,7 @@ interface StoreWithSelections {
   pinnedSessions: string[];
   sidebarOrganize: 'byProject' | 'chronological';
   sidebarSortBy: 'created' | 'updated';
+  contentPanelTabs: ContentPanelTabsState;
   selectRepo: (path: string | null) => void;
   selectWorkspace: (id: string | null) => void;
   selectSession: (id: string | null) => void;
@@ -139,12 +141,23 @@ export const createEntitiesSlice: StateCreator<
         selectedSessionId = null;
       }
 
+      // Clean up tabs for the deleted repo
+      const { [path]: _removedTabs, ...newTabsByRepo } =
+        state.contentPanelTabs.tabsByRepo;
+      const { [path]: _removedActiveTab, ...newActiveTabIdByRepo } =
+        state.contentPanelTabs.activeTabIdByRepo;
+
       return {
         repos: newRepos,
         workspaces: newWorkspaces,
         selectedRepoPath,
         selectedWorkspaceId,
         selectedSessionId,
+        contentPanelTabs: {
+          ...state.contentPanelTabs,
+          tabsByRepo: newTabsByRepo,
+          activeTabIdByRepo: newActiveTabIdByRepo,
+        },
       };
     });
   },

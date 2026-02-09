@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CONTENT_TAB_PERSIST_DELAY_MS } from '../../constants';
+import { useCallback, useEffect } from 'react';
+import { generateTabId } from '../../lib/utils';
+import { useStore } from '../../store';
 import type {
   ContentTab,
   ContentTabType,
@@ -7,49 +8,8 @@ import type {
   TabOfType,
 } from './types';
 
-// Generate unique tab ID
-function generateTabId(): string {
-  return `tab-${crypto.randomUUID().slice(0, 8)}`;
-}
-
-// Persistence key for localStorage
-function getPersistenceKey(repoPath: string): string {
-  return `contentTabs:${repoPath}`;
-}
-
-// Load tabs from localStorage
-function loadPersistedTabs(
-  repoPath: string,
-): { tabs: ContentTab[]; activeTabId: string | null } | null {
-  try {
-    const stored = localStorage.getItem(getPersistenceKey(repoPath));
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed.tabs) && parsed.tabs.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.error('[useContentTabs] Failed to load persisted tabs:', e);
-  }
-  return null;
-}
-
-// Save tabs to localStorage
-function persistTabs(
-  repoPath: string,
-  tabs: ContentTab[],
-  activeTabId: string | null,
-): void {
-  try {
-    localStorage.setItem(
-      getPersistenceKey(repoPath),
-      JSON.stringify({ tabs, activeTabId }),
-    );
-  } catch (e) {
-    console.error('[useContentTabs] Failed to persist tabs:', e);
-  }
-}
+// Stable empty array to avoid re-renders
+const EMPTY_TABS: ContentTab[] = [];
 
 // Create default terminal tab
 function createDefaultTerminalTab(): ContentTab {
@@ -58,6 +18,17 @@ function createDefaultTerminalTab(): ContentTab {
     type: 'terminal',
     name: 'Terminal',
     ptyId: null,
+  };
+}
+
+// Create default editor tab
+function createDefaultEditorTab(): ContentTab {
+  return {
+    id: generateTabId(),
+    type: 'editor',
+    name: 'Editor',
+    filePath: '',
+    isDirty: false,
   };
 }
 
@@ -87,107 +58,79 @@ export function useContentTabs({
   repoPath,
   onTabClose,
 }: UseContentTabsOptions): UseContentTabsReturn {
-  // Initialize state from persistence or default
-  const [state, setState] = useState<{
-    tabs: ContentTab[];
-    activeTabId: string | null;
-  }>(() => {
-    const persisted = loadPersistedTabs(repoPath);
-    if (persisted) {
-      return persisted;
-    }
-    const defaultTab = createDefaultTerminalTab();
-    const editorTab = {
-      id: generateTabId(),
-      type: 'editor' as const,
-      name: 'Editor',
-      filePath: '',
-      isDirty: false,
-    };
-    return { tabs: [defaultTab, editorTab], activeTabId: defaultTab.id };
-  });
+  // Read from store (namespaced under contentPanelTabs)
+  const tabs = useStore(
+    (state) => state.contentPanelTabs.tabsByRepo[repoPath] ?? EMPTY_TABS,
+  );
+  const activeTabId = useStore(
+    (state) => state.contentPanelTabs.activeTabIdByRepo[repoPath] ?? null,
+  );
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
 
-  const { tabs, activeTabId } = state;
-
-  // Persist on change (debounced)
-  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (persistTimeoutRef.current) {
-      clearTimeout(persistTimeoutRef.current);
-    }
-    persistTimeoutRef.current = setTimeout(() => {
-      persistTabs(repoPath, tabs, activeTabId);
-    }, CONTENT_TAB_PERSIST_DELAY_MS);
-
-    return () => {
-      if (persistTimeoutRef.current) {
-        clearTimeout(persistTimeoutRef.current);
-      }
-    };
-  }, [repoPath, tabs, activeTabId]);
-
-  // Save on unmount
-  useEffect(() => {
-    return () => {
-      persistTabs(repoPath, tabs, activeTabId);
-    };
-  }, []);
-
-  const activeTab = useMemo(
-    () => tabs.find((t) => t.id === activeTabId) ?? null,
-    [tabs, activeTabId],
+  // Store actions
+  const { open, close, activate, update, reorder, initForRepo } = useStore(
+    (state) => state.contentPanelTabs,
   );
 
-  const addTab = useCallback((input: CreateTabInput): string => {
-    const id = generateTabId();
-    const newTab = { ...input, id } as ContentTab;
+  // Initialize default tabs if repo not in store
+  useEffect(() => {
+    const isInitialized =
+      repoPath in useStore.getState().contentPanelTabs.tabsByRepo;
+    if (!isInitialized) {
+      const defaultTerminal = createDefaultTerminalTab();
+      const defaultEditor = createDefaultEditorTab();
+      initForRepo(
+        repoPath,
+        [defaultTerminal, defaultEditor],
+        defaultTerminal.id,
+      );
+    }
+  }, [repoPath, initForRepo]);
 
-    setState((prev) => ({
-      tabs: [...prev.tabs, newTab],
-      activeTabId: id,
-    }));
+  // No localStorage logic - persistence handled by Store's setupPersistence()
 
-    return id;
-  }, []);
+  // Wrap actions with repoPath
+  const addTab = useCallback(
+    (input: CreateTabInput): string => {
+      const result = open(input, repoPath);
+      return result?.id ?? '';
+    },
+    [open, repoPath],
+  );
 
   const closeTab = useCallback(
     (tabId: string) => {
-      setState((prev) => {
-        const tabToClose = prev.tabs.find((t) => t.id === tabId);
-        if (tabToClose && onTabClose) {
-          onTabClose(tabToClose);
-        }
-
-        const newTabs = prev.tabs.filter((t) => t.id !== tabId);
-
-        // If closing active tab, switch to last remaining tab
-        let newActiveId = prev.activeTabId;
-        if (prev.activeTabId === tabId && newTabs.length > 0) {
-          newActiveId = newTabs[newTabs.length - 1].id;
-        } else if (newTabs.length === 0) {
-          newActiveId = null;
-        }
-
-        return { tabs: newTabs, activeTabId: newActiveId };
-      });
+      // Call onTabClose callback before closing
+      const tabToClose = useStore
+        .getState()
+        .contentPanelTabs.tabsByRepo[repoPath]?.find((t) => t.id === tabId);
+      if (tabToClose && onTabClose) {
+        onTabClose(tabToClose);
+      }
+      close(tabId, repoPath);
     },
-    [onTabClose],
+    [close, repoPath, onTabClose],
   );
 
-  const setActiveTab = useCallback((tabId: string) => {
-    setState((prev) => ({ ...prev, activeTabId: tabId }));
-  }, []);
+  const setActiveTab = useCallback(
+    (tabId: string) => {
+      activate(tabId, repoPath);
+    },
+    [activate, repoPath],
+  );
 
   const updateTab = useCallback(
     (tabId: string, updates: Partial<ContentTab>) => {
-      setState((prev) => ({
-        ...prev,
-        tabs: prev.tabs.map((t) =>
-          t.id === tabId ? ({ ...t, ...updates } as ContentTab) : t,
-        ),
-      }));
+      update(tabId, updates, repoPath);
     },
-    [],
+    [update, repoPath],
+  );
+
+  const reorderTabs = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      reorder(fromIndex, toIndex, repoPath);
+    },
+    [reorder, repoPath],
   );
 
   const getTabsByType = useCallback(
@@ -196,15 +139,6 @@ export function useContentTabs({
     },
     [tabs],
   );
-
-  const reorderTabs = useCallback((fromIndex: number, toIndex: number) => {
-    setState((prev) => {
-      const newTabs = [...prev.tabs];
-      const [movedTab] = newTabs.splice(fromIndex, 1);
-      newTabs.splice(toIndex, 0, movedTab);
-      return { ...prev, tabs: newTabs };
-    });
-  }, []);
 
   return {
     tabs,
