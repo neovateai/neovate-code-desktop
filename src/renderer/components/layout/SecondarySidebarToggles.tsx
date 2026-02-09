@@ -9,7 +9,7 @@ import { useAppLayoutPanels } from './AppLayoutProvider';
 export function SecondarySidebarToggles() {
   const { getPanel, toggle } = useAppLayoutPanels();
   const panel = getPanel('secondarySidebar');
-  const collapsed = !panel.visible;
+  const collapsed = panel.collapsed;
 
   return (
     <div
