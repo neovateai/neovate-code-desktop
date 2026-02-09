@@ -1,11 +1,7 @@
-import { MultiFileDiff } from '@pierre/diffs/react';
 import { useMemo } from 'react';
+import { FileDiff } from '../FileDiff';
 import type { DiffViewerProps } from './types';
 
-/**
- * DiffViewer component
- * Displays file differences in a simple, color-coded format
- */
 export function DiffViewer({
   originalContent,
   newContent,
@@ -19,14 +15,5 @@ export function DiffViewer({
     [filePath, originalContent, newContent],
   );
 
-  return (
-    <MultiFileDiff
-      oldFile={oldFile}
-      newFile={newFile}
-      options={{
-        theme: { dark: 'github-dark', light: 'github-light' },
-        diffStyle: 'split',
-      }}
-    />
-  );
+  return <FileDiff oldFile={oldFile} newFile={newFile} />;
 }

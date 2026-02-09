@@ -1,7 +1,7 @@
 import { FileIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { MultiFileDiff } from '@pierre/diffs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { FileDiff } from '../../FileDiff';
 import { useStore } from '../../../store';
 import {
   Accordion,
@@ -153,13 +153,9 @@ export function ReviewPane({ tab, isActive }: ReviewPaneProps) {
               </div>
             </AccordionTrigger>
             <AccordionPanel className="p-0">
-              <MultiFileDiff
+              <FileDiff
                 oldFile={{ name: diff.path, contents: diff.oldContent }}
                 newFile={{ name: diff.path, contents: diff.newContent }}
-                options={{
-                  theme: { dark: 'github-dark', light: 'github-light' },
-                  diffStyle: 'split',
-                }}
               />
             </AccordionPanel>
           </AccordionItem>

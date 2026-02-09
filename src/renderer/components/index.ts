@@ -4,6 +4,7 @@ export {
   ImagePreview,
   SuggestionDropdown,
 } from './ChatInput';
+export { FileDiff } from './FileDiff';
 export { RepoSidebar } from './RepoSidebar';
 export { SessionActionsMenu } from './SessionActionsMenu';
 export { SessionInfoBar } from './SessionInfoBar';
