@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Neovate Code Desktop",
   "main": "dist/main/index.js",
+  "workspaces": [
+    "vscode-extension"
+  ],
   "scripts": {
     "build": "electron-vite build",
     "dev": "electron-vite dev",

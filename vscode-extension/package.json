@@ -1,0 +1,24 @@
+{
+  "name": "neovate-code-extension",
+  "displayName": "Neovate Code",
+  "description": "Neovate Code VS Code Extension",
+  "version": "0.0.1",
+  "publisher": "neovateai",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {},
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.9.3"
+  }
+}
