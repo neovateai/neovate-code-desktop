@@ -1,27 +1,18 @@
 import { memo, useEffect, useState } from 'react';
 import {
-  PlusCircle,
-  Trash2,
-  Edit3,
   ChevronDown,
   ChevronRight,
   ArrowUp,
   ArrowDown,
   RefreshCw,
-  RotateCcw,
+  Undo2,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../../store';
-import '../../styles/seti.css';
+import { useGit } from './useGit';
+import type { GitFile } from './useGit';
 
-interface GitFile {
-  extName: string;
-  fileName: string;
-  fullPath: string;
-  relPath: string;
-  status: 'modified' | 'deleted' | 'untracked' | 'added';
-  staged?: boolean;
-}
+import '../../styles/seti.css';
 
 export const GitPanel = memo(function GitPanel() {
   const { t } = useTranslation();
@@ -31,67 +22,26 @@ export const GitPanel = memo(function GitPanel() {
   const cwd = selectedWorkspaceId
     ? workspaces[selectedWorkspaceId]?.worktreePath
     : null;
-  const [workingFiles, setWorkingFiles] = useState<GitFile[]>([]);
-  const [stagedFiles, setStagedFiles] = useState<GitFile[]>([]);
+
   const [workingCollapsed, setWorkingCollapsed] = useState(false);
   const [stagedCollapsed, setStagedCollapsed] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const {
+    loading,
+    workingFiles,
+    stagedFiles,
+    refreshGitStatus,
+    clearStaged,
+    revertAll,
+    stageAll,
+    add2stage,
+    removeFromStage,
+    revert,
+  } = useGit(cwd || '');
 
   useEffect(() => {
     if (!cwd) return;
     refreshGitStatus(cwd);
   }, [cwd]);
-
-  const refreshGitStatus = async (workingDir: string) => {
-    setLoading(true);
-    try {
-      const res = await request<any>('scm.panel', { cwd: workingDir });
-      console.log('scm.panel', res);
-      setWorkingFiles(res?.data?.working || []);
-      setStagedFiles(res?.data?.staged || []);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddToStage = async (file: GitFile) => {
-    if (!cwd) return;
-
-    try {
-      await request<any>('scm.add', { cwd, fullPath: file.fullPath });
-      refreshGitStatus(cwd);
-    } catch (error) {
-      console.error('Failed to add file to stage:', error);
-    }
-  };
-
-  const handleRemoveFromStage = async (file: GitFile) => {
-    if (!cwd) return;
-
-    try {
-      await request<any>('scm.reset', { cwd, fullPath: file.fullPath });
-      refreshGitStatus(cwd);
-    } catch (error) {
-      console.error('Failed to remove file from stage:', error);
-    }
-  };
-
-  const handleRevertFile = async (file: GitFile) => {
-    if (!cwd) return;
-
-    try {
-      // 对于未跟踪的文件，直接删除
-      if (file.status === 'untracked') {
-        await request<any>('fs.delete', { path: file.fullPath });
-      } else {
-        // 对于已跟踪的文件，使用git checkout还原
-        await request<any>('scm.checkout', { cwd, fullPath: file.fullPath });
-      }
-      refreshGitStatus(cwd);
-    } catch (error) {
-      console.error('Failed to revert file:', error);
-    }
-  };
 
   const getFileIcon = (extName: string) => {
     const suffix = extName.startsWith('.') ? extName.slice(1) : extName;
@@ -104,15 +54,16 @@ export const GitPanel = memo(function GitPanel() {
     );
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'modified':
-        return <Edit3 className="w-3 h-3 text-yellow-500" />;
+        return <span className="text-xs font-medium text-yellow-600">M</span>;
       case 'deleted':
-        return <Trash2 className="w-3 h-3 text-red-500" />;
+        return <span className="text-xs font-medium text-red-600">D</span>;
       case 'untracked':
+        return <span className="text-xs font-medium text-green-600">U</span>;
       case 'added':
-        return <PlusCircle className="w-3 h-3 text-green-500" />;
+        return <span className="text-xs font-medium text-green-600">A</span>;
       default:
         return null;
     }
@@ -130,6 +81,10 @@ export const GitPanel = memo(function GitPanel() {
       default:
         return 'text-foreground';
     }
+  };
+
+  const showDiff = (filePath: string) => {
+    request<any>('editor.diff', { cwd, filePath });
   };
 
   const renderFileList = (
@@ -150,11 +105,52 @@ export const GitPanel = memo(function GitPanel() {
           <h3 className="text-sm text-muted-foreground">
             {title} ({files.length})
           </h3>
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          )}
+          <div className="flex items-center gap-1">
+            {isStaged && files.length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearStaged();
+                }}
+                className="p-1 hover:bg-accent rounded"
+                title={t('git.removeAllFromStage')}
+                disabled={loading}
+              >
+                <ArrowDown className="w-3 h-3 text-muted-foreground/60 hover:text-muted-foreground" />
+              </button>
+            )}
+            {!isStaged && files.length > 0 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    stageAll();
+                  }}
+                  className="p-1 hover:bg-accent rounded"
+                  title={t('git.addAllToStage')}
+                  disabled={loading}
+                >
+                  <ArrowUp className="w-3 h-3 text-muted-foreground/60 hover:text-muted-foreground" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    revertAll();
+                  }}
+                  className="p-1 hover:bg-accent rounded"
+                  title={t('git.revertAllFiles')}
+                  disabled={loading}
+                >
+                  <Undo2 className="w-3 h-3 text-muted-foreground/60 hover:text-muted-foreground" />
+                </button>
+              </>
+            )}
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            )}
+          </div>
         </div>
 
         {!collapsed && (
@@ -162,8 +158,9 @@ export const GitPanel = memo(function GitPanel() {
             {files.map((file) => (
               <div
                 key={file.fullPath}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-accent/50 border-b border-border/50"
+                className="flex items-center gap-2 px-3 py-2 hover:bg-accent/50 border-b border-border/50 cursor-pointer"
                 title={file.relPath}
+                onClick={() => showDiff(file.fullPath)}
               >
                 <div className="flex-shrink-0">{getFileIcon(file.extName)}</div>
 
@@ -179,14 +176,14 @@ export const GitPanel = memo(function GitPanel() {
                 </div>
 
                 <div className="flex-shrink-0 flex items-center gap-1">
-                  {getStatusIcon(file.status)}
+                  {getStatusText(file.status)}
 
                   {isStaged ? (
                     <>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRemoveFromStage(file);
+                          removeFromStage(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
                         title={t('git.removeFromStage')}
@@ -196,12 +193,12 @@ export const GitPanel = memo(function GitPanel() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRevertFile(file);
+                          revert(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
                         title={t('git.revertFile')}
                       >
-                        <RotateCcw className="w-3 h-3 text-muted-foreground hover:text-foreground" />
+                        <Undo2 className="w-3 h-3 text-muted-foreground hover:text-foreground" />
                       </button>
                     </>
                   ) : (
@@ -209,7 +206,7 @@ export const GitPanel = memo(function GitPanel() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAddToStage(file);
+                          add2stage(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
                         title={t('git.addToStage')}
@@ -219,12 +216,12 @@ export const GitPanel = memo(function GitPanel() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRevertFile(file);
+                          revert(file);
                         }}
                         className="p-1 hover:bg-accent rounded"
                         title={t('git.revertFile')}
                       >
-                        <RotateCcw className="w-3 h-3 text-muted-foreground hover:text-foreground" />
+                        <Undo2 className="w-3 h-3 text-muted-foreground hover:text-foreground" />
                       </button>
                     </>
                   )}

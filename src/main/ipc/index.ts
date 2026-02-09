@@ -178,4 +178,7 @@ export type IPCRendererHandlers = {
   browser: {
     open: (url: string) => void;
   };
+  extension: {
+    ready: () => void;
+  };
 };
