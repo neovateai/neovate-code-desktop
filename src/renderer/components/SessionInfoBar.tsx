@@ -80,7 +80,7 @@ export function SessionInfoBar({
       {showSeparator && (
         <UISeparator orientation="vertical" className="h-4 mx-2 bg-border" />
       )}
-      <div className="flex items-center gap-1 text-sm">
+      <div className="flex items-center gap-2 text-sm">
         {isRenaming ? (
           <input
             className="bg-transparent border border-primary rounded px-1 py-0.5 text-sm outline-none max-w-40"

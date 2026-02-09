@@ -23,7 +23,7 @@ export function PrimaryTitleBar() {
   if (multiProjectSupport) {
     return (
       <div
-        className="relative flex h-full shrink-0 items-center gap-1"
+        className="relative flex h-full shrink-0 items-center gap-1 pl-2"
         // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
         style={{ WebkitAppRegion: 'no-drag' }}
       >
