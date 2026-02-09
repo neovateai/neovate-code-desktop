@@ -2,6 +2,17 @@ import path from 'node:path';
 import { is } from '@electron-toolkit/utils';
 import { BrowserWindow } from 'electron';
 
+/**
+ * Options for opening a new window
+ *
+ * @property urlSearchParams - Additional URL search parameters to pass to the window.
+ * All values must be strings (URLSearchParams standard). For complex types:
+ * - Arrays: use comma-separated values (e.g., 'ids=1,2,3')
+ * - Booleans: use string representation (e.g., 'enabled=true')
+ * - For large data, consider IPC data channel instead
+ *
+ * Note: Keep total URL length under ~2000 chars (browser limit)
+ */
 export interface WindowOpenOptions {
   windowId: string;
   windowType: string;
@@ -9,6 +20,7 @@ export interface WindowOpenOptions {
   height?: number;
   title?: string;
   parent?: boolean;
+  urlSearchParams?: Record<string, string>;
 }
 
 class BrowserWindowManager {
@@ -51,7 +63,11 @@ class BrowserWindowManager {
       },
     });
 
-    const params = new URLSearchParams({ windowId, windowType });
+    const params = new URLSearchParams({
+      windowId,
+      windowType,
+      ...options.urlSearchParams,
+    });
     if (is.dev && process.env.ELECTRON_RENDERER_URL) {
       const url = new URL(process.env.ELECTRON_RENDERER_URL);
       url.search = params.toString();
