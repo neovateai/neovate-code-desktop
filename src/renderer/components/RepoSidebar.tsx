@@ -26,6 +26,7 @@ import { useStore } from '../store';
 import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
 import { useRepoDelete } from './Repo/useRepoDelete';
 import { SessionActionsContextMenuItems } from './SessionActionsMenu';
+import { useSessionDelete } from './Session/useSessionDelete';
 import {
   ContextMenu,
   ContextMenuPopup,
@@ -79,6 +80,8 @@ const PinnedSessionList = () => {
   const updateSession = useStore((state) => state.updateSession);
   const togglePinSession = useStore((state) => state.togglePinSession);
   const request = useStore((state) => state.request);
+  const { confirmingSessionId, startDelete, cancelDelete, confirmDelete } =
+    useSessionDelete();
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -142,6 +145,8 @@ const PinnedSessionList = () => {
         const isAwaitingApproval = processing.status === 'awaiting_approval';
         const isFailed = processing.status === 'failed';
 
+        const isConfirming = confirmingSessionId === session.sessionId;
+
         return (
           <ContextMenu key={session.sessionId}>
             <ContextMenuTrigger
@@ -156,6 +161,7 @@ const PinnedSessionList = () => {
                 selectWorkspace(workspaceId);
                 selectSession(session.sessionId);
               }}
+              onMouseLeave={cancelDelete}
             >
               <button
                 className="hidden group-hover:block"
@@ -202,13 +208,39 @@ const PinnedSessionList = () => {
                   {displaySummary}
                 </span>
               )}
-              <span className="text-sm text-muted-foreground group-hover:hidden">
+              <span
+                className={cn(
+                  'text-sm text-muted-foreground group-hover:hidden',
+                  isConfirming && 'hidden',
+                )}
+              >
                 {formatRelativeTime(
                   sidebarSortBy === 'created'
                     ? session.created
                     : session.modified,
                 )}
               </span>
+              {isConfirming ? (
+                <button
+                  className="text-xs text-destructive cursor-pointer rounded bg-muted px-2 py-0.5 hover:bg-destructive/10 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    confirmDelete(workspaceId, session.sessionId);
+                  }}
+                >
+                  Confirm
+                </button>
+              ) : (
+                <button
+                  className="hidden group-hover:block cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startDelete(session.sessionId);
+                  }}
+                >
+                  <Trash2 size={14} strokeWidth={1.5} />
+                </button>
+              )}
             </ContextMenuTrigger>
             <ContextMenuPopup>
               <SessionActionsContextMenuItems
@@ -238,6 +270,8 @@ const ChronologicalSessionList = () => {
   const updateSession = useStore((state) => state.updateSession);
   const togglePinSession = useStore((state) => state.togglePinSession);
   const request = useStore((state) => state.request);
+  const { confirmingSessionId, startDelete, cancelDelete, confirmDelete } =
+    useSessionDelete();
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -310,6 +344,8 @@ const ChronologicalSessionList = () => {
         const isAwaitingApproval = processing.status === 'awaiting_approval';
         const isFailed = processing.status === 'failed';
 
+        const isConfirming = confirmingSessionId === session.sessionId;
+
         return (
           <ContextMenu key={session.sessionId}>
             <ContextMenuTrigger
@@ -324,6 +360,7 @@ const ChronologicalSessionList = () => {
                 selectWorkspace(workspaceId);
                 selectSession(session.sessionId);
               }}
+              onMouseLeave={cancelDelete}
             >
               <button
                 className="hidden group-hover:block"
@@ -374,9 +411,35 @@ const ChronologicalSessionList = () => {
                   {displaySummary}
                 </span>
               )}
-              <span className="text-sm text-muted-foreground group-hover:hidden">
+              <span
+                className={cn(
+                  'text-sm text-muted-foreground group-hover:hidden',
+                  isConfirming && 'hidden',
+                )}
+              >
                 {formatRelativeTime(session.modified)}
               </span>
+              {isConfirming ? (
+                <button
+                  className="text-xs text-destructive cursor-pointer rounded bg-muted px-2 py-0.5 hover:bg-destructive/10 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    confirmDelete(workspaceId, session.sessionId);
+                  }}
+                >
+                  Confirm
+                </button>
+              ) : (
+                <button
+                  className="hidden group-hover:block cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startDelete(session.sessionId);
+                  }}
+                >
+                  <Trash2 size={14} strokeWidth={1.5} />
+                </button>
+              )}
             </ContextMenuTrigger>
             <ContextMenuPopup>
               <SessionActionsContextMenuItems
@@ -426,6 +489,8 @@ const RepoSessionList = ({ repo }: RepoSessionListProps) => {
   const togglePinSession = useStore((state) => state.togglePinSession);
   const updateSession = useStore((state) => state.updateSession);
   const request = useStore((state) => state.request);
+  const { confirmingSessionId, startDelete, cancelDelete, confirmDelete } =
+    useSessionDelete();
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -518,6 +583,8 @@ const RepoSessionList = ({ repo }: RepoSessionListProps) => {
                 const isFailed = processing.status === 'failed';
                 const isPinned = pinnedSessions.includes(session.sessionId);
 
+                const isConfirming = confirmingSessionId === session.sessionId;
+
                 return (
                   <ContextMenu key={session.sessionId}>
                     <ContextMenuTrigger
@@ -532,6 +599,7 @@ const RepoSessionList = ({ repo }: RepoSessionListProps) => {
                         selectWorkspace(workspaceId);
                         selectSession(session.sessionId);
                       }}
+                      onMouseLeave={cancelDelete}
                     >
                       <button
                         className="hidden group-hover:block"
@@ -588,13 +656,39 @@ const RepoSessionList = ({ repo }: RepoSessionListProps) => {
                           {displaySummary}
                         </span>
                       )}
-                      <span className="text-sm text-muted-foreground group-hover:hidden">
+                      <span
+                        className={cn(
+                          'text-sm text-muted-foreground group-hover:hidden',
+                          isConfirming && 'hidden',
+                        )}
+                      >
                         {formatRelativeTime(
                           sidebarSortBy === 'created'
                             ? session.created
                             : session.modified,
                         )}
                       </span>
+                      {isConfirming ? (
+                        <button
+                          className="text-xs text-destructive cursor-pointer rounded bg-muted px-2 py-0.5 hover:bg-destructive/10 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDelete(workspaceId, session.sessionId);
+                          }}
+                        >
+                          Confirm
+                        </button>
+                      ) : (
+                        <button
+                          className="hidden group-hover:block cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startDelete(session.sessionId);
+                          }}
+                        >
+                          <Trash2 size={14} strokeWidth={1.5} />
+                        </button>
+                      )}
                     </ContextMenuTrigger>
                     <ContextMenuPopup>
                       <SessionActionsContextMenuItems

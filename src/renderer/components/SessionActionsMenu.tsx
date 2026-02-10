@@ -1,6 +1,7 @@
 import { MoreHorizontal } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useStore } from '../store';
+import { useSessionDelete } from './Session/useSessionDelete';
 import { Button, toastManager } from './ui';
 import { ContextMenuItem, ContextMenuSeparator } from './ui/context-menu';
 import {
@@ -27,48 +28,15 @@ export function SessionActionsMenu({
   onDeleted,
 }: SessionActionsMenuProps) {
   const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
   const pinnedSessions = useStore((state) => state.pinnedSessions);
   const togglePinSession = useStore((state) => state.togglePinSession);
-  const removeSession = useStore((state) => state.removeSession);
-  const selectSession = useStore((state) => state.selectSession);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const request = useStore((state) => state.request);
+  const { deleteSession } = useSessionDelete();
 
   const workspace = workspaces[workspaceId];
-  const session = sessions[workspaceId]?.find((s) => s.sessionId === sessionId);
   const isPinned = pinnedSessions.includes(sessionId);
 
-  const handleDelete = async () => {
-    if (!workspace || !session) return;
-
-    const isLocalOnly = session.messageCount === 0;
-
-    try {
-      if (!isLocalOnly) {
-        const result = await request('sessions.remove', {
-          cwd: workspace.worktreePath,
-          sessionId,
-        });
-        if (!result.success) {
-          console.error('Failed to delete session:', result.error);
-          return;
-        }
-      }
-
-      removeSession(workspaceId, sessionId);
-
-      if (selectedSessionId === sessionId) {
-        const remaining = (sessions[workspaceId] || [])
-          .filter((s) => s.sessionId !== sessionId)
-          .sort((a, b) => b.modified - a.modified);
-        selectSession(remaining.length > 0 ? remaining[0].sessionId : null);
-      }
-
-      onDeleted?.();
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-    }
+  const handleDelete = () => {
+    deleteSession(workspaceId, sessionId, onDeleted);
   };
 
   const handleCopyWorkingDirectory = () => {
@@ -126,48 +94,15 @@ export function SessionActionsContextMenuItems({
   onDeleted,
 }: SessionActionsContextMenuItemsProps) {
   const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
   const pinnedSessions = useStore((state) => state.pinnedSessions);
   const togglePinSession = useStore((state) => state.togglePinSession);
-  const removeSession = useStore((state) => state.removeSession);
-  const selectSession = useStore((state) => state.selectSession);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const request = useStore((state) => state.request);
+  const { deleteSession } = useSessionDelete();
 
   const workspace = workspaces[workspaceId];
-  const session = sessions[workspaceId]?.find((s) => s.sessionId === sessionId);
   const isPinned = pinnedSessions.includes(sessionId);
 
-  const handleDelete = async () => {
-    if (!workspace || !session) return;
-
-    const isLocalOnly = session.messageCount === 0;
-
-    try {
-      if (!isLocalOnly) {
-        const result = await request('sessions.remove', {
-          cwd: workspace.worktreePath,
-          sessionId,
-        });
-        if (!result.success) {
-          console.error('Failed to delete session:', result.error);
-          return;
-        }
-      }
-
-      removeSession(workspaceId, sessionId);
-
-      if (selectedSessionId === sessionId) {
-        const remaining = (sessions[workspaceId] || [])
-          .filter((s) => s.sessionId !== sessionId)
-          .sort((a, b) => b.modified - a.modified);
-        selectSession(remaining.length > 0 ? remaining[0].sessionId : null);
-      }
-
-      onDeleted?.();
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-    }
+  const handleDelete = () => {
+    deleteSession(workspaceId, sessionId, onDeleted);
   };
 
   const handleCopyWorkingDirectory = () => {
