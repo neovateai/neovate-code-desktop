@@ -1,17 +1,20 @@
 /**
- * i18n type safety for default namespace.
+ * i18n type safety.
  *
- * Plugins can add their own namespaces by creating a types.d.ts:
- * @see src/renderer/plugins/demo-i18n/types.d.ts
+ * Core declares I18nResources inside i18next module with the default namespace.
+ * Plugins augment I18nResources via `declare module 'i18next'` to add their namespaces.
+ * @see src/renderer/plugins/demo/types.d.ts
  */
 import 'i18next';
 import type en from '../../locales/en.json';
 
 declare module 'i18next' {
+  interface I18nResources {
+    translation: typeof en;
+  }
+
   interface CustomTypeOptions {
     defaultNS: 'translation';
-    resources: {
-      translation: typeof en;
-    };
+    resources: I18nResources;
   }
 }

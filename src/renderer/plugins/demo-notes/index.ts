@@ -1,1 +1,0 @@
-export { demoNotesPlugin } from './plugin';

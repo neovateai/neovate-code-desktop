@@ -1,10 +1,9 @@
 import { Save } from 'lucide-react';
 import { useState } from 'react';
-import type { ContentPanelProps } from '../../core/plugin';
 import { Button } from '../../components/ui/button';
+import type { ContentPanelProps } from '../../core/plugin';
 
-export default function NotesEditor({ tab }: ContentPanelProps) {
-  // Get noteId from tab props (passed via app.ui.openContentPanel)
+export default function DemoEditor({ tab }: ContentPanelProps) {
   const noteId = tab.props?.noteId as string | undefined;
 
   const [title, setTitle] = useState(noteId ? `Note ${noteId}` : 'Untitled');
@@ -26,7 +25,6 @@ export default function NotesEditor({ tab }: ContentPanelProps) {
   };
 
   const handleSave = () => {
-    // In a real plugin, you would save to persistent storage
     console.log('Saving note:', { noteId, title, content });
     setIsSaved(true);
   };
