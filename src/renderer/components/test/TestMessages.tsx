@@ -1208,20 +1208,12 @@ export function TestMessages() {
       <div className="flex flex-col gap-4 max-h-[800px] overflow-y-auto p-2">
         {/* LOOP 1: Simple Ping-Pong */}
         {pingPongMessages.map((msg, idx) => (
-          <Message
-            key={`ping-${idx}`}
-            message={msg}
-            allMessages={pingPongMessages}
-          />
+          <Message key={`ping-${idx}`} message={msg} />
         ))}
 
         {/* LOOP 2: Comprehensive Agent Demo */}
         {comprehensiveMessages.map((msg, idx) => (
-          <Message
-            key={`comp-${idx}`}
-            message={msg}
-            allMessages={comprehensiveMessages}
-          />
+          <Message key={`comp-${idx}`} message={msg} />
         ))}
       </div>
     </div>

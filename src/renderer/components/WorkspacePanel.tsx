@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import type { WorkspaceData } from '../client/types/entities';
 import type { NormalizedMessage } from '../client/types/message';
-import { AUTO_SCROLL_THRESHOLD_PX, FOCUS_DELAY_MS } from '../constants';
+import { FOCUS_DELAY_MS } from '../constants';
 import { useNotification } from '../hooks';
 import { useStore } from '../store';
 import { ActivityIndicator } from './ActivityIndicator';
@@ -11,7 +12,8 @@ import { AskQuestionPanel } from './AskQuestionPanel';
 import { ChatInput, type ChatInputHandle } from './ChatInput';
 import { ForkModal } from './ForkModal';
 import { Message } from './messages/Message';
-import { splitMessages } from './messages/messageHelpers';
+import { computeToolPairsMap, splitMessages } from './messages/messageHelpers';
+import type { ToolPair } from './messages/types';
 import {
   Empty,
   EmptyDescription,
@@ -20,6 +22,8 @@ import {
   EmptyTitle,
 } from './ui/empty';
 import { WelcomePanel } from './WelcomePanel';
+
+const EMPTY_MESSAGES: NormalizedMessage[] = [];
 
 // Main component
 export const WorkspacePanel = ({
@@ -277,15 +281,11 @@ WorkspacePanel.Header = function Header() {
 
 WorkspacePanel.Messages = function Messages() {
   const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const messagesMap = useStore((state) => state.messages);
-  const messages = useMemo(
-    () => (selectedSessionId ? messagesMap[selectedSessionId] || [] : []),
-    [selectedSessionId, messagesMap],
+  const messages = useStore(
+    (state) => state.messages[state.selectedSessionId ?? ''] ?? EMPTY_MESSAGES,
   );
 
-  // Refs for auto-scroll functionality
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevMessagesLengthRef = useRef(0);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const prevSessionIdRef = useRef<string | null>(null);
 
   // Split messages into completed and pending sections
@@ -294,52 +294,68 @@ WorkspacePanel.Messages = function Messages() {
     [messages],
   );
 
-  // Auto-scroll logic: scroll to bottom when messages change or session switches
+  // Pre-compute tool pairs for all messages once at the list level
+  const toolPairsMap = useMemo(() => computeToolPairsMap(messages), [messages]);
+
+  // When session changes, scroll to bottom immediately
   useEffect(() => {
-    const container = messagesEndRef.current;
-    if (!container) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    const isNearBottom = distanceFromBottom < AUTO_SCROLL_THRESHOLD_PX;
-    const isFirstLoad =
-      prevMessagesLengthRef.current === 0 && messages.length > 0;
-    const isSessionSwitch = prevSessionIdRef.current !== selectedSessionId;
-
-    if (isNearBottom || isFirstLoad || isSessionSwitch) {
-      container.scrollTo({ top: scrollHeight, behavior: 'instant' });
+    if (prevSessionIdRef.current !== selectedSessionId) {
+      prevSessionIdRef.current = selectedSessionId;
+      virtuosoRef.current?.scrollToIndex({
+        index: 'LAST',
+        behavior: 'auto',
+      });
     }
+  }, [selectedSessionId, messages]);
 
-    prevMessagesLengthRef.current = messages.length;
-    prevSessionIdRef.current = selectedSessionId;
-  }, [messages, selectedSessionId]);
+  // Render a single message item for the virtualized list
+  const renderCompletedItem = useCallback(
+    (index: number) => {
+      const message = completedMessages[index];
+      return (
+        <MemoizedMessage
+          key={message.uuid}
+          message={message}
+          toolPairs={toolPairsMap.get(message.uuid)}
+        />
+      );
+    },
+    [completedMessages, toolPairsMap],
+  );
+
+  if (messages.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto p-4 min-w-0">
+        <WelcomePanel />
+      </div>
+    );
+  }
 
   return (
-    <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-4 min-w-0">
-      {messages.length === 0 ? (
-        <WelcomePanel />
-      ) : (
-        <div className="min-w-0">
-          {/* Completed messages (memoized to prevent re-renders) */}
-          {completedMessages.map((message) => (
-            <MemoizedMessage
-              key={message.uuid}
-              message={message}
-              allMessages={messages}
-            />
-          ))}
-
-          {/* Pending messages (dynamic updates) */}
-          {pendingMessages.map((message) => (
-            <Message
-              key={message.uuid}
-              message={message}
-              allMessages={messages}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <Virtuoso
+      ref={virtuosoRef}
+      totalCount={completedMessages.length}
+      itemContent={renderCompletedItem}
+      followOutput="auto"
+      increaseViewportBy={{ top: 400, bottom: 200 }}
+      className="flex-1 min-w-0"
+      style={{ padding: '1rem' }}
+      components={{
+        // Render pending messages (streaming) after the virtualized list
+        Footer: () =>
+          pendingMessages.length > 0 ? (
+            <div className="min-w-0">
+              {pendingMessages.map((message) => (
+                <Message
+                  key={message.uuid}
+                  message={message}
+                  toolPairs={toolPairsMap.get(message.uuid)}
+                />
+              ))}
+            </div>
+          ) : null,
+      }}
+    />
   );
 };
 
@@ -347,16 +363,19 @@ WorkspacePanel.Messages = function Messages() {
 const MemoizedMessage = memo(
   ({
     message,
-    allMessages,
+    toolPairs,
   }: {
     message: NormalizedMessage;
-    allMessages: NormalizedMessage[];
+    toolPairs?: ToolPair[];
   }) => {
-    return <Message message={message} allMessages={allMessages} />;
+    return <Message message={message} toolPairs={toolPairs} />;
   },
   (prevProps, nextProps) => {
-    // Only re-render if the message UUID changes (which shouldn't happen)
-    return prevProps.message.uuid === nextProps.message.uuid;
+    // Only re-render if the message UUID or its tool pairs change
+    return (
+      prevProps.message.uuid === nextProps.message.uuid &&
+      prevProps.toolPairs === nextProps.toolPairs
+    );
   },
 );
 

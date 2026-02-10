@@ -52,7 +52,7 @@ class MessageErrorBoundary extends Component<
  * Message component (Router)
  * Routes messages to appropriate rendering components based on role and content type
  */
-export function Message({ message, allMessages }: MessageRenderProps) {
+export function Message({ message, toolPairs }: MessageRenderProps) {
   // Check if message should be hidden
   if (shouldHideMessage(message)) {
     return null;
@@ -67,7 +67,7 @@ export function Message({ message, allMessages }: MessageRenderProps) {
     <MessageErrorBoundary message={message}>
       {message.role === 'user' && <UserMessage message={message} />}
       {message.role === 'assistant' && (
-        <AssistantMessage message={message} allMessages={allMessages} />
+        <AssistantMessage message={message} toolPairs={toolPairs} />
       )}
       {message.role === 'system' && <SystemMessage message={message} />}
     </MessageErrorBoundary>

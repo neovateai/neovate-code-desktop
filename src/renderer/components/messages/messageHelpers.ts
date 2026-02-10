@@ -243,6 +243,30 @@ export function extractImageParts(message: NormalizedMessage): ImagePart[] {
 }
 
 /**
+ * Batch-compute tool pairs for all assistant messages in a list.
+ * Returns a Map from message UUID to its ToolPair[].
+ * This avoids the O(n) findIndex per message that was previously done inside AssistantMessage.
+ */
+export function computeToolPairsMap(
+  messages: NormalizedMessage[],
+): Map<string, ToolPair[]> {
+  const map = new Map<string, ToolPair[]>();
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (msg.role !== 'assistant') continue;
+
+    const toolUseParts = extractToolUseParts(msg);
+    if (toolUseParts.length === 0) continue;
+
+    const subsequentMsgs = messages.slice(i + 1);
+    map.set(msg.uuid, pairToolsWithResults(msg, subsequentMsgs));
+  }
+
+  return map;
+}
+
+/**
  * Check if a message should be hidden from rendering
  */
 export function shouldHideMessage(message: NormalizedMessage): boolean {
