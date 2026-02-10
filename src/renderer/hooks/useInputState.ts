@@ -30,7 +30,8 @@ export function useInputState(
 
   const sessionInput = sessionId
     ? getSessionInput(sessionId)
-    : defaultSessionInputState;
+    : getSessionInput('__draft__');
+  const inputSessionId = sessionId ?? '__draft__';
   const history = workspaceId ? getWorkspaceHistory(workspaceId) : [];
 
   const [localValue, setLocalValue] = useState(sessionInput.value);
@@ -166,19 +167,17 @@ export function useInputState(
   const thinkingVariants = sessionInput.thinkingVariants;
 
   const togglePlanMode = useCallback(() => {
-    if (sessionId) {
-      const newMode: PlanMode =
-        planMode === 'normal'
-          ? 'plan'
-          : planMode === 'plan'
-            ? 'brainstorm'
-            : 'normal';
-      setSessionInput(sessionId, { planMode: newMode });
-    }
-  }, [sessionId, planMode, setSessionInput]);
+    const newMode: PlanMode =
+      planMode === 'normal'
+        ? 'plan'
+        : planMode === 'plan'
+          ? 'brainstorm'
+          : 'normal';
+    setSessionInput(inputSessionId, { planMode: newMode });
+  }, [inputSessionId, planMode, setSessionInput]);
 
   const toggleThinking = useCallback(() => {
-    if (sessionId && thinkingEnabled && thinkingVariants.length > 0) {
+    if (thinkingEnabled && thinkingVariants.length > 0) {
       const currentIndex =
         thinking === null ? -1 : thinkingVariants.indexOf(thinking);
       const nextIndex = currentIndex + 1;
@@ -186,35 +185,35 @@ export function useInputState(
         nextIndex >= thinkingVariants.length
           ? null
           : thinkingVariants[nextIndex];
-      setSessionInput(sessionId, { thinking: newThinking });
+      setSessionInput(inputSessionId, { thinking: newThinking });
     }
-  }, [sessionId, thinking, thinkingEnabled, thinkingVariants, setSessionInput]);
+  }, [
+    inputSessionId,
+    thinking,
+    thinkingEnabled,
+    thinkingVariants,
+    setSessionInput,
+  ]);
 
   const setThinkingEnabled = useCallback(
     (enabled: boolean) => {
-      if (sessionId) {
-        setSessionInput(sessionId, { thinkingEnabled: enabled });
-      }
+      setSessionInput(inputSessionId, { thinkingEnabled: enabled });
     },
-    [sessionId, setSessionInput],
+    [inputSessionId, setSessionInput],
   );
 
   const setThinking = useCallback(
     (level: ThinkingLevel) => {
-      if (sessionId) {
-        setSessionInput(sessionId, { thinking: level });
-      }
+      setSessionInput(inputSessionId, { thinking: level });
     },
-    [sessionId, setSessionInput],
+    [inputSessionId, setSessionInput],
   );
 
   const setThinkingVariants = useCallback(
     (variants: string[]) => {
-      if (sessionId) {
-        setSessionInput(sessionId, { thinkingVariants: variants });
-      }
+      setSessionInput(inputSessionId, { thinkingVariants: variants });
     },
-    [sessionId, setSessionInput],
+    [inputSessionId, setSessionInput],
   );
 
   // Pasted text and image maps

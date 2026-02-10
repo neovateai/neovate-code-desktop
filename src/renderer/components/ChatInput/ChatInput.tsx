@@ -110,6 +110,7 @@ export interface ChatInputHandle {
 export const ChatInput = memo(
   forwardRef<ChatInputHandle>(function ChatInput(_props, ref) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const [localModel, setLocalModel] = useState<string | null>(null);
 
     const selectedSessionId = useStore((state) => state.selectedSessionId);
     const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
@@ -160,19 +161,22 @@ export const ChatInput = memo(
       async (content: string, images?: string[]) => {
         if (!content.trim() || isProcessing) return;
 
+        const draftInput = getSessionInput(sessionId ?? '__draft__');
+
         let targetSessionId = sessionId;
         if (!targetSessionId) {
           targetSessionId = createSession();
         }
 
-        const inputState = getSessionInput(targetSessionId);
-
         await storeSendMessage({
           message: content,
-          planMode: inputState.planMode,
-          think: inputState.thinking,
+          planMode: draftInput.planMode,
+          think: draftInput.thinking,
           images,
+          model: localModel ?? undefined,
         });
+
+        setLocalModel(null);
       },
       [
         isProcessing,
@@ -180,6 +184,7 @@ export const ChatInput = memo(
         createSession,
         getSessionInput,
         storeSendMessage,
+        localModel,
       ],
     );
 
@@ -220,48 +225,74 @@ export const ChatInput = memo(
 
     const { planMode, thinking, togglePlanMode, toggleThinking } = inputState;
 
-    const handleModelChange = useCallback(async () => {
-      if (!cwd || !sessionId) return;
+    const fetchVariantsForModel = useCallback(
+      async (model: string) => {
+        try {
+          const res = await request('models.getVariants', {
+            cwd: cwd || '/tmp',
+            model,
+          });
 
-      try {
-        const modelInfoResponse = await request('session.getModel', {
-          cwd,
-          sessionId,
-          includeModelInfo: true,
-        });
-
-        if (
-          modelInfoResponse.success &&
-          'modelInfo' in modelInfoResponse.data &&
-          modelInfoResponse.data.modelInfo
-        ) {
-          const variants = modelInfoResponse.data.modelInfo.model?.variants;
-          const variantKeys =
-            variants && Object.keys(variants).length > 0
-              ? Object.keys(variants)
-              : [];
-          const hasThinking = variantKeys.length > 0;
-          setThinkingEnabled(hasThinking);
-          setThinkingVariants(variantKeys);
-          setThinking(hasThinking ? variantKeys[0] : null);
-        } else {
+          if (res.success && res.data?.variants) {
+            const variantKeys = Object.keys(res.data.variants);
+            const hasThinking = variantKeys.length > 0;
+            setThinkingEnabled(hasThinking);
+            setThinkingVariants(variantKeys);
+            setThinking(hasThinking ? variantKeys[0] : null);
+          } else {
+            setThinkingEnabled(false);
+            setThinkingVariants([]);
+            setThinking(null);
+          }
+        } catch {
           setThinkingEnabled(false);
           setThinkingVariants([]);
           setThinking(null);
         }
-      } catch {
-        setThinkingEnabled(false);
-        setThinkingVariants([]);
-        setThinking(null);
-      }
-    }, [
-      request,
-      cwd,
-      sessionId,
-      setThinkingEnabled,
-      setThinkingVariants,
-      setThinking,
-    ]);
+      },
+      [request, cwd, setThinkingEnabled, setThinkingVariants, setThinking],
+    );
+
+    const handleModelChange = useCallback(
+      async (model: string) => {
+        if (!sessionId) {
+          setLocalModel(model);
+        }
+        fetchVariantsForModel(model);
+      },
+      [sessionId, fetchVariantsForModel],
+    );
+
+    useEffect(() => {
+      if (sessionId || !cwd) return;
+
+      const fetchDefaultModelVariants = async () => {
+        try {
+          const projectRes = await request('config.get', {
+            cwd,
+            isGlobal: false,
+            key: 'model',
+          });
+          const model = projectRes?.data?.value;
+          if (model) {
+            fetchVariantsForModel(model);
+            return;
+          }
+
+          const globalRes = await request('config.get', {
+            cwd,
+            isGlobal: true,
+            key: 'model',
+          });
+          const globalModel = globalRes?.data?.value;
+          if (globalModel) {
+            fetchVariantsForModel(globalModel);
+          }
+        } catch {}
+      };
+
+      fetchDefaultModelVariants();
+    }, [sessionId, cwd, request, fetchVariantsForModel]);
 
     const { value } = inputState.state;
     const canSend = value.trim().length > 0;
@@ -415,6 +446,7 @@ export const ChatInput = memo(
                   cwd={cwd}
                   sessionId={sessionId ?? undefined}
                   onModelChange={handleModelChange}
+                  localOnly={!sessionId}
                   compact
                 />
               )}

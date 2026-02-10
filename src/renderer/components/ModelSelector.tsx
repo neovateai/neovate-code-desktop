@@ -33,6 +33,7 @@ interface ModelSelectorProps {
   sessionId?: string;
   disabled?: boolean;
   compact?: boolean;
+  localOnly?: boolean;
   onModelChange?: (model: string) => void;
 }
 
@@ -81,6 +82,7 @@ export const ModelSelector = ({
   sessionId,
   disabled = false,
   compact = false,
+  localOnly = false,
   onModelChange,
 }: ModelSelectorProps) => {
   const request = useStore((state) => state.request);
@@ -216,10 +218,15 @@ export const ModelSelector = ({
 
   const handleSelectModel = useCallback(
     (modelValue: string) => {
-      saveModel(modelValue);
+      if (localOnly) {
+        setCurrentModel(modelValue);
+        onModelChange?.(modelValue);
+      } else {
+        saveModel(modelValue);
+      }
       setIsOpen(false);
     },
-    [saveModel],
+    [localOnly, saveModel, onModelChange],
   );
 
   const { displayGroups, flatModels, modelKeyToIndex } = useMemo(() => {

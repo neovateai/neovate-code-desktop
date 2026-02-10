@@ -133,6 +133,7 @@ interface CoreActions {
     parentUuid?: string;
     think: ThinkingLevel;
     images?: string[];
+    model?: string;
   }) => Promise<void>;
 
   // Server URL action
@@ -402,6 +403,7 @@ const useStore = create<Store>()((set, get, api) => ({
     parentUuid?: string;
     think: ThinkingLevel;
     images?: string[];
+    model?: string;
   }) => {
     const {
       selectedSessionId,
@@ -417,7 +419,7 @@ const useStore = create<Store>()((set, get, api) => ({
     } = get();
 
     let sessionId = selectedSessionId;
-    let model: string | undefined = undefined;
+    let model: string | undefined = params.model;
 
     if (!selectedWorkspaceId) {
       throw new Error('No workspace selected to create session');
