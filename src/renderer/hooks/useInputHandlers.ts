@@ -656,6 +656,37 @@ export function useInputHandlers({
         slashCommands.suggestions.length > 0
           ? slashCommands.selectedIndex
           : fileSuggestion.selectedIndex,
+      setSelectedIndex:
+        slashCommands.suggestions.length > 0
+          ? slashCommands.setSelectedIndex
+          : fileSuggestion.setSelectedIndex,
+      selectItem: (index: number) => {
+        if (slashCommands.suggestions.length > 0) {
+          slashCommands.setSelectedIndex(index);
+          const completed = slashCommands.getCompletedCommand();
+          inputState.setValue(completed);
+          inputState.setCursorPosition(completed.length);
+        } else if (fileSuggestion.matchedPaths.length > 0) {
+          fileSuggestion.setSelectedIndex(index);
+          const selected = fileSuggestion.matchedPaths[index];
+          if (selected) {
+            const currentValue = valueRef.current;
+            const prefix = fileSuggestion.triggerType === 'at' ? '@' : '';
+            const path = selected.includes(' ') ? `"${selected}"` : selected;
+            const before = currentValue.substring(0, fileSuggestion.startIndex);
+            const after = currentValue
+              .substring(
+                fileSuggestion.startIndex + fileSuggestion.fullMatch.length,
+              )
+              .trim();
+            const newValue = `${before}${prefix}${path} ${after}`.trim();
+            inputState.setValue(newValue);
+            inputState.setCursorPosition(newValue.length);
+            setForceTabTrigger(false);
+            fileSuggestion.reset();
+          }
+        }
+      },
     },
     imageManager,
     thinkingEnabled,

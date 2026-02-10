@@ -1,5 +1,6 @@
 import { CodeIcon, FileIcon, FolderIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useEffect, useRef } from 'react';
 import { ScrollArea } from '../ui';
 
 interface SuggestionDropdownProps {
@@ -7,6 +8,8 @@ interface SuggestionDropdownProps {
   items: (string | { name: string; description: string })[];
   selectedIndex: number;
   maxVisible?: number;
+  onSelect?: (index: number) => void;
+  onHover?: (index: number) => void;
 }
 
 function parseFilePath(path: string): { fileName: string; dirPath: string } {
@@ -29,7 +32,15 @@ export function SuggestionDropdown({
   items,
   selectedIndex,
   maxVisible = 10,
+  onSelect,
+  onHover,
 }: SuggestionDropdownProps) {
+  const selectedRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    selectedRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [selectedIndex]);
+
   if (items.length === 0) return null;
 
   const startIndex = Math.max(
@@ -57,7 +68,10 @@ export function SuggestionDropdown({
               return (
                 <li
                   key={actualIndex}
+                  ref={isSelected ? selectedRef : null}
                   className={`px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors ${isSelected ? 'bg-accent' : 'bg-transparent'}`}
+                  onClick={() => onSelect?.(actualIndex)}
+                  onMouseEnter={() => onHover?.(actualIndex)}
                 >
                   <HugeiconsIcon
                     icon={CodeIcon}
@@ -83,7 +97,10 @@ export function SuggestionDropdown({
             return (
               <li
                 key={actualIndex}
+                ref={isSelected ? selectedRef : null}
                 className={`px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors min-w-0 ${isSelected ? 'bg-accent' : 'bg-transparent'}`}
+                onClick={() => onSelect?.(actualIndex)}
+                onMouseEnter={() => onHover?.(actualIndex)}
               >
                 <HugeiconsIcon
                   icon={isDir ? FolderIcon : FileIcon}
