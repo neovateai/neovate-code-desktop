@@ -233,6 +233,12 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'col-resize';
 
+    // Disable pointer events on iframes to prevent them from capturing mouse events during drag
+    const iframes = document.getElementsByTagName('iframe');
+    for (const iframe of iframes) {
+      iframe.style.pointerEvents = 'none';
+    }
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('blur', handleBlur);
@@ -240,6 +246,9 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
     return () => {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
+      for (const iframe of iframes) {
+        iframe.style.pointerEvents = '';
+      }
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('blur', handleBlur);
