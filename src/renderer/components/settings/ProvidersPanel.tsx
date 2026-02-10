@@ -6,6 +6,7 @@ import {
   Cancel01Icon,
   CloudIcon,
   Delete01Icon,
+  Delete02Icon,
   FlashIcon,
   StarIcon,
   Tick01Icon,
@@ -16,6 +17,15 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store';
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import {
@@ -145,6 +155,7 @@ export const ProvidersPanel = () => {
   >({});
   const [editingApiFormat, setEditingApiFormat] =
     useState<CustomProvider['apiFormat']>('openai');
+  const [deleteProviderId, setDeleteProviderId] = useState<string | null>(null);
 
   // Model test state
   const [showTestDropdown, setShowTestDropdown] = useState(false);
@@ -932,7 +943,7 @@ export const ProvidersPanel = () => {
                       className="opacity-0 group-hover:opacity-100 cursor-pointer hover:text-foreground p-1 rounded transition-opacity text-muted-foreground"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteCustomProvider(provider.id);
+                        setDeleteProviderId(provider.id);
                       }}
                       title="Delete custom provider"
                     >
@@ -1681,6 +1692,41 @@ export const ProvidersPanel = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Provider Confirm Dialog */}
+      <AlertDialog
+        open={deleteProviderId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteProviderId(null);
+        }}
+      >
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Provider?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`This will permanently delete '${providers.find((p) => p.id === deleteProviderId)?.name ?? deleteProviderId}' and its configuration. This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose>
+              <Button variant="outline">Cancel</Button>
+            </AlertDialogClose>
+            <Button
+              variant="destructive"
+              className="gap-2"
+              onClick={() => {
+                if (deleteProviderId) {
+                  handleDeleteCustomProvider(deleteProviderId);
+                  setDeleteProviderId(null);
+                }
+              }}
+            >
+              <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={1.5} />
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
     </div>
   );
 };
