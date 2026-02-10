@@ -3,7 +3,6 @@ import {
   Add01Icon,
   AlertCircleIcon,
   ArrowDown01Icon,
-  Cancel01Icon,
   CloudIcon,
   Delete01Icon,
   Delete02Icon,
@@ -14,6 +13,7 @@ import {
   ViewOffIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { Copy, Check, ExternalLink, Loader2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store';
@@ -121,6 +121,7 @@ export const ProvidersPanel = () => {
     null,
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const shouldScrollRef = useRef(false);
 
   // Provider config state
   const [apiKey, setApiKey] = useState('');
@@ -135,17 +136,6 @@ export const ProvidersPanel = () => {
   const [currentSmallModel, setCurrentSmallModel] = useState<string | null>(
     null,
   );
-
-  // Custom provider state (modal only, no longer stored separately)
-  const [showAddProviderModal, setShowAddProviderModal] = useState(false);
-  const [newProvider, setNewProvider] = useState<Omit<CustomProvider, 'id'>>({
-    name: '',
-    baseUrl: '',
-    apiKey: '',
-    apiFormat: 'openai',
-    models: {},
-  });
-  const [newModelId, setNewModelId] = useState('');
 
   // Inline editing state for non-built-in providers
   const [editingProviderName, setEditingProviderName] = useState('');
@@ -166,6 +156,20 @@ export const ProvidersPanel = () => {
   const [testError, setTestError] = useState<string | null>(null);
   const testDropdownRef = useRef<HTMLDivElement>(null);
 
+  // OAuth login state
+  const [oauthState, setOauthState] = useState<{
+    providerId: string;
+    providerName: string;
+    authUrl: string;
+    userCode?: string;
+    oauthSessionId: string;
+    startedAt: number;
+  } | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthCountdown, setOauthCountdown] = useState(300); // 5 minutes in seconds
+  const [copiedCode, setCopiedCode] = useState(false);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -185,6 +189,7 @@ export const ProvidersPanel = () => {
     setTestStatus('idle');
     setTestError(null);
     setTestingModel(null);
+    shouldScrollRef.current = true;
   }, [selectedProviderId]);
 
   // Refresh providers list
@@ -250,42 +255,23 @@ export const ProvidersPanel = () => {
     refreshModels();
   }, [refreshModels]);
 
-  // Save custom provider
-  const handleSaveCustomProvider = useCallback(async () => {
-    if (!newProvider.name.trim() || !newProvider.baseUrl.trim()) {
-      toastManager.add({
-        type: 'error',
-        title: 'Validation Error',
-        description: 'Name and Base URL are required.',
-      });
-      return;
+  // Add a new custom provider with a generated name, then select it for inline editing
+  const handleAddCustomProvider = useCallback(async () => {
+    let name = 'Custom Provider';
+    let counter = 2;
+    while (providers.some((p) => p.name === name)) {
+      name = `Custom Provider ${counter}`;
+      counter++;
     }
 
-    const providerId = slugify(newProvider.name.trim());
+    const providerId = slugify(name);
+    if (!providerId) return;
 
-    if (!providerId) {
-      toastManager.add({
-        type: 'error',
-        title: 'Validation Error',
-        description: 'Name must contain valid characters.',
-      });
-      return;
-    }
-
-    // Build the provider config object
     const providerConfig = {
-      name: newProvider.name.trim(),
-      options: {
-        baseURL: newProvider.baseUrl.trim(),
-        ...(newProvider.apiKey.trim()
-          ? { apiKey: newProvider.apiKey.trim() }
-          : {}),
-      },
-      models: newProvider.models,
-      apiFormat: newProvider.apiFormat,
-      ...(newProvider.apiFormat === 'anthropic'
-        ? { createModelType: 'anthropic' as const }
-        : {}),
+      name,
+      options: {},
+      models: {},
+      apiFormat: 'openai',
     };
 
     try {
@@ -297,35 +283,22 @@ export const ProvidersPanel = () => {
       });
 
       if (result.success) {
-        setShowAddProviderModal(false);
-        setNewProvider({
-          name: '',
-          baseUrl: '',
-          apiKey: '',
-          apiFormat: 'openai',
-          models: {},
-        });
-        setNewModelId('');
-
-        // Refresh providers list from backend
         await refreshProviders();
-        // Auto-select the newly created provider
         setSelectedProviderId(providerId);
-
         toastManager.add({
           type: 'success',
-          title: 'Custom provider added',
-          description: `${newProvider.name.trim()} has been added.`,
+          title: 'Custom provider created',
+          description: `${name} has been added.`,
         });
       }
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to save custom provider',
+        title: 'Failed to create custom provider',
         description: String(error),
       });
     }
-  }, [newProvider, request]);
+  }, [providers, request, refreshProviders]);
 
   // Delete custom provider (removes provider.{{id}} config key)
   const handleDeleteCustomProvider = useCallback(
@@ -358,24 +331,6 @@ export const ProvidersPanel = () => {
     },
     [selectedProviderId, refreshProviders, request],
   );
-
-  // Add model to new provider
-  const handleAddModel = useCallback(() => {
-    if (!newModelId.trim()) return;
-    setNewProvider((prev) => ({
-      ...prev,
-      models: { ...prev.models, [newModelId.trim()]: {} },
-    }));
-    setNewModelId('');
-  }, [newModelId]);
-
-  // Remove model from new provider
-  const handleRemoveModel = useCallback((modelId: string) => {
-    setNewProvider((prev) => {
-      const { [modelId]: _, ...rest } = prev.models;
-      return { ...prev, models: rest };
-    });
-  }, []);
 
   const handleSaveProviderName = useCallback(async () => {
     if (!selectedProviderId || !editingProviderName.trim()) return;
@@ -768,6 +723,159 @@ export const ProvidersPanel = () => {
     }
   }, [selectedProviderId, selectedProvider?.name, refreshProviders, request]);
 
+  // Reset OAuth state when provider changes
+  useEffect(() => {
+    setOauthState(null);
+    setOauthError(null);
+    setOauthLoading(false);
+    setCopiedCode(false);
+  }, [selectedProviderId]);
+
+  // OAuth login handler
+  const handleOAuthLogin = useCallback(async () => {
+    if (!selectedProviderId || !selectedProvider) return;
+
+    setOauthLoading(true);
+    setOauthError(null);
+
+    try {
+      // Check if already logged in
+      const statusResult = await request('providers.login.status', {
+        cwd: '/tmp',
+        providerId: selectedProviderId,
+      });
+      if (statusResult.success && statusResult.data.isLoggedIn) {
+        const user = statusResult.data.user;
+        toastManager.add({
+          type: 'info',
+          title: 'Already logged in',
+          description: `${selectedProvider.name} is already logged in${user ? ` as ${user}` : ''}.`,
+        });
+        setOauthLoading(false);
+        return;
+      }
+
+      // Initialize OAuth flow
+      const initResult = await request('providers.login.initOAuth', {
+        cwd: '/tmp',
+        providerId: selectedProviderId as 'github-copilot' | 'qwen' | 'codex',
+      });
+
+      if (!initResult.success) {
+        setOauthError(initResult.error);
+        setOauthLoading(false);
+        return;
+      }
+
+      setOauthState({
+        providerId: selectedProviderId,
+        providerName: selectedProvider.name,
+        authUrl: initResult.data.authUrl,
+        userCode: initResult.data.userCode,
+        oauthSessionId: initResult.data.oauthSessionId,
+        startedAt: Date.now(),
+      });
+      setOauthCountdown(300);
+    } catch (error) {
+      setOauthError(String(error));
+    } finally {
+      setOauthLoading(false);
+    }
+  }, [selectedProviderId, selectedProvider, request]);
+
+  // OAuth cancel handler
+  const handleOAuthCancel = useCallback(() => {
+    setOauthState(null);
+    setOauthError(null);
+    setCopiedCode(false);
+  }, []);
+
+  // Copy user code to clipboard
+  const handleCopyCode = useCallback((code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  }, []);
+
+  // Poll for OAuth completion
+  useEffect(() => {
+    if (!oauthState) return;
+
+    let cancelled = false;
+    const pollInterval = setInterval(async () => {
+      if (cancelled) return;
+
+      try {
+        const pollResult = await request('providers.login.pollOAuth', {
+          cwd: '/tmp',
+          oauthSessionId: oauthState.oauthSessionId,
+        });
+
+        if (!pollResult.success) {
+          clearInterval(pollInterval);
+          if (!cancelled) {
+            setOauthError(pollResult.error);
+            setOauthState(null);
+          }
+          return;
+        }
+
+        const { status, user, error } = pollResult.data;
+
+        if (status === 'completed') {
+          clearInterval(pollInterval);
+          if (!cancelled) {
+            setOauthState(null);
+            toastManager.add({
+              type: 'success',
+              title: 'Login successful',
+              description: `${oauthState.providerName} authorized${user ? ` as ${user}` : ''}.`,
+            });
+            await refreshProviders();
+            setApiKey('[OAuth Token]');
+            setProviders((prev) =>
+              prev.map((p) =>
+                p.id === oauthState.providerId ? { ...p, hasApiKey: true } : p,
+              ),
+            );
+          }
+        } else if (status === 'error') {
+          clearInterval(pollInterval);
+          if (!cancelled) {
+            setOauthError(error || 'Authorization failed');
+            setOauthState(null);
+          }
+        }
+      } catch {
+        // Ignore transient errors, keep polling
+      }
+    }, 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(pollInterval);
+    };
+  }, [oauthState, request, refreshProviders]);
+
+  // Countdown timer for OAuth timeout
+  useEffect(() => {
+    if (!oauthState) return;
+
+    const timer = setInterval(() => {
+      setOauthCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setOauthState(null);
+          setOauthError('Authorization timed out. Please try again.');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [oauthState]);
+
   // Get models for the selected provider
   const selectedProviderModels =
     groupedModels.find((g) => g.providerId === selectedProviderId)?.models ||
@@ -928,6 +1036,16 @@ export const ProvidersPanel = () => {
             {filteredProviders.map((provider) => (
               <button
                 key={provider.id}
+                ref={(el) => {
+                  if (
+                    el &&
+                    selectedProviderId === provider.id &&
+                    shouldScrollRef.current
+                  ) {
+                    shouldScrollRef.current = false;
+                    el.scrollIntoView({ block: 'nearest' });
+                  }
+                }}
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors group hover:text-foreground hover:bg-muted',
                   selectedProviderId === provider.id
@@ -976,7 +1094,7 @@ export const ProvidersPanel = () => {
           <div className="p-2 border-t border-border">
             <button
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-md transition-colors bg-background border border-border text-muted-foreground hover:bg-accent hover:border-accent"
-              onClick={() => setShowAddProviderModal(true)}
+              onClick={handleAddCustomProvider}
             >
               <HugeiconsIcon icon={Add01Icon} size={16} strokeWidth={1.5} />
               Add custom provider
@@ -1149,49 +1267,145 @@ export const ProvidersPanel = () => {
                   <div
                     className={cn(
                       'p-3 rounded-md text-sm border',
-                      selectedProvider.hasApiKey
-                        ? 'bg-green-500/10 border-green-500/20'
-                        : 'bg-blue-500/10 border-blue-500/20',
+                      oauthError
+                        ? 'bg-red-500/10 border-red-500/20'
+                        : selectedProvider.hasApiKey
+                          ? 'bg-green-500/10 border-green-500/20'
+                          : 'bg-blue-500/10 border-blue-500/20',
                     )}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-foreground">
-                        OAuth Provider
-                      </div>
-                      {selectedProvider.hasApiKey ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleRemoveApiKey}
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <Spinner className="h-4 w-4" />
-                          ) : (
-                            'Logout'
-                          )}
-                        </Button>
-                      ) : (
+                    {/* Error state */}
+                    {oauthError && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium text-red-500">
+                            Authorization Failed
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setOauthError(null)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <div className="text-red-400">{oauthError}</div>
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => {
-                            toastManager.add({
-                              type: 'warning',
-                              title: 'Not implemented',
-                              description: `OAuth login for ${selectedProvider?.name} is not implemented yet.`,
-                            });
-                          }}
+                          onClick={handleOAuthLogin}
+                          disabled={oauthLoading}
                         >
-                          Login
+                          Try Again
                         </Button>
-                      )}
-                    </div>
-                    <div className="text-muted-foreground">
-                      {selectedProvider.hasApiKey
-                        ? 'You are logged in. Click Logout to remove your credentials.'
-                        : 'This provider uses OAuth authentication.'}
-                    </div>
+                      </div>
+                    )}
+
+                    {/* Waiting for authorization state */}
+                    {!oauthError && oauthState && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium text-foreground">
+                            {oauthState.providerName} Authorization
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleOAuthCancel}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <button
+                            onClick={() => openExternalUrl(oauthState.authUrl)}
+                            className="text-sm text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-left break-all"
+                          >
+                            Open in browser to authorize
+                          </button>
+                        </div>
+
+                        {oauthState.userCode && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">
+                              Enter code:
+                            </span>
+                            <code className="px-2 py-1 rounded bg-muted font-mono text-sm font-bold text-foreground">
+                              {oauthState.userCode}
+                            </code>
+                            <button
+                              onClick={() =>
+                                handleCopyCode(oauthState.userCode!)
+                              }
+                              className="p-1 rounded hover:bg-muted cursor-pointer bg-transparent border-none text-muted-foreground hover:text-foreground transition-colors"
+                              title="Copy code"
+                            >
+                              {copiedCode ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>Waiting for authorization...</span>
+                          </div>
+                          <span>
+                            {Math.floor(oauthCountdown / 60)}:
+                            {String(oauthCountdown % 60).padStart(2, '0')}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Default state: logged in or not */}
+                    {!oauthError && !oauthState && (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-foreground">
+                            OAuth Provider
+                          </div>
+                          {selectedProvider.hasApiKey ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleRemoveApiKey}
+                              disabled={isSaving}
+                            >
+                              {isSaving ? (
+                                <Spinner className="h-4 w-4" />
+                              ) : (
+                                'Logout'
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={handleOAuthLogin}
+                              disabled={oauthLoading}
+                            >
+                              {oauthLoading ? (
+                                <Spinner className="h-4 w-4" />
+                              ) : (
+                                'Login'
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {selectedProvider.hasApiKey
+                            ? 'You are logged in. Click Logout to remove your credentials.'
+                            : 'This provider uses OAuth authentication.'}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -1485,213 +1699,6 @@ export const ProvidersPanel = () => {
           )}
         </div>
       </div>
-
-      {/* Add Custom Provider Modal */}
-      {showAddProviderModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black/50"
-          onClick={() => setShowAddProviderModal(false)}
-        >
-          <div
-            className="rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto bg-popover border border-border"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="px-4 py-3 flex items-center justify-between border-b border-border">
-              <h3 className="text-lg font-semibold text-foreground">
-                Add Custom Provider
-              </h3>
-              <button
-                onClick={() => setShowAddProviderModal(false)}
-                className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground"
-              >
-                <HugeiconsIcon
-                  icon={Cancel01Icon}
-                  size={20}
-                  strokeWidth={1.5}
-                />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-4 space-y-4">
-              {/* Name */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-foreground">
-                  Name <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={newProvider.name}
-                  onChange={(e) =>
-                    setNewProvider((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g., My Custom Provider"
-                />
-              </div>
-
-              {/* Base URL */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-foreground">
-                  Base URL <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={newProvider.baseUrl}
-                  onChange={(e) =>
-                    setNewProvider((prev) => ({
-                      ...prev,
-                      baseUrl: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g., https://api.example.com/v1"
-                />
-              </div>
-
-              {/* API Key */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-foreground">
-                  API Key
-                </label>
-                <Input
-                  type="password"
-                  value={newProvider.apiKey}
-                  onChange={(e) =>
-                    setNewProvider((prev) => ({
-                      ...prev,
-                      apiKey: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter your API key"
-                />
-              </div>
-
-              {/* API Format */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-foreground">
-                  API Format
-                </label>
-                <Select
-                  value={newProvider.apiFormat}
-                  onValueChange={(value) =>
-                    setNewProvider((prev) => ({
-                      ...prev,
-                      apiFormat: value as CustomProvider['apiFormat'],
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectPopup>
-                    {API_FORMAT_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectPopup>
-                </Select>
-                {newProvider.apiFormat === 'anthropic' && (
-                  <p className="text-xs mt-1 text-muted-foreground">
-                    This will set{' '}
-                    <code className="text-violet-500">
-                      createModelType: anthropic
-                    </code>{' '}
-                    in the config.
-                  </p>
-                )}
-              </div>
-
-              {/* Models */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Models
-                </label>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={newModelId}
-                      onChange={(e) => setNewModelId(e.target.value)}
-                      placeholder="Model ID (e.g., gpt-4)"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddModel();
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddModel}
-                      disabled={!newModelId.trim()}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                </div>
-                {Object.keys(newProvider.models).length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {Object.keys(newProvider.models).map((modelId) => (
-                      <span
-                        key={modelId}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-background border border-border text-foreground"
-                      >
-                        {modelId}
-                        <button
-                          onClick={() => handleRemoveModel(modelId)}
-                          className="p-0.5 rounded hover:bg-accent transition-colors text-muted-foreground"
-                        >
-                          <HugeiconsIcon
-                            icon={Cancel01Icon}
-                            size={12}
-                            strokeWidth={1.5}
-                          />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Enter model ID. Press Enter or click Add.
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-4 py-3 flex items-center justify-end gap-2 border-t border-border">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setShowAddProviderModal(false);
-                  setNewProvider({
-                    name: '',
-                    baseUrl: '',
-                    apiKey: '',
-                    apiFormat: 'openai',
-                    models: {},
-                  });
-                  setNewModelId('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleSaveCustomProvider}
-                disabled={
-                  !newProvider.name.trim() || !newProvider.baseUrl.trim()
-                }
-              >
-                Add Provider
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Provider Confirm Dialog */}
       <AlertDialog
