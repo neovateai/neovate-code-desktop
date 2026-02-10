@@ -137,6 +137,13 @@ export const ProvidersPanel = () => {
   });
   const [newModelId, setNewModelId] = useState('');
 
+  // Inline editing state for non-built-in providers
+  const [editingProviderName, setEditingProviderName] = useState('');
+  const [inlineNewModelId, setInlineNewModelId] = useState('');
+  const [editingModelIds, setEditingModelIds] = useState<
+    Record<string, string>
+  >({});
+
   // Model test state
   const [showTestDropdown, setShowTestDropdown] = useState(false);
   const [testingModel, setTestingModel] = useState<string | null>(null);
@@ -200,36 +207,35 @@ export const ProvidersPanel = () => {
     loadProviders();
   }, [request, refreshProviders]);
 
+  const refreshModels = useCallback(async () => {
+    try {
+      const modelsResult = await request('models.list', { cwd: '/tmp' });
+      if (modelsResult.success) {
+        setGroupedModels(modelsResult.data.groupedModels as GroupedModels[]);
+        if (modelsResult.data.currentModel) {
+          setCurrentModel(
+            `${modelsResult.data.currentModel?.provider.id}/${modelsResult.data.currentModel?.model.id}`,
+          );
+        }
+      }
+
+      const smallModelResult = await request('config.get', {
+        cwd: '/tmp',
+        isGlobal: true,
+        key: 'smallModel',
+      });
+      if (smallModelResult.success && smallModelResult.data.value) {
+        setCurrentSmallModel(smallModelResult.data.value);
+      }
+    } catch (error) {
+      console.error('Failed to load models:', error);
+    }
+  }, [request]);
+
   // Load models list and current model config
   useEffect(() => {
-    const loadModels = async () => {
-      try {
-        // Load models list
-        const modelsResult = await request('models.list', { cwd: '/tmp' });
-        if (modelsResult.success) {
-          setGroupedModels(modelsResult.data.groupedModels as GroupedModels[]);
-          if (modelsResult.data.currentModel) {
-            setCurrentModel(
-              `${modelsResult.data.currentModel?.provider.id}/${modelsResult.data.currentModel?.model.id}`,
-            );
-          }
-        }
-
-        // Load smallModel config
-        const smallModelResult = await request('config.get', {
-          cwd: '/tmp',
-          isGlobal: true,
-          key: 'smallModel',
-        });
-        if (smallModelResult.success && smallModelResult.data.value) {
-          setCurrentSmallModel(smallModelResult.data.value);
-        }
-      } catch (error) {
-        console.error('Failed to load models:', error);
-      }
-    };
-    loadModels();
-  }, [request]);
+    refreshModels();
+  }, [refreshModels]);
 
   // Save custom provider
   const handleSaveCustomProvider = useCallback(async () => {
@@ -357,6 +363,169 @@ export const ProvidersPanel = () => {
       return { ...prev, models: rest };
     });
   }, []);
+
+  const handleSaveProviderName = useCallback(async () => {
+    if (!selectedProviderId || !editingProviderName.trim()) return;
+    const provider = providers.find((p) => p.id === selectedProviderId);
+    if (!provider || provider.source === 'built-in') return;
+    if (editingProviderName.trim() === provider.name) return;
+
+    setIsSaving(true);
+    try {
+      const result = await request('config.set', {
+        cwd: '/tmp',
+        isGlobal: true,
+        key: `provider.${selectedProviderId}.name`,
+        value: editingProviderName.trim(),
+      });
+      if (result.success) {
+        await refreshProviders();
+        toastManager.add({
+          type: 'success',
+          title: 'Provider name updated',
+        });
+      }
+    } catch (error) {
+      toastManager.add({
+        type: 'error',
+        title: 'Failed to update provider name',
+        description: String(error),
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    selectedProviderId,
+    editingProviderName,
+    providers,
+    refreshProviders,
+    request,
+  ]);
+
+  const handleAddModelInline = useCallback(async () => {
+    if (!selectedProviderId || !inlineNewModelId.trim()) return;
+
+    setIsSaving(true);
+    try {
+      const result = await request('config.set', {
+        cwd: '/tmp',
+        isGlobal: true,
+        key: `provider.${selectedProviderId}.models.${inlineNewModelId.trim()}`,
+        value: {},
+      });
+      if (result.success) {
+        setInlineNewModelId('');
+        await Promise.all([refreshProviders(), refreshModels()]);
+        toastManager.add({
+          type: 'success',
+          title: 'Model added',
+        });
+      }
+    } catch (error) {
+      toastManager.add({
+        type: 'error',
+        title: 'Failed to add model',
+        description: String(error),
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    selectedProviderId,
+    inlineNewModelId,
+    refreshProviders,
+    refreshModels,
+    request,
+  ]);
+
+  const handleDeleteModelInline = useCallback(
+    async (modelId: string) => {
+      if (!selectedProviderId) return;
+
+      setIsSaving(true);
+      try {
+        const result = await request('config.remove', {
+          cwd: '/tmp',
+          isGlobal: true,
+          key: `provider.${selectedProviderId}.models.${modelId}`,
+        });
+        if (result.success) {
+          await Promise.all([refreshProviders(), refreshModels()]);
+          toastManager.add({
+            type: 'info',
+            title: 'Model removed',
+          });
+        }
+      } catch (error) {
+        toastManager.add({
+          type: 'error',
+          title: 'Failed to remove model',
+          description: String(error),
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [selectedProviderId, refreshProviders, refreshModels, request],
+  );
+
+  const handleRenameModelInline = useCallback(
+    async (oldModelId: string) => {
+      if (!selectedProviderId) return;
+      const newId = editingModelIds[oldModelId]?.trim();
+      if (!newId || newId === oldModelId) return;
+
+      setIsSaving(true);
+      try {
+        const removeResult = await request('config.remove', {
+          cwd: '/tmp',
+          isGlobal: true,
+          key: `provider.${selectedProviderId}.models.${oldModelId}`,
+        });
+        if (removeResult.success) {
+          const addResult = await request('config.set', {
+            cwd: '/tmp',
+            isGlobal: true,
+            key: `provider.${selectedProviderId}.models.${newId}`,
+            value: {},
+          });
+          if (addResult.success) {
+            setEditingModelIds((prev) => {
+              const { [oldModelId]: _, ...rest } = prev;
+              return rest;
+            });
+            await Promise.all([refreshProviders(), refreshModels()]);
+            toastManager.add({
+              type: 'success',
+              title: 'Model renamed',
+            });
+          }
+        }
+      } catch (error) {
+        toastManager.add({
+          type: 'error',
+          title: 'Failed to rename model',
+          description: String(error),
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [
+      selectedProviderId,
+      editingModelIds,
+      refreshProviders,
+      refreshModels,
+      request,
+    ],
+  );
+
+  useEffect(() => {
+    const provider = providers.find((p) => p.id === selectedProviderId);
+    setEditingProviderName(provider?.name ?? '');
+    setInlineNewModelId('');
+    setEditingModelIds({});
+  }, [selectedProviderId, providers]);
 
   // Load selected provider's config
   useEffect(() => {
@@ -755,9 +924,39 @@ export const ProvidersPanel = () => {
                 {/* Provider Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {selectedProvider.name}
-                    </h2>
+                    {selectedProvider.source !== 'built-in' ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={editingProviderName}
+                          onChange={(e) =>
+                            setEditingProviderName(e.target.value)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSaveProviderName();
+                            }
+                          }}
+                          className="text-lg font-semibold bg-transparent border-b border-transparent hover:border-border focus:border-accent outline-none text-foreground"
+                        />
+                        {editingProviderName.trim() !==
+                          selectedProvider.name && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSaveProviderName}
+                            disabled={isSaving || !editingProviderName.trim()}
+                          >
+                            Save
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <h2 className="text-lg font-semibold text-foreground">
+                        {selectedProvider.name}
+                      </h2>
+                    )}
                     <span
                       className={cn(
                         'px-2 py-0.5 text-xs rounded-full',
@@ -1017,72 +1216,164 @@ export const ProvidersPanel = () => {
                 )}
 
                 {/* Models List */}
-                {selectedProviderModels.length > 0 && (
+                {(selectedProviderModels.length > 0 ||
+                  selectedProvider.source !== 'built-in') && (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-foreground">
                       Models ({selectedProviderModels.length})
                     </label>
-                    <div
-                      className="rounded-md overflow-hidden border border-border"
-                      style={{
-                        maxHeight: '300px',
-                        overflowY: 'auto',
-                      }}
-                    >
-                      {selectedProviderModels.map((model) => {
-                        const isCurrentModel = currentModel === model.value;
-                        const isCurrentSmallModel =
-                          currentSmallModel === model.value;
+                    {selectedProviderModels.length > 0 && (
+                      <div
+                        className="rounded-md overflow-hidden border border-border"
+                        style={{
+                          maxHeight: '300px',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        {selectedProviderModels.map((model) => {
+                          const isCurrentModel = currentModel === model.value;
+                          const isCurrentSmallModel =
+                            currentSmallModel === model.value;
 
-                        return (
-                          <div
-                            key={model.modelId}
-                            className="flex items-center justify-between px-3 py-2 text-sm  border-b border-border hover:bg-muted"
-                          >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span
-                                className="truncate text-foreground"
-                                title={model.name || model.modelId}
-                              >
-                                {model.name || model.modelId}
-                              </span>
-                              {isCurrentModel && (
-                                <span className="px-1.5 py-0.5 text-xs rounded bg-blue-500/10 text-blue-500">
-                                  Default
-                                </span>
-                              )}
-                              {isCurrentSmallModel && (
-                                <span className="px-1.5 py-0.5 text-xs rounded bg-green-500/10 text-green-500">
-                                  Small
-                                </span>
-                              )}
+                          return (
+                            <div
+                              key={model.modelId}
+                              className="flex items-center justify-between px-3 py-2 text-sm  border-b border-border hover:bg-muted"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                {selectedProvider.source !== 'built-in' ? (
+                                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                                    <input
+                                      type="text"
+                                      value={
+                                        editingModelIds[model.modelId] ??
+                                        model.modelId
+                                      }
+                                      onChange={(e) =>
+                                        setEditingModelIds((prev) => ({
+                                          ...prev,
+                                          [model.modelId]: e.target.value,
+                                        }))
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          e.preventDefault();
+                                          handleRenameModelInline(
+                                            model.modelId,
+                                          );
+                                        }
+                                      }}
+                                      className="flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-border focus:border-accent outline-none text-foreground text-sm"
+                                    />
+                                    {editingModelIds[model.modelId] != null &&
+                                      editingModelIds[model.modelId].trim() !==
+                                        model.modelId && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleRenameModelInline(
+                                              model.modelId,
+                                            )
+                                          }
+                                          disabled={
+                                            isSaving ||
+                                            !editingModelIds[
+                                              model.modelId
+                                            ]?.trim()
+                                          }
+                                        >
+                                          Save
+                                        </Button>
+                                      )}
+                                  </div>
+                                ) : (
+                                  <span
+                                    className="truncate text-foreground"
+                                    title={model.name || model.modelId}
+                                  >
+                                    {model.name || model.modelId}
+                                  </span>
+                                )}
+                                {isCurrentModel && (
+                                  <span className="px-1.5 py-0.5 text-xs rounded bg-blue-500/10 text-blue-500">
+                                    Default
+                                  </span>
+                                )}
+                                {isCurrentSmallModel && (
+                                  <span className="px-1.5 py-0.5 text-xs rounded bg-green-500/10 text-green-500">
+                                    Small
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                {!isCurrentModel && (
+                                  <button
+                                    onClick={() => handleSetModel(model.value)}
+                                    className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
+                                    title="Set as default model"
+                                  >
+                                    Set Default
+                                  </button>
+                                )}
+                                {!isCurrentSmallModel && (
+                                  <button
+                                    onClick={() =>
+                                      handleSetSmallModel(model.value)
+                                    }
+                                    className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
+                                    title="Set as small model"
+                                  >
+                                    Set Small
+                                  </button>
+                                )}
+                                {selectedProvider.source !== 'built-in' && (
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteModelInline(model.modelId)
+                                    }
+                                    className="px-2 py-1 text-xs rounded hover:bg-red-500/10 hover:text-red-500 transition-colors text-muted-foreground"
+                                    title="Delete model"
+                                    disabled={isSaving}
+                                  >
+                                    <HugeiconsIcon
+                                      icon={Delete01Icon}
+                                      size={14}
+                                      strokeWidth={1.5}
+                                    />
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              {!isCurrentModel && (
-                                <button
-                                  onClick={() => handleSetModel(model.value)}
-                                  className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
-                                  title="Set as default model"
-                                >
-                                  Set Default
-                                </button>
-                              )}
-                              {!isCurrentSmallModel && (
-                                <button
-                                  onClick={() =>
-                                    handleSetSmallModel(model.value)
-                                  }
-                                  className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
-                                  title="Set as small model"
-                                >
-                                  Set Small
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {selectedProvider.source !== 'built-in' && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={inlineNewModelId}
+                          onChange={(e) => setInlineNewModelId(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddModelInline();
+                            }
+                          }}
+                          placeholder="Model ID (e.g., gpt-4)"
+                          className="flex-1 px-3 py-2 text-sm rounded-md outline-none bg-muted border border-border text-foreground focus:border-accent"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleAddModelInline}
+                          disabled={isSaving || !inlineNewModelId.trim()}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
