@@ -143,6 +143,8 @@ export const ProvidersPanel = () => {
   const [editingModelIds, setEditingModelIds] = useState<
     Record<string, string>
   >({});
+  const [editingApiFormat, setEditingApiFormat] =
+    useState<CustomProvider['apiFormat']>('openai');
 
   // Model test state
   const [showTestDropdown, setShowTestDropdown] = useState(false);
@@ -520,6 +522,51 @@ export const ProvidersPanel = () => {
     ],
   );
 
+  const handleSaveApiFormat = useCallback(
+    async (value: CustomProvider['apiFormat']) => {
+      if (!selectedProviderId) return;
+
+      setEditingApiFormat(value);
+      setIsSaving(true);
+      try {
+        await request('config.set', {
+          cwd: '/tmp',
+          isGlobal: true,
+          key: `provider.${selectedProviderId}.apiFormat`,
+          value,
+        });
+        if (value === 'anthropic') {
+          await request('config.set', {
+            cwd: '/tmp',
+            isGlobal: true,
+            key: `provider.${selectedProviderId}.createModelType`,
+            value: 'anthropic',
+          });
+        } else {
+          await request('config.remove', {
+            cwd: '/tmp',
+            isGlobal: true,
+            key: `provider.${selectedProviderId}.createModelType`,
+          });
+        }
+        await refreshProviders();
+        toastManager.add({
+          type: 'success',
+          title: 'API format updated',
+        });
+      } catch (error) {
+        toastManager.add({
+          type: 'error',
+          title: 'Failed to update API format',
+          description: String(error),
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [selectedProviderId, refreshProviders, request],
+  );
+
   useEffect(() => {
     const provider = providers.find((p) => p.id === selectedProviderId);
     setEditingProviderName(provider?.name ?? '');
@@ -561,6 +608,20 @@ export const ProvidersPanel = () => {
         });
         if (baseUrlResult.success && baseUrlResult.data.value) {
           setBaseUrl(baseUrlResult.data.value);
+        }
+
+        // Load API format for custom providers
+        const apiFormatResult = await request('config.get', {
+          cwd: '/tmp',
+          isGlobal: true,
+          key: `provider.${selectedProviderId}.apiFormat`,
+        });
+        if (apiFormatResult.success && apiFormatResult.data.value) {
+          setEditingApiFormat(
+            apiFormatResult.data.value as CustomProvider['apiFormat'],
+          );
+        } else {
+          setEditingApiFormat('openai');
         }
       } catch (error) {
         console.error('Failed to load provider config:', error);
@@ -1212,6 +1273,34 @@ export const ProvidersPanel = () => {
                     <p className="text-xs text-muted-foreground">
                       Leave empty to use the default API endpoint
                     </p>
+                  </div>
+                )}
+
+                {/* API Format */}
+                {!isOAuthProvider && selectedProvider.source !== 'built-in' && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-foreground">
+                      API Format
+                    </label>
+                    <Select
+                      value={editingApiFormat}
+                      onValueChange={(value) =>
+                        handleSaveApiFormat(
+                          value as CustomProvider['apiFormat'],
+                        )
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectPopup>
+                        {API_FORMAT_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectPopup>
+                    </Select>
                   </div>
                 )}
 
