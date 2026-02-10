@@ -108,7 +108,8 @@
   "dependencies": {
     "@neovate/code": "^0.27.0",
     "electron-updater": "^6.7.3",
-    "node-pty": "^1.1.0"
+    "node-pty": "^1.1.0",
+    "react-virtuoso": "^4.18.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css}": "biome format --write"

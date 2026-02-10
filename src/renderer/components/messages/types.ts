@@ -25,7 +25,7 @@ export interface SplitMessages {
  */
 export interface MessageRenderProps {
   message: NormalizedMessage;
-  allMessages: NormalizedMessage[];
+  toolPairs?: ToolPair[];
 }
 
 /**

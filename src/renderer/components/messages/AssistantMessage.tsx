@@ -4,17 +4,14 @@ import Markdown from 'marked-react';
 import { type ReactNode, useCallback, useMemo } from 'react';
 import type { NormalizedMessage } from '../../client/types/message';
 import { cn } from '../../lib/utils';
-import {
-  extractReasoningParts,
-  extractTextParts,
-  extractToolUseParts,
-  pairToolsWithResults,
-} from './messageHelpers';
+import { extractReasoningParts, extractTextParts } from './messageHelpers';
 import { ToolMessage } from './ToolMessage';
+import type { ToolPair } from './types';
 
 interface AssistantMessageProps {
   message: NormalizedMessage;
-  allMessages: NormalizedMessage[];
+  /** Pre-computed tool pairs from the parent list. */
+  toolPairs?: ToolPair[];
 }
 
 /**
@@ -23,25 +20,10 @@ interface AssistantMessageProps {
  */
 export function AssistantMessage({
   message,
-  allMessages,
+  toolPairs = [],
 }: AssistantMessageProps) {
   const textParts = extractTextParts(message);
   const reasoningParts = extractReasoningParts(message);
-  const toolUseParts = extractToolUseParts(message);
-
-  // Get subsequent messages for tool pairing
-  const messageIndex = allMessages.findIndex((m) => m.uuid === message.uuid);
-  const subsequentMessages =
-    messageIndex >= 0 ? allMessages.slice(messageIndex + 1) : [];
-
-  // Pair tools with results
-  const toolPairs = useMemo(
-    () =>
-      toolUseParts.length > 0
-        ? pairToolsWithResults(message, subsequentMessages)
-        : [],
-    [message, subsequentMessages, toolUseParts.length],
-  );
 
   return (
     <div className="flex justify-start min-w-0 w-full">
