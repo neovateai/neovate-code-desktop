@@ -71,9 +71,7 @@ export function SessionInfoBar({
     setIsRenaming(false);
   };
 
-  if (!activeSession || !selectedWorkspaceId || !selectedSessionId) {
-    return null;
-  }
+  const hasSession = activeSession && selectedWorkspaceId && selectedSessionId;
 
   return (
     <>
@@ -81,7 +79,7 @@ export function SessionInfoBar({
         <UISeparator orientation="vertical" className="h-4 mx-2 bg-border" />
       )}
       <div className="flex items-center gap-2 text-sm">
-        {isRenaming ? (
+        {hasSession && isRenaming ? (
           <input
             className="bg-transparent border border-primary rounded px-1 py-0.5 text-sm outline-none max-w-40"
             value={renameValue}
@@ -100,10 +98,10 @@ export function SessionInfoBar({
             // @ts-expect-error - WebkitAppRegion is a valid CSS property for Electron
             style={draggable ? { WebkitAppRegion: 'drag' } : undefined}
           >
-            {activeSession.summary || 'New Chat'}
+            {activeSession?.summary || 'New Chat'}
           </span>
         )}
-        {showProjectName && (
+        {hasSession && showProjectName && (
           <button
             className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             onClick={handleOpenInFinder}
@@ -113,11 +111,13 @@ export function SessionInfoBar({
             <span className="truncate max-w-32">{projectName}</span>
           </button>
         )}
-        <SessionActionsMenu
-          sessionId={selectedSessionId}
-          workspaceId={selectedWorkspaceId}
-          onRenameStart={handleStartRename}
-        />
+        {hasSession && (
+          <SessionActionsMenu
+            sessionId={selectedSessionId}
+            workspaceId={selectedWorkspaceId}
+            onRenameStart={handleStartRename}
+          />
+        )}
       </div>
     </>
   );
