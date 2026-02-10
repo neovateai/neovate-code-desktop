@@ -316,9 +316,9 @@ WorkspacePanel.Messages = function Messages() {
 
   return (
     <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-4 min-w-0">
-      {messages.length === 0 ? (
+      {!selectedSessionId ? (
         <WelcomePanel />
-      ) : (
+      ) : messages.length > 0 ? (
         <div className="min-w-0">
           {/* Completed messages (memoized to prevent re-renders) */}
           {completedMessages.map((message) => (
@@ -338,7 +338,7 @@ WorkspacePanel.Messages = function Messages() {
             />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
