@@ -135,4 +135,100 @@ describe('BrowserWindowManager', () => {
     expect(mockBrowserWindowInstances[0].destroy).toHaveBeenCalled();
     expect(mockBrowserWindowInstances[1].destroy).toHaveBeenCalled();
   });
+
+  describe('Custom URL Params', () => {
+    it('should merge urlSearchParams into window URL', async () => {
+      const { browserWindowManager } = await import('./browser-window-manager');
+
+      browserWindowManager.open({
+        windowId: 'test-window',
+        windowType: 'editor',
+        urlSearchParams: {
+          fileId: '123',
+          line: '45',
+        },
+      });
+
+      const mockWindow = mockBrowserWindowInstances[0];
+      const loadFileCall = mockWindow.loadFile.mock.calls[0];
+      const search = loadFileCall[1]?.search;
+
+      const params = new URLSearchParams(search);
+      expect(params.get('windowId')).toBe('test-window');
+      expect(params.get('windowType')).toBe('editor');
+      expect(params.get('fileId')).toBe('123');
+      expect(params.get('line')).toBe('45');
+    });
+
+    it('should work without urlSearchParams (backward compatibility)', async () => {
+      const { browserWindowManager } = await import('./browser-window-manager');
+
+      browserWindowManager.open({
+        windowId: 'test-window',
+        windowType: 'settings',
+      });
+
+      const mockWindow = mockBrowserWindowInstances[0];
+      const loadFileCall = mockWindow.loadFile.mock.calls[0];
+      const search = loadFileCall[1]?.search;
+
+      const params = new URLSearchParams(search);
+      expect(params.get('windowId')).toBe('test-window');
+      expect(params.get('windowType')).toBe('settings');
+      expect(params.get('fileId')).toBeNull();
+    });
+
+    it('should handle empty urlSearchParams object', async () => {
+      const { browserWindowManager } = await import('./browser-window-manager');
+
+      browserWindowManager.open({
+        windowId: 'test-window',
+        windowType: 'browser',
+        urlSearchParams: {},
+      });
+
+      const mockWindow = mockBrowserWindowInstances[0];
+      expect(mockWindow.loadFile).toHaveBeenCalled();
+
+      const loadFileCall = mockWindow.loadFile.mock.calls[0];
+      const search = loadFileCall[1]?.search;
+      const params = new URLSearchParams(search);
+
+      // Should only have windowId and windowType
+      expect(params.get('windowId')).toBe('test-window');
+      expect(params.get('windowType')).toBe('browser');
+      expect(params.toString()).toBe('windowId=test-window&windowType=browser');
+    });
+
+    it('should merge params in dev mode with Vite server', async () => {
+      // Mock dev environment
+      vi.doMock('@electron-toolkit/utils', () => ({
+        is: { dev: true },
+      }));
+
+      process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
+
+      const { browserWindowManager } = await import('./browser-window-manager');
+
+      browserWindowManager.open({
+        windowId: 'dev-window',
+        windowType: 'editor',
+        urlSearchParams: {
+          fileId: 'abc',
+          mode: 'diff',
+        },
+      });
+
+      const mockWindow = mockBrowserWindowInstances[0];
+      const loadedUrl = mockWindow.loadURL.mock.calls[0][0];
+
+      const url = new URL(loadedUrl);
+      expect(url.searchParams.get('windowId')).toBe('dev-window');
+      expect(url.searchParams.get('windowType')).toBe('editor');
+      expect(url.searchParams.get('fileId')).toBe('abc');
+      expect(url.searchParams.get('mode')).toBe('diff');
+
+      delete process.env.ELECTRON_RENDERER_URL;
+    });
+  });
 });
