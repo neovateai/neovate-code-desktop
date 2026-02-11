@@ -46,12 +46,21 @@ export function FileTree(props: { active: boolean }) {
     : null;
 
   useEffect(() => {
-    init();
+    init(true);
   }, [cwd]);
 
-  const init = async () => {
+  useEffect(() => {
+    init(false);
+  }, [active]);
+
+  const init = async (clear = false) => {
     if (!cwd) {
       return;
+    }
+    if (clear) {
+      setSelectedKey(null);
+      setExpandedKeys(new Set());
+      setItemToDelete(null);
     }
     request<any>('fs.tree', { cwd }).then((res) => {
       if (res?.data?.tree) {
