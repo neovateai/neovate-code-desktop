@@ -223,7 +223,7 @@ export function ContentTabBar() {
               key={tab.id}
               tab={tab}
               isActive={activeTabId === tab.id}
-              onClose={tabs.length > 1 ? () => closeTab(tab.id) : undefined}
+              onClose={() => closeTab(tab.id)}
             />
           ))}
         </SortableContext>
