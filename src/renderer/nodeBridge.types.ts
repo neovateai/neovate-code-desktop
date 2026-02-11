@@ -428,6 +428,7 @@ type WorkspaceData = {
   repoPath: string;
   branch: string;
   worktreePath: string;
+  globalProjectDir: string;
   sessionIds: string[];
   gitState: {
     currentCommit: string;

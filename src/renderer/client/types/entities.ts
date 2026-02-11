@@ -17,6 +17,7 @@ export interface WorkspaceData {
   repoPath: string;
   branch: string;
   worktreePath: string;
+  globalProjectDir: string;
   gitState: {
     currentCommit: string;
     isDirty: boolean;
