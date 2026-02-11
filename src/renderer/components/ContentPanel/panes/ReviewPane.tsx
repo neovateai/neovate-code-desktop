@@ -1,23 +1,54 @@
-import { FileIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChevronRight, MoreHorizontal } from 'lucide-react';
 import { FileDiff } from '../../FileDiff';
 import { useStore } from '../../../store';
 import {
-  Accordion,
-  AccordionItem,
-  AccordionPanel,
-  AccordionTrigger,
-} from '../../ui/accordion';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+} from '../../ui/menu';
+import { MenuRadioGroup, MenuRadioItem } from '../../ui/menu';
+import { MenuItem } from '../../ui/menu';
 import { Spinner } from '../../ui/spinner';
 import { useContentPanelContext } from '../ContentPanelProvider';
 import type { ReviewTab } from '../types';
+import { cn } from '../../../lib/utils';
 
-type FileDiff = {
+type FileDiffData = {
   path: string;
   oldContent: string;
   newContent: string;
 };
+
+type DiffStyle = 'unified' | 'split';
+
+/** Compute added/removed line counts from old and new content. */
+function computeDiffStats(oldContent: string, newContent: string) {
+  const oldLines = oldContent ? oldContent.split('\n') : [];
+  const newLines = newContent ? newContent.split('\n') : [];
+  const oldSet = new Set(oldLines);
+  const newSet = new Set(newLines);
+  let additions = 0;
+  let deletions = 0;
+  for (const line of newLines) {
+    if (!oldSet.has(line)) additions++;
+  }
+  for (const line of oldLines) {
+    if (!newSet.has(line)) deletions++;
+  }
+  return { additions, deletions };
+}
+
+/** Split a file path into filename and directory. */
+function splitPath(filePath: string) {
+  const lastSlash = filePath.lastIndexOf('/');
+  if (lastSlash === -1) return { fileName: filePath, directory: '' };
+  return {
+    fileName: filePath.slice(lastSlash + 1),
+    directory: filePath.slice(0, lastSlash + 1),
+  };
+}
 
 interface ReviewPaneProps {
   tab: ReviewTab;
@@ -28,8 +59,9 @@ export function ReviewPane({ tab, isActive }: ReviewPaneProps) {
   const { repoPath } = useContentPanelContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fileDiffs, setFileDiffs] = useState<FileDiff[]>([]);
-  const [openItems, setOpenItems] = useState<string[]>([]);
+  const [fileDiffs, setFileDiffs] = useState<FileDiffData[]>([]);
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  const [diffStyle, setDiffStyle] = useState<DiffStyle>('unified');
 
   const request = useStore((s) => s.request);
   const selectedSessionId = useStore((s) => s.selectedSessionId);
@@ -73,14 +105,11 @@ export function ReviewPane({ tab, isActive }: ReviewPaneProps) {
             return newDiffs;
           });
           setOpenItems((prev) => {
-            const existingPaths = new Set(prev);
             const newPaths = newDiffs
-              .map((d: FileDiff) => d.path)
-              .filter((path: string) => !existingPaths.has(path));
-            if (newPaths.length === 0) {
-              return prev;
-            }
-            return [...prev, ...newPaths];
+              .map((d: FileDiffData) => d.path)
+              .filter((path: string) => !prev.has(path));
+            if (newPaths.length === 0) return prev;
+            return new Set([...prev, ...newPaths]);
           });
         } else {
           setFileDiffs([]);
@@ -98,6 +127,26 @@ export function ReviewPane({ tab, isActive }: ReviewPaneProps) {
 
     fetchDiffs();
   }, [isActive, selectedSessionId, cwd, firstMessageId, messageCount, request]);
+
+  const toggleItem = useCallback((path: string) => {
+    setOpenItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  }, []);
+
+  const expandAll = useCallback(() => {
+    setOpenItems(new Set(fileDiffs.map((d) => d.path)));
+  }, [fileDiffs]);
+
+  const collapseAll = useCallback(() => {
+    setOpenItems(new Set());
+  }, []);
 
   if (!isActive) {
     return null;
@@ -135,32 +184,88 @@ export function ReviewPane({ tab, isActive }: ReviewPaneProps) {
   }
 
   return (
-    <div className="flex-1 overflow-auto bg-background">
-      <Accordion
-        multiple
-        value={openItems}
-        onValueChange={(value) => setOpenItems(value as string[])}
-      >
-        {fileDiffs.map((diff) => (
-          <AccordionItem key={diff.path} value={diff.path}>
-            <AccordionTrigger className="px-3 py-2 hover:bg-muted/50">
-              <div className="flex items-center gap-2">
-                <HugeiconsIcon
-                  icon={FileIcon}
-                  className="size-4 text-green-500"
+    <div className="flex-1 flex flex-col overflow-hidden bg-background">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
+        <span className="text-sm font-medium text-foreground">All Changes</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+            <MoreHorizontal className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={4}>
+            <MenuRadioGroup
+              value={diffStyle}
+              onValueChange={(value) => setDiffStyle(value as DiffStyle)}
+            >
+              <MenuRadioItem value="unified">Unified View</MenuRadioItem>
+              <MenuRadioItem value="split">Split View</MenuRadioItem>
+            </MenuRadioGroup>
+            <DropdownMenuSeparator />
+            <MenuItem inset onClick={expandAll}>
+              Expand All
+            </MenuItem>
+            <MenuItem inset onClick={collapseAll}>
+              Collapse All
+            </MenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* File diffs list */}
+      <div className="flex-1 overflow-auto">
+        {fileDiffs.map((diff) => {
+          const isOpen = openItems.has(diff.path);
+          const { fileName, directory } = splitPath(diff.path);
+          const { additions, deletions } = computeDiffStats(
+            diff.oldContent,
+            diff.newContent,
+          );
+
+          return (
+            <div key={diff.path}>
+              {/* File header */}
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 transition-colors cursor-pointer border-b border-border"
+                onClick={() => toggleItem(diff.path)}
+              >
+                <ChevronRight
+                  className={cn(
+                    'size-3.5 shrink-0 text-muted-foreground transition-transform duration-150',
+                    isOpen && 'rotate-90',
+                  )}
                 />
-                <span className="text-sm">{diff.path}</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionPanel className="p-0">
-              <FileDiff
-                oldFile={{ name: diff.path, contents: diff.oldContent }}
-                newFile={{ name: diff.path, contents: diff.newContent }}
-              />
-            </AccordionPanel>
-          </AccordionItem>
-        ))}
-      </Accordion>
+                <span className="text-sm font-medium truncate">{fileName}</span>
+                {directory && (
+                  <span className="text-xs text-muted-foreground truncate">
+                    {directory}
+                  </span>
+                )}
+                <span className="ml-auto flex items-center gap-1.5 shrink-0 text-xs">
+                  {additions > 0 && (
+                    <span className="text-green-500">+{additions}</span>
+                  )}
+                  {deletions > 0 && (
+                    <span className="text-red-500">-{deletions}</span>
+                  )}
+                </span>
+              </button>
+
+              {/* File diff content */}
+              {isOpen && (
+                <div className="border-b border-border">
+                  <FileDiff
+                    oldFile={{ name: diff.path, contents: diff.oldContent }}
+                    newFile={{ name: diff.path, contents: diff.newContent }}
+                    diffStyle={diffStyle}
+                    disableFileHeader
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

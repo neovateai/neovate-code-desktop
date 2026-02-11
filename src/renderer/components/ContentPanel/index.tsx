@@ -137,7 +137,7 @@ function ContentPanelBase({ repoPath, hidden }: ContentPanelProps) {
   return (
     <ContentPanelProvider repoPath={repoPath}>
       <div
-        className={`flex flex-col flex-1 bg-background text-foreground ${hidden ? 'hidden' : 'flex'}`}
+        className={`flex flex-col flex-1 overflow-hidden bg-background text-foreground ${hidden ? 'hidden' : 'flex'}`}
       >
         <ContentTabBar />
         <ContentPaneRouter />

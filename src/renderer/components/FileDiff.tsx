@@ -7,12 +7,14 @@ interface FileDiffProps {
   oldFile: { name: string; contents: string };
   newFile: { name: string; contents: string };
   diffStyle?: DiffStyle;
+  disableFileHeader?: boolean;
 }
 
 export function FileDiff({
   oldFile,
   newFile,
   diffStyle = 'unified',
+  disableFileHeader,
 }: FileDiffProps) {
   const theme = useStore((s) => s.theme);
 
@@ -30,6 +32,7 @@ export function FileDiff({
       options={{
         theme: resolvedTheme,
         diffStyle,
+        disableFileHeader,
       }}
     />
   );
