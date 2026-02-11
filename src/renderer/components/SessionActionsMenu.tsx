@@ -30,6 +30,7 @@ export function SessionActionsMenu({
   const workspaces = useStore((state) => state.workspaces);
   const pinnedSessions = useStore((state) => state.pinnedSessions);
   const togglePinSession = useStore((state) => state.togglePinSession);
+  const request = useStore((state) => state.request);
   const { deleteSession } = useSessionDelete();
 
   const workspace = workspaces[workspaceId];
@@ -49,6 +50,13 @@ export function SessionActionsMenu({
   const handleCopySessionId = () => {
     navigator.clipboard.writeText(sessionId);
     toastManager.add({ title: 'Copied session ID' });
+  };
+
+  const handleOpenLogFile = async () => {
+    if (workspace) {
+      const logFilePath = `${workspace.globalProjectDir}/${sessionId}.jsonl`;
+      await request('utils.open', { cwd: logFilePath, app: 'finder' });
+    }
   };
 
   return (
@@ -75,6 +83,7 @@ export function SessionActionsMenu({
           Copy working directory
         </MenuItem>
         <MenuItem onClick={handleCopySessionId}>Copy session ID</MenuItem>
+        <MenuItem onClick={handleOpenLogFile}>Open session log</MenuItem>
       </MenuPopup>
     </Menu>
   );
@@ -96,6 +105,7 @@ export function SessionActionsContextMenuItems({
   const workspaces = useStore((state) => state.workspaces);
   const pinnedSessions = useStore((state) => state.pinnedSessions);
   const togglePinSession = useStore((state) => state.togglePinSession);
+  const request = useStore((state) => state.request);
   const { deleteSession } = useSessionDelete();
 
   const workspace = workspaces[workspaceId];
@@ -117,6 +127,13 @@ export function SessionActionsContextMenuItems({
     toastManager.add({ title: 'Copied session ID' });
   };
 
+  const handleOpenLogFile = async () => {
+    if (workspace) {
+      const logFilePath = `${workspace.globalProjectDir}/${sessionId}.jsonl`;
+      await request('utils.open', { cwd: logFilePath, app: 'finder' });
+    }
+  };
+
   return (
     <>
       {onRenameStart && (
@@ -134,6 +151,9 @@ export function SessionActionsContextMenuItems({
       </ContextMenuItem>
       <ContextMenuItem onClick={handleCopySessionId}>
         Copy session ID
+      </ContextMenuItem>
+      <ContextMenuItem onClick={handleOpenLogFile}>
+        Open session log
       </ContextMenuItem>
     </>
   );
