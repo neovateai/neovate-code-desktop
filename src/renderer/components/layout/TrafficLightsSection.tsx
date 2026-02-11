@@ -1,6 +1,6 @@
 import { PanelLeftIcon, ViewSidebarLeftIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { SquarePen } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useStore } from '../../store';
 import { Button } from '../ui/button';
@@ -77,7 +77,7 @@ export function TrafficLightsSection() {
           onClick={handleNewChat}
           title="New Chat"
         >
-          <SquarePen size={14} strokeWidth={1.5} />
+          <Plus size={14} strokeWidth={1.5} />
         </Button>
       )}
     </div>
