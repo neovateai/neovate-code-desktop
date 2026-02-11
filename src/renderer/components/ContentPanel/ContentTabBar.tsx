@@ -170,8 +170,9 @@ export function ContentTabItem({
   return (
     <div
       ref={setNodeRef}
+      data-tab-id={tab.id}
       className={`
-        flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md cursor-pointer transition-colors
+        flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 text-sm whitespace-nowrap rounded-md cursor-pointer transition-colors
         ${isDragging ? 'opacity-50' : 'opacity-100'}
         ${isActive ? 'text-foreground bg-muted border border-border' : 'text-muted-foreground border border-transparent hover:bg-accent'}
       `}
@@ -190,6 +191,7 @@ export function ContentTabItem({
 // Tab bar component
 export function ContentTabBar() {
   const { tabs, activeTabId, closeTab, reorderTabs } = useContentPanelContext();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -207,36 +209,65 @@ export function ContentTabBar() {
     }
   };
 
-  return (
-    <div className="flex items-center gap-1 px-2 py-2 border-b border-border">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={tabs.map((t) => t.id)}
-          strategy={horizontalListSortingStrategy}
-        >
-          {tabs.map((tab) => (
-            <ContentTabItem
-              key={tab.id}
-              tab={tab}
-              isActive={activeTabId === tab.id}
-              onClose={() => closeTab(tab.id)}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
+  // Translate vertical wheel scroll to horizontal scroll
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    // Only hijack when there's horizontal overflow
+    if (container.scrollWidth <= container.clientWidth) return;
+    e.preventDefault();
+    container.scrollLeft += e.deltaY || e.deltaX;
+  }, []);
 
-      {/* Add tab menu */}
-      <AddTabButton />
+  // Auto-scroll active tab into view
+  useEffect(() => {
+    if (!activeTabId || !scrollRef.current) return;
+    const container = scrollRef.current;
+    const activeEl = container.querySelector<HTMLElement>(
+      `[data-tab-id="${activeTabId}"]`,
+    );
+    activeEl?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [activeTabId]);
+
+  return (
+    <div className="flex items-center border-b border-border">
+      {/* Scrollable tabs region */}
+      <div
+        ref={scrollRef}
+        className="flex flex-1 items-center gap-1 min-w-0 overflow-x-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onWheel={handleWheel}
+      >
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={tabs.map((t) => t.id)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {tabs.map((tab) => (
+              <ContentTabItem
+                key={tab.id}
+                tab={tab}
+                isActive={activeTabId === tab.id}
+                onClose={() => closeTab(tab.id)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      </div>
+
+      {/* Pinned add tab button */}
+      <div className="shrink-0 px-2 py-2">
+        <AddTabButton />
+      </div>
     </div>
   );
 }
 
 // Add tab button with dropdown
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SINGLETON_TAB_TYPES, TAB_TYPE_OPTIONS } from './types';
 import { useStore } from '../../store';
 
@@ -341,7 +372,7 @@ function AddTabButton() {
       {isOpen && (
         <div
           ref={menuRef}
-          className="absolute top-full left-0 mt-1 py-1 rounded-md shadow-lg z-50 bg-popover border border-border min-w-[120px]"
+          className="absolute top-full right-0 mt-1 py-1 rounded-md shadow-lg z-50 bg-popover border border-border min-w-[120px]"
         >
           {TAB_TYPE_OPTIONS.map((option) => {
             const disabled = isTypeDisabled(option.type);
