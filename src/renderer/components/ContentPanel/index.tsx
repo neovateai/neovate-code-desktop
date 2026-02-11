@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useMemo } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useRef } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type RendererApp, useRendererApp } from '../../core/app';
 import type {
@@ -6,6 +6,7 @@ import type {
   ContentPanelProps as PluginPaneProps,
 } from '../../core/plugin';
 import { cn } from '../../lib/utils';
+import { useAppLayoutPanels } from '../layout/AppLayoutProvider';
 import {
   ContentPanelProvider,
   useContentPanelContext,
@@ -127,6 +128,39 @@ const ContentPane = memo(function ContentPane({
   }
 });
 
+// Auto-collapse content panel when all tabs are closed
+function useCollapseOnEmpty() {
+  const { tabs } = useContentPanelContext();
+  const { getPanel, toggle } = useAppLayoutPanels();
+  const prevTabCount = useRef(tabs.length);
+
+  useEffect(() => {
+    // Only collapse when transitioning from having tabs to having none
+    // (not on initial mount with 0 tabs)
+    if (prevTabCount.current > 0 && tabs.length === 0) {
+      const panel = getPanel('contentPanel');
+      if (!panel.collapsed) {
+        toggle('contentPanel');
+      }
+    }
+    prevTabCount.current = tabs.length;
+  }, [tabs.length, getPanel, toggle]);
+}
+
+// Inner content that has access to ContentPanelContext
+function ContentPanelInner({ hidden }: { hidden?: boolean }) {
+  useCollapseOnEmpty();
+
+  return (
+    <div
+      className={`flex flex-col flex-1 overflow-hidden bg-background text-foreground ${hidden ? 'hidden' : 'flex'}`}
+    >
+      <ContentTabBar />
+      <ContentPaneRouter />
+    </div>
+  );
+}
+
 // Main ContentPanel component
 interface ContentPanelProps {
   repoPath: string;
@@ -136,12 +170,7 @@ interface ContentPanelProps {
 function ContentPanelBase({ repoPath, hidden }: ContentPanelProps) {
   return (
     <ContentPanelProvider repoPath={repoPath}>
-      <div
-        className={`flex flex-col flex-1 overflow-hidden bg-background text-foreground ${hidden ? 'hidden' : 'flex'}`}
-      >
-        <ContentTabBar />
-        <ContentPaneRouter />
-      </div>
+      <ContentPanelInner hidden={hidden} />
     </ContentPanelProvider>
   );
 }
