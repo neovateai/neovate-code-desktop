@@ -1,6 +1,8 @@
 import { PanelLeftIcon, ViewSidebarLeftIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { SquarePen } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useStore } from '../../store';
 import { Button } from '../ui/button';
 import { useAppLayoutPanels } from './AppLayoutProvider';
 
@@ -23,10 +25,16 @@ export function TrafficLightsSection() {
   const { getPanel, toggle } = useAppLayoutPanels();
   const panel = getPanel('primarySidebar');
   const isOpen = !panel.collapsed;
+  const clearSelectedSession = useStore((state) => state.clearSelectedSession);
+
+  const handleNewChat = () => {
+    clearSelectedSession();
+    window.dispatchEvent(new CustomEvent('chat-input:focus'));
+  };
 
   return (
     <div
-      className="fixed z-[100] pointer-events-auto"
+      className="fixed z-[100] pointer-events-auto flex items-center gap-1"
       style={
         { top: 11, left: 82, WebkitAppRegion: 'no-drag' } as React.CSSProperties
       }
@@ -60,6 +68,18 @@ export function TrafficLightsSection() {
           <HugeiconsIcon icon={PanelLeftIcon} size={18} strokeWidth={1.5} />
         </motion.span>
       </Button>
+
+      {!isOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="!size-6"
+          onClick={handleNewChat}
+          title="New Chat"
+        >
+          <SquarePen size={14} strokeWidth={1.5} />
+        </Button>
+      )}
     </div>
   );
 }

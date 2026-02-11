@@ -3,7 +3,7 @@ export const ACTIVITY_BAR_WIDTH = 48;
 export const PANEL_WINDOW_EDGE_SPACING = 8;
 export const PANEL_PANEL_SPACING = 5;
 export const TRAFFIC_LIGHTS_SPACER_WIDTH = 76;
-export const TITLEBAR_SIDEBAR_TOGGLE_WIDTH = 32;
+export const TITLEBAR_SIDEBAR_TOGGLE_WIDTH = 60;
 
 export const PANEL_CONFIG = {
   primarySidebar: {
