@@ -93,18 +93,27 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   useEffect(() => {
     if (pendingTabUri?.type === 'editor') {
       const uri = pendingTabUri.uri;
-      // 解析文件名#L1 格式，提取行号
-      const hashMatch = uri.match(/^(.+?)#L(\d+)$/);
-      if (hashMatch) {
-        const [, filePath, line] = hashMatch;
-        request<any>('editor.open', {
-          cwd: repoPath,
-          filePath,
-          line: parseInt(line, 10),
-        });
-      } else {
-        request<any>('editor.open', { cwd: repoPath, filePath: uri });
+      // anchor request from search panel
+      if (uri.includes(`#L`)) {
+        // 解析文件名#L1 格式，提取行号
+        const hashMatch = uri.match(/^(.+?)#L(\d+)$/);
+        if (hashMatch) {
+          const [, filePath, line] = hashMatch;
+          request<any>('editor.open', {
+            cwd: repoPath,
+            filePath,
+            line: parseInt(line, 10),
+          });
+          return;
+        }
       }
+      // diff request from git panel
+      if (uri.includes(`diff://`)) {
+        const diffPath = uri.replace('diff://', '');
+        request<any>('editor.diff', { cwd: repoPath, filePath: diffPath });
+        return;
+      }
+      request<any>('editor.open', { cwd: repoPath, filePath: uri });
     }
   }, [pendingTabUri]);
 

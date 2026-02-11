@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../../store';
+import { useAppLayoutPanels } from '../layout';
 import { useGit } from './useGit';
 import type { GitFile } from './useGit';
 
@@ -16,12 +17,13 @@ import '../../styles/seti.css';
 
 export const GitPanel = memo(function GitPanel() {
   const { t } = useTranslation();
-  const { request } = useStore();
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
   const cwd = selectedWorkspaceId
     ? workspaces[selectedWorkspaceId]?.worktreePath
     : null;
+  const { getPanel, toggle } = useAppLayoutPanels();
+  const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
 
   const [workingCollapsed, setWorkingCollapsed] = useState(false);
   const [stagedCollapsed, setStagedCollapsed] = useState(false);
@@ -84,7 +86,14 @@ export const GitPanel = memo(function GitPanel() {
   };
 
   const showDiff = (filePath: string) => {
-    request<any>('editor.diff', { cwd, filePath });
+    if (getPanel('contentPanel').collapsed) {
+      toggle('contentPanel');
+    }
+    setPendingTabRequest({
+      uri: `diff://${filePath}`,
+      repoPath: cwd || '',
+      type: 'editor',
+    });
   };
 
   const renderFileList = (
