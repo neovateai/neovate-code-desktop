@@ -6,7 +6,9 @@ export function WelcomePanel() {
     <div className="flex flex-col items-center justify-center h-full gap-6">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">
         <MessageCircle className="size-12 opacity-50" />
-        <p className="text-2xl">No messages yet. Start a conversation!</p>
+        <p className="text-2xl text-center">
+          No messages yet. Start a conversation!
+        </p>
       </div>
       <RepoSelector />
     </div>
