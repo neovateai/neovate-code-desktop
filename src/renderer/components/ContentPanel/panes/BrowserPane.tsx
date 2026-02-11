@@ -22,14 +22,15 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
   const [currentUrl, setCurrentUrl] = useState('');
   const [inputUrl, setInputUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [isInspecting, setIsInspecting] = useState(false);
+  const [showBlankPage, setShowBlankPage] = useState(true);
 
   useEffect(() => {
     if (pendingTabUri?.type === 'browser') {
       setCurrentUrl(pendingTabUri.uri);
       setInputUrl(pendingTabUri.uri);
+      setShowBlankPage(false);
       useStore.setState({ pendingTabUri: null });
     }
   }, [pendingTabUri]);
@@ -37,14 +38,12 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
   const handleUrlChange = (newUrl: string) => {
     setCurrentUrl(newUrl);
     setInputUrl(newUrl);
-    setCanGoBack(browserRef.current?.canGoBack() ?? false);
     setCanGoForward(browserRef.current?.canGoForward() ?? false);
   };
 
   const handleLoadingChange = (loading: boolean) => {
     setIsLoading(loading);
     if (!loading) {
-      setCanGoBack(browserRef.current?.canGoBack() ?? false);
       setCanGoForward(browserRef.current?.canGoForward() ?? false);
     }
   };
@@ -61,14 +60,27 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
     }
 
     setCurrentUrl(finalUrl);
+    setShowBlankPage(false);
   };
 
   const handleBack = () => {
-    browserRef.current?.goBack();
+    if (browserRef.current?.canGoBack()) {
+      browserRef.current?.goBack();
+    } else {
+      // 回到空白页，但保留浏览器历史记录以便前进
+      setShowBlankPage(true);
+      setInputUrl('');
+    }
   };
 
   const handleForward = () => {
-    browserRef.current?.goForward();
+    if (showBlankPage) {
+      // 从空白页前进到网页
+      setShowBlankPage(false);
+      // 浏览器会自动前进到历史记录中的下一个页面
+    } else {
+      browserRef.current?.goForward();
+    }
   };
 
   const handleRefresh = () => {
@@ -83,21 +95,44 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
     <div
       className={`flex-1 text-muted-foreground bg-background ${isActive ? 'flex flex-col' : 'hidden'}`}
     >
-      {!!currentUrl ? (
-        <div className="flex flex-col flex-1 min-h-0">
-          <NavBar
-            inputUrl={inputUrl}
-            isLoading={isLoading}
-            canGoBack={canGoBack}
-            canGoForward={canGoForward}
-            onUrlChange={setInputUrl}
-            onSubmit={handleSubmitUrl}
-            onBack={handleBack}
-            onForward={handleForward}
-            onRefresh={handleRefresh}
-            onInspect={handleInspect}
-            isInspecting={isInspecting}
-          />
+      <div className="flex flex-col flex-1 min-h-0">
+        <NavBar
+          inputUrl={inputUrl}
+          isLoading={isLoading}
+          canGoBack={!showBlankPage}
+          canGoForward={canGoForward}
+          onUrlChange={setInputUrl}
+          onSubmit={handleSubmitUrl}
+          onBack={handleBack}
+          onForward={handleForward}
+          onRefresh={handleRefresh}
+          onInspect={handleInspect}
+          isInspecting={isInspecting}
+        />
+        {showBlankPage ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <svg
+                className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                />
+              </svg>
+              <p className="text-lg font-medium">Browser</p>
+              <p className="text-sm opacity-60 mt-1">
+                Enter a URL to start browsing
+              </p>
+            </div>
+          </div>
+        ) : (
           <Browser
             ref={browserRef}
             url={currentUrl}
@@ -111,15 +146,8 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
             }}
             onInspectorStateChange={(active) => setIsInspecting(active)}
           />
-        </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-lg">Browser</p>
-            <p className="text-sm opacity-60 mt-1">{tab.name}</p>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

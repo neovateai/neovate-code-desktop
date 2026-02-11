@@ -143,12 +143,14 @@ function CloseButton({ onClick }: { onClick: () => void }) {
 interface ContentTabItemProps {
   tab: ContentTab;
   isActive: boolean;
+  closable?: boolean;
   onClose?: () => void;
 }
 
 export function ContentTabItem({
   tab,
   isActive,
+  closable = true,
   onClose,
 }: ContentTabItemProps) {
   const { setActiveTab } = useContentPanelContext();
@@ -183,7 +185,7 @@ export function ContentTabItem({
     >
       <TabIcon type={tab.type} size={14} />
       <span>{tab.name}</span>
-      {onClose && <CloseButton onClick={onClose} />}
+      {closable && !!onClose && <CloseButton onClick={onClose} />}
     </div>
   );
 }
@@ -252,6 +254,7 @@ export function ContentTabBar() {
                 tab={tab}
                 isActive={activeTabId === tab.id}
                 onClose={() => closeTab(tab.id)}
+                closable={tab.type !== 'editor'}
               />
             ))}
           </SortableContext>

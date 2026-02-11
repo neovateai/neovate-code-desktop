@@ -32,6 +32,14 @@ function createDefaultEditorTab(): ContentTab {
   };
 }
 
+function createDefaultBrowserTab(): ContentTab {
+  return {
+    id: generateTabId(),
+    type: 'browser',
+    name: 'Browser',
+  };
+}
+
 export interface UseContentTabsOptions {
   repoPath: string;
   onTabClose?: (tab: ContentTab) => void;
@@ -81,8 +89,8 @@ export function useContentTabs({
       const defaultEditor = createDefaultEditorTab();
       initForRepo(
         repoPath,
-        [defaultTerminal, defaultEditor],
-        defaultTerminal.id,
+        [defaultEditor, defaultTerminal, createDefaultBrowserTab()],
+        defaultEditor.id,
       );
     }
   }, [repoPath, initForRepo]);
