@@ -26,7 +26,8 @@ interface IFileTreeItem extends IFileTreeItemBase {
   editStatus?: 'rename' | '';
 }
 
-export function FileTree() {
+export function FileTree(props: { active: boolean }) {
+  const { active } = props;
   const { t } = useTranslation();
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -45,12 +46,21 @@ export function FileTree() {
     : null;
 
   useEffect(() => {
-    init();
+    init(true);
   }, [cwd]);
 
-  const init = async () => {
+  useEffect(() => {
+    init(false);
+  }, [active]);
+
+  const init = async (clear = false) => {
     if (!cwd) {
       return;
+    }
+    if (clear) {
+      setSelectedKey(null);
+      setExpandedKeys(new Set());
+      setItemToDelete(null);
     }
     request<any>('fs.tree', { cwd }).then((res) => {
       if (res?.data?.tree) {
@@ -138,6 +148,10 @@ export function FileTree() {
       setItemToDelete(null);
     }
   };
+
+  if (!active) {
+    return null;
+  }
 
   return (
     <>

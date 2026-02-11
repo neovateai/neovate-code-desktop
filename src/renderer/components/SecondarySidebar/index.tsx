@@ -78,7 +78,7 @@ export function SecondarySidebar() {
         </span>
       </div>
       <div className="flex-1 overflow-auto">
-        {secondarySidebarTab === 'files' && <FileTree />}
+        <FileTree active={secondarySidebarTab === 'files'} />
         {secondarySidebarTab === 'git' && <GitPanel />}
         <SearchPanel active={secondarySidebarTab === 'search'} />
         {!isBuiltinTab && (
