@@ -25,6 +25,7 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
   const [canGoForward, setCanGoForward] = useState(false);
   const [isInspecting, setIsInspecting] = useState(false);
   const [showBlankPage, setShowBlankPage] = useState(true);
+  const [previousUrl, setPreviousUrl] = useState('');
 
   useEffect(() => {
     if (pendingTabUri?.type === 'browser') {
@@ -67,7 +68,8 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
     if (browserRef.current?.canGoBack()) {
       browserRef.current?.goBack();
     } else {
-      // 回到空白页，但保留浏览器历史记录以便前进
+      // 回到空白页，保存当前URL以便前进
+      setPreviousUrl(currentUrl);
       setShowBlankPage(true);
       setInputUrl('');
     }
@@ -75,9 +77,12 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
 
   const handleForward = () => {
     if (showBlankPage) {
-      // 从空白页前进到网页
+      // 从空白页前进到之前保存的URL
+      if (previousUrl) {
+        setCurrentUrl(previousUrl);
+        setInputUrl(previousUrl);
+      }
       setShowBlankPage(false);
-      // 浏览器会自动前进到历史记录中的下一个页面
     } else {
       browserRef.current?.goForward();
     }
@@ -100,7 +105,7 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
           inputUrl={inputUrl}
           isLoading={isLoading}
           canGoBack={!showBlankPage}
-          canGoForward={canGoForward}
+          canGoForward={showBlankPage ? !!previousUrl : canGoForward}
           onUrlChange={setInputUrl}
           onSubmit={handleSubmitUrl}
           onBack={handleBack}
@@ -108,6 +113,7 @@ export function BrowserPane({ tab, isActive }: BrowserPaneProps) {
           onRefresh={handleRefresh}
           onInspect={handleInspect}
           isInspecting={isInspecting}
+          showInspect={!showBlankPage}
         />
         {showBlankPage ? (
           <div className="flex-1 flex items-center justify-center">

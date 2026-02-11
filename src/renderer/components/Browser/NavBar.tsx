@@ -72,7 +72,7 @@ export function NavBar({
               onUrlChange(e.target.value)
             }
             placeholder="Enter URL..."
-            className="h-8 text-sm bg-muted rounded-lg"
+            className="h-8 text-sm bg-muted/30 rounded-lg focus:bg-transparent"
           />
         </div>
       </form>
