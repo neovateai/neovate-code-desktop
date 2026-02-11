@@ -173,6 +173,9 @@ interface CoreActions {
   hideForkModal: () => void;
   fork: (targetMessageUuid: string) => void;
 
+  // Chat input actions
+  insertTextToChatInput: (text: string) => void;
+
   // Clipboard actions
   copyPathToClipboard: (path: string) => Promise<void>;
 }
@@ -1041,6 +1044,13 @@ const useStore = create<Store>()((set, get, api) => ({
   ...createUISlice(set, get, api),
   ...createOnboardingSlice(set, get, api),
   ...createDesktopSettingsSlice(set, get, api),
+
+  // ==================== Chat Input Actions ====================
+  insertTextToChatInput: (text: string) => {
+    window.dispatchEvent(
+      new CustomEvent('chat-input:insert-text', { detail: { text } }),
+    );
+  },
 
   // ==================== Clipboard Actions ====================
   copyPathToClipboard: async (path: string) => {

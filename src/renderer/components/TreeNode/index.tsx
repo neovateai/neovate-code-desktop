@@ -9,6 +9,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useStore } from '../../store';
 
 import {
   ContextMenu,
@@ -90,9 +91,13 @@ export function TreeNode({
     }
   };
 
+  const insertTextToChatInput = useStore(
+    (state) => state.insertTextToChatInput,
+  );
+
   const handlePlusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Add action for:', item.fullPath);
+    insertTextToChatInput(`@${item.relPath} `);
   };
 
   const handleStartRename = () => {

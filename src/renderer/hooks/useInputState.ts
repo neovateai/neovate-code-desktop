@@ -74,6 +74,48 @@ export function useInputState(
     sessionInput.cursorPosition,
   ]);
 
+  // Listen for external text insertion (e.g., "Add to chat" from file tree)
+  // Uses refs to always have fresh local state without re-subscribing
+  const localValueRef = useRef(localValue);
+  const localCursorPositionRef = useRef(localCursorPosition);
+  useEffect(() => {
+    localValueRef.current = localValue;
+    localCursorPositionRef.current = localCursorPosition;
+  }, [localValue, localCursorPosition]);
+
+  useEffect(() => {
+    const handleInsertText = (e: Event) => {
+      const { text } = (e as CustomEvent<{ text: string }>).detail;
+      const currentValue = localValueRef.current;
+      const cursorPos = localCursorPositionRef.current;
+
+      const before = currentValue.slice(0, cursorPos);
+      const after = currentValue.slice(cursorPos);
+      const newValue = `${before}${text}${after}`;
+      const newCursorPos = before.length + text.length;
+
+      setLocalValue(newValue);
+      setLocalCursorPosition(newCursorPos);
+
+      // Flush to store immediately (skip debounce)
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      setSessionInput(inputSessionId, {
+        value: newValue,
+        cursorPosition: newCursorPos,
+      });
+
+      // Focus the chat input
+      window.dispatchEvent(new Event('chat-input:focus'));
+    };
+
+    window.addEventListener('chat-input:insert-text', handleInsertText);
+    return () => {
+      window.removeEventListener('chat-input:insert-text', handleInsertText);
+    };
+  }, [inputSessionId, setSessionInput]);
+
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
