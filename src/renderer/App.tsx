@@ -60,6 +60,18 @@ function App() {
   }, [developerMode]);
 
   useEffect(() => {
+    if (
+      import.meta.env.DEV &&
+      process.env.NODE_ENV !== 'production' &&
+      developerMode
+    ) {
+      void import('react-scan').then(({ scan }) => {
+        scan({ enabled: true });
+      });
+    }
+  }, [developerMode]);
+
+  useEffect(() => {
     const elapsed = Date.now() - loadStartTime.current;
     const remaining = MIN_LOADING_TIME_MS - elapsed;
 
