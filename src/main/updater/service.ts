@@ -1,5 +1,6 @@
 import type { BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
+import type { UpdaterOptions } from '../core/types';
 import {
   exposeAsMainHandlers,
   getRendererCaller,
@@ -22,12 +23,32 @@ class UpdaterService {
     percent: number;
   } | null = null;
 
-  init(mainWindow: BrowserWindow): void {
+  async init(
+    mainWindow: BrowserWindow,
+    updaterOptions?: UpdaterOptions,
+  ): Promise<void> {
     this.mainWindow = mainWindow;
+
     if (!this.isAutoUpdaterSetup) {
+      if (updaterOptions?.feedURL) {
+        try {
+          const resolved =
+            typeof updaterOptions.feedURL === 'function'
+              ? await updaterOptions.feedURL()
+              : updaterOptions.feedURL;
+          autoUpdater.setFeedURL(resolved);
+        } catch (err) {
+          console.error(
+            '[UpdaterService] Failed to resolve feedURL, using build-time config:',
+            (err as Error).message,
+          );
+        }
+      }
+
       this.setupAutoUpdater();
       this.isAutoUpdaterSetup = true;
     }
+
     this.startScheduledChecks();
   }
 
