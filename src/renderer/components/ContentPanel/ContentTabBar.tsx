@@ -254,7 +254,7 @@ export function ContentTabBar() {
                 tab={tab}
                 isActive={activeTabId === tab.id}
                 onClose={() => closeTab(tab.id)}
-                closable={tab.type !== 'editor'}
+                closable
               />
             ))}
           </SortableContext>
