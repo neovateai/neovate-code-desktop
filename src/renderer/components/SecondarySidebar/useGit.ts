@@ -14,7 +14,7 @@ export function useGit(cwd: string) {
   const [workingFiles, setWorkingFiles] = useState<GitFile[]>([]);
   const [stagedFiles, setStagedFiles] = useState<GitFile[]>([]);
   const [loading, setLoading] = useState(true);
-  const { request } = useStore();
+  const request = useStore((s) => s.request);
 
   const refreshGitStatus = async (workingDir: string) => {
     setLoading(true);

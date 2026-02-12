@@ -55,7 +55,7 @@ export function EditorPane({ isActive, onReady }: EditorPaneProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initRef = useRef(false);
   const pendingTabUri = useStore((s) => s.pendingTabUri);
-  const { request } = useStore();
+  const request = useStore((s) => s.request);
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
   const theme = useStore((state) => state.theme);
   const [extensionReady, setExtensionReady] = useState(false);
