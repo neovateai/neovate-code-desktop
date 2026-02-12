@@ -99,6 +99,17 @@ export function useInputHandlers({
     fileSuggestion.matchedPaths.length > 0 ||
     slashCommands.suggestions.length > 0;
 
+  const handleSuggestionHover = useCallback(
+    (index: number) => {
+      if (slashCommands.suggestions.length > 0) {
+        slashCommands.setSelectedIndex(index);
+      } else if (fileSuggestion.matchedPaths.length > 0) {
+        fileSuggestion.setSelectedIndex(index);
+      }
+    },
+    [slashCommands, fileSuggestion],
+  );
+
   const handleDoubleEscape = useDoublePress(
     () => {
       logger.debug(
@@ -122,23 +133,50 @@ export function useInputHandlers({
     DOUBLE_PRESS_TIMEOUT_MS,
   );
 
+  const applyFileSuggestionAtIndex = useCallback(
+    (index: number) => {
+      const path = fileSuggestion.matchedPaths[index];
+      if (!path) return;
+      const selected = path.includes(' ') ? `"${path}"` : path;
+
+      const currentValue = valueRef.current;
+      const prefix = fileSuggestion.triggerType === 'at' ? '@' : '';
+      const before = currentValue.substring(0, fileSuggestion.startIndex);
+      const after = currentValue
+        .substring(fileSuggestion.startIndex + fileSuggestion.fullMatch.length)
+        .trim();
+      const newValue = `${before}${prefix}${selected} ${after}`.trim();
+
+      inputState.setValue(newValue);
+      inputState.setCursorPosition(newValue.length);
+      setForceTabTrigger(false);
+      fileSuggestion.reset();
+    },
+    [fileSuggestion, inputState],
+  );
+
   const applyFileSuggestion = useCallback(() => {
-    const selected = fileSuggestion.getSelected();
-    if (!selected) return;
+    applyFileSuggestionAtIndex(fileSuggestion.selectedIndex);
+  }, [applyFileSuggestionAtIndex, fileSuggestion.selectedIndex]);
 
-    const currentValue = valueRef.current;
-    const prefix = fileSuggestion.triggerType === 'at' ? '@' : '';
-    const before = currentValue.substring(0, fileSuggestion.startIndex);
-    const after = currentValue
-      .substring(fileSuggestion.startIndex + fileSuggestion.fullMatch.length)
-      .trim();
-    const newValue = `${before}${prefix}${selected} ${after}`.trim();
-
-    inputState.setValue(newValue);
-    inputState.setCursorPosition(newValue.length);
-    setForceTabTrigger(false);
-    fileSuggestion.reset();
-  }, [fileSuggestion, inputState]);
+  const handleSuggestionSelect = useCallback(
+    (index: number) => {
+      if (slashCommands.suggestions.length > 0) {
+        const cmd = slashCommands.suggestions[index];
+        if (!cmd) return;
+        const currentValue = valueRef.current;
+        const args = currentValue.includes(' ')
+          ? currentValue.split(' ').slice(1).join(' ')
+          : '';
+        const completed = `/${cmd.name} ${args}`.trim() + ' ';
+        inputState.setValue(completed);
+        inputState.setCursorPosition(completed.length);
+      } else if (fileSuggestion.matchedPaths.length > 0) {
+        applyFileSuggestionAtIndex(index);
+      }
+    },
+    [slashCommands, fileSuggestion, applyFileSuggestionAtIndex, inputState],
+  );
 
   const handleSubmit = useCallback(() => {
     if (isProcessing) {
@@ -656,6 +694,8 @@ export function useInputHandlers({
         slashCommands.suggestions.length > 0
           ? slashCommands.selectedIndex
           : fileSuggestion.selectedIndex,
+      onHover: handleSuggestionHover,
+      onSelect: handleSuggestionSelect,
     },
     imageManager,
     thinkingEnabled,

@@ -399,6 +399,8 @@ export const ChatInput = memo(
             type={suggestions.type}
             items={suggestions.items}
             selectedIndex={suggestions.selectedIndex}
+            onHover={suggestions.onHover}
+            onSelect={suggestions.onSelect}
           />
         )}
 

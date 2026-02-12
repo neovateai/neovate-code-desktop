@@ -168,3 +168,22 @@
 .thinking-high-twinkle {
   animation: twinkle 1.5s ease-in-out infinite;
 }
+
+/* Thin scrollbar for dropdowns and compact lists */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0% 0 0 / 0.2) transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0% 0 0 / 0.2);
+  border-radius: 3px;
+}
