@@ -935,6 +935,9 @@ const useStore = create<Store>()((set, get, api) => ({
       retryInfo: null,
       error: null,
     });
+
+    // Clear agent progress state so sub-agent UIs stop showing loading
+    get().clearAllAgentProgress();
   },
 
   clearSession: (sessionId: string) => {

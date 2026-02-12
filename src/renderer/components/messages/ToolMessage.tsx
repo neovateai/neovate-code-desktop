@@ -14,6 +14,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { diffLines } from 'diff';
+import { useStore } from '../../store';
 import { DiffViewer } from './DiffViewer';
 import { TaskMessage } from './TaskMessage';
 import type { TodoItemProps } from './TodoItem';
@@ -108,6 +109,14 @@ function calculateDiffStats(
 export function ToolMessage({ pair }: ToolMessageProps) {
   const { toolUse, toolResult } = pair;
 
+  const selectedSessionId = useStore((s) => s.selectedSessionId);
+  const isProcessing = useStore(
+    (s) =>
+      (selectedSessionId
+        ? s.sessionProcessing[selectedSessionId]?.status
+        : null) === 'processing',
+  );
+
   // Delegate to TaskMessage for task tool (sub-agent)
   if (toolUse.name === 'task') {
     return <TaskMessage toolUse={toolUse} toolResult={toolResult} />;
@@ -171,9 +180,14 @@ export function ToolMessage({ pair }: ToolMessageProps) {
               </span>
             );
           })()}
-        {!toolResult && (
+        {!toolResult && isProcessing && (
           <span className="ml-2 text-xs text-amber-500 italic">
             (pending...)
+          </span>
+        )}
+        {!toolResult && !isProcessing && (
+          <span className="ml-2 text-xs text-muted-foreground italic">
+            (cancelled)
           </span>
         )}
       </div>
