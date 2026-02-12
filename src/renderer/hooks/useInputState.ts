@@ -16,29 +16,36 @@ export interface InputState {
   mode: InputMode;
 }
 
+const EMPTY_HISTORY: string[] = [];
+
 export function useInputState(
   sessionId: string | null,
   workspaceId: string | null,
 ) {
-  const {
-    getSessionInput,
-    setSessionInput,
-    resetSessionInput,
-    addToWorkspaceHistory,
-    getWorkspaceHistory,
-  } = useStore();
+  const setSessionInput = useStore((state) => state.setSessionInput);
+  const resetSessionInput = useStore((state) => state.resetSessionInput);
+  const addToWorkspaceHistory = useStore(
+    (state) => state.addToWorkspaceHistory,
+  );
 
-  const sessionInput = sessionId
-    ? getSessionInput(sessionId)
-    : getSessionInput('__draft__');
   const inputSessionId = sessionId ?? '__draft__';
-  const history = workspaceId ? getWorkspaceHistory(workspaceId) : [];
+  const sessionInput = useStore(
+    (state) => state.inputBySession[inputSessionId] ?? defaultSessionInputState,
+  );
+  const history = useStore((state) =>
+    workspaceId
+      ? (state.historyByWorkspace[workspaceId] ?? EMPTY_HISTORY)
+      : EMPTY_HISTORY,
+  );
 
   const [localValue, setLocalValue] = useState(sessionInput.value);
   const [localCursorPosition, setLocalCursorPosition] = useState(
     sessionInput.cursorPosition,
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingChangesRef = useRef<
+    Partial<{ value: string; cursorPosition: number }>
+  >({});
   const prevSessionIdRef = useRef<string | null>(sessionId);
   const prevForceUpdateKeyRef = useRef<number>(sessionInput.forceUpdateKey);
 
@@ -101,6 +108,7 @@ export function useInputState(
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
+      pendingChangesRef.current = {};
       setSessionInput(inputSessionId, {
         value: newValue,
         cursorPosition: newCursorPos,
@@ -130,34 +138,45 @@ export function useInputState(
     mode: getInputMode(localValue),
   };
 
+  const flushPendingChanges = useCallback(() => {
+    if (sessionId && Object.keys(pendingChangesRef.current).length > 0) {
+      setSessionInput(sessionId, pendingChangesRef.current);
+      pendingChangesRef.current = {};
+    }
+  }, [sessionId, setSessionInput]);
+
   const setValue = useCallback(
     (newValue: string) => {
       setLocalValue(newValue);
       if (sessionId) {
+        pendingChangesRef.current.value = newValue;
         if (debounceRef.current) {
           clearTimeout(debounceRef.current);
         }
-        debounceRef.current = setTimeout(() => {
-          setSessionInput(sessionId, { value: newValue });
-        }, INPUT_DEBOUNCE_MS);
+        debounceRef.current = setTimeout(
+          flushPendingChanges,
+          INPUT_DEBOUNCE_MS,
+        );
       }
     },
-    [sessionId, setSessionInput],
+    [sessionId, flushPendingChanges],
   );
 
   const setCursorPosition = useCallback(
     (pos: number) => {
       setLocalCursorPosition(pos);
       if (sessionId) {
+        pendingChangesRef.current.cursorPosition = pos;
         if (debounceRef.current) {
           clearTimeout(debounceRef.current);
         }
-        debounceRef.current = setTimeout(() => {
-          setSessionInput(sessionId, { cursorPosition: pos });
-        }, INPUT_DEBOUNCE_MS);
+        debounceRef.current = setTimeout(
+          flushPendingChanges,
+          INPUT_DEBOUNCE_MS,
+        );
       }
     },
-    [sessionId, setSessionInput],
+    [sessionId, flushPendingChanges],
   );
 
   const reset = useCallback(() => {
@@ -165,6 +184,7 @@ export function useInputState(
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
+      pendingChangesRef.current = {};
       setLocalValue('');
       setLocalCursorPosition(0);
       resetSessionInput(sessionId);
