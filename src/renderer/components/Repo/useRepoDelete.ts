@@ -10,7 +10,8 @@ interface RepoDeleteInfo {
 export const useRepoDelete = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [repoToDelete, setRepoToDelete] = useState<RepoDeleteInfo | null>(null);
-  const { deleteRepo, workspaces } = useStore();
+  const deleteRepo = useStore((state) => state.deleteRepo);
+  const workspaces = useStore((state) => state.workspaces);
 
   const handleDeleteRepoClick = (
     e: React.MouseEvent,
