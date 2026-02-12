@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Inspect,
-  RefreshCw,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Inspect, RefreshCw } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 
@@ -20,6 +14,7 @@ interface NavBarProps {
   onRefresh: () => void;
   onInspect: () => void;
   isInspecting: boolean;
+  showInspect?: boolean;
 }
 
 export function NavBar({
@@ -34,6 +29,7 @@ export function NavBar({
   onRefresh,
   onInspect,
   isInspecting,
+  showInspect = true,
 }: NavBarProps) {
   return (
     <div className="flex items-center gap-2 p-2 border-b border-border bg-background">
@@ -76,19 +72,23 @@ export function NavBar({
               onUrlChange(e.target.value)
             }
             placeholder="Enter URL..."
-            className="h-8 text-sm bg-muted rounded-lg"
+            className="h-8 text-sm bg-muted/30 rounded-lg focus:bg-transparent"
           />
         </div>
       </form>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onInspect}
-        className={`h-8 w-8 p-0 ${isInspecting ? 'bg-muted hover:bg-muted' : ''}`}
-        title="Inspect Element"
-      >
-        <Inspect className={`h-4 w-4 ${isInspecting ? 'text-blue-500' : ''}`} />
-      </Button>
+      {showInspect && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onInspect}
+          className={`h-8 w-8 p-0 ${isInspecting ? 'bg-muted hover:bg-muted' : ''}`}
+          title="Inspect Element"
+        >
+          <Inspect
+            className={`h-4 w-4 ${isInspecting ? 'text-blue-500' : ''}`}
+          />
+        </Button>
+      )}
     </div>
   );
 }

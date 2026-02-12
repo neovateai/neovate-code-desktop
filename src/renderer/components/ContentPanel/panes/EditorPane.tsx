@@ -8,8 +8,9 @@ import { useStore } from '../../../store';
 type EditorStatus = 'idle' | 'starting' | 'ready' | 'error';
 
 interface EditorPaneProps {
-  tab: EditorTab;
+  tab?: EditorTab;
   isActive: boolean;
+  onReady?: () => void;
 }
 
 function LoadingState({ status }: { status: EditorStatus }) {
@@ -46,7 +47,7 @@ function ErrorState({
   );
 }
 
-export function EditorPane({ tab, isActive }: EditorPaneProps) {
+export function EditorPane({ isActive, onReady }: EditorPaneProps) {
   const { repoPath } = useContentPanelContext();
   const [status, setStatus] = useState<EditorStatus>('idle');
   const [serverUrl, setServerUrl] = useState<string | null>(null);
@@ -58,6 +59,10 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
   const theme = useStore((state) => state.theme);
   const [extensionReady, setExtensionReady] = useState(false);
+
+  useEffect(() => {
+    onReady?.();
+  }, []);
 
   const startEditor = async () => {
     if (status === 'starting') return;
@@ -91,7 +96,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
 
   // 文件打开行为承接
   useEffect(() => {
-    if (pendingTabUri?.type === 'editor') {
+    if (pendingTabUri?.type === 'editor' && status === 'ready') {
       const uri = pendingTabUri.uri;
       // anchor request from search panel
       if (uri.includes(`#L`)) {
@@ -115,7 +120,7 @@ export function EditorPane({ tab, isActive }: EditorPaneProps) {
       }
       request<any>('editor.open', { cwd: repoPath, filePath: uri });
     }
-  }, [pendingTabUri]);
+  }, [pendingTabUri, status]);
 
   useEffect(() => {
     if (extensionReady) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from '../../store';
@@ -38,6 +38,7 @@ export function FileTree(props: { active: boolean }) {
   const { getPanel, toggle } = useAppLayoutPanels();
   const { request } = useStore();
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
+  const inited = useRef(false);
 
   const selectedWorkspaceId = useStore((state) => state.selectedWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
@@ -46,11 +47,14 @@ export function FileTree(props: { active: boolean }) {
     : null;
 
   useEffect(() => {
+    inited.current = false;
     init(true);
   }, [cwd]);
 
   useEffect(() => {
-    init(false);
+    if (active && inited.current) {
+      init(false);
+    }
   }, [active]);
 
   const init = async (clear = false) => {
@@ -63,6 +67,7 @@ export function FileTree(props: { active: boolean }) {
       setItemToDelete(null);
     }
     request<any>('fs.tree', { cwd }).then((res) => {
+      inited.current = true;
       if (res?.data?.tree) {
         setTreeData(res.data.tree);
       }

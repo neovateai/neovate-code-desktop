@@ -27,7 +27,10 @@ function getExcludePatterns(): string[] {
   return [...new Set(allPatterns)];
 }
 
-export function getFileTree(parent: string, root?: string): FileTreeNode[] {
+export async function getFileTree(
+  parent: string,
+  root?: string,
+): Promise<FileTreeNode[]> {
   const includePatterns: string[] = [];
   const actualRoot = root || parent;
 
@@ -35,47 +38,61 @@ export function getFileTree(parent: string, root?: string): FileTreeNode[] {
 
   const dirFilePath = parent;
   const tree: FileTreeNode[] = [];
-  const files = fs.readdirSync(dirFilePath);
 
-  files.forEach((file) => {
-    const filePath = path.join(dirFilePath, file);
-    const stats = fs.statSync(filePath);
-    const relativePath = path
-      .relative(actualRoot, filePath)
-      .replace(/\\/g, '/');
+  try {
+    const files = await fs.promises.readdir(dirFilePath);
 
-    const isExcluded = excludePatterns.some((pattern) =>
-      minimatch(relativePath, pattern),
-    );
-    const isFolder = stats.isDirectory();
-    const node: FileTreeNode = {
-      fileName: file,
-      fullPath: filePath,
-      relPath: relativePath,
-      isFolder,
-    };
+    // 使用 Promise.all 并行处理文件
+    const filePromises = files.map(async (file) => {
+      const filePath = path.join(dirFilePath, file);
 
-    if (isExcluded) {
-      return;
-    }
+      try {
+        const stats = await fs.promises.stat(filePath);
+        const relativePath = path
+          .relative(actualRoot, filePath)
+          .replace(/\\/g, '/');
 
-    if (!isFolder) {
-      const isIncluded =
-        includePatterns.length === 0 ||
-        includePatterns.some((pattern) => minimatch(relativePath, pattern));
-      if (!isIncluded) return;
-      node.languageId = file.split('.').pop();
-    } else {
-      node.children = getFileTree(filePath, actualRoot);
-    }
+        const isExcluded = excludePatterns.some((pattern) =>
+          minimatch(relativePath, pattern),
+        );
 
-    if (node.isFolder && node.children?.length === 0) {
-      return;
-    }
-    tree.push(node);
-  });
+        if (isExcluded) {
+          return null;
+        }
 
-  if (!tree || !Array.isArray(tree)) {
+        const isFolder = stats.isDirectory();
+        const node: FileTreeNode = {
+          fileName: file,
+          fullPath: filePath,
+          relPath: relativePath,
+          isFolder,
+        };
+
+        if (!isFolder) {
+          const isIncluded =
+            includePatterns.length === 0 ||
+            includePatterns.some((pattern) => minimatch(relativePath, pattern));
+          if (!isIncluded) return null;
+          node.languageId = file.split('.').pop();
+        } else {
+          node.children = await getFileTree(filePath, actualRoot);
+        }
+
+        if (node.isFolder && (!node.children || node.children.length === 0)) {
+          return null;
+        }
+
+        return node;
+      } catch (error) {
+        // 处理单个文件的错误，避免整个树构建失败
+        console.warn(`Error processing file ${filePath}:`, error);
+        return null;
+      }
+    });
+    const results = await Promise.all(filePromises);
+    tree.push(...(results.filter(Boolean) as FileTreeNode[]));
+  } catch (error) {
+    console.warn(`Error reading directory ${dirFilePath}:`, error);
     return [];
   }
 

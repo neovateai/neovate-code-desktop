@@ -1,4 +1,12 @@
-import { lazy, memo, Suspense, useEffect, useMemo, useRef } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type RendererApp, useRendererApp } from '../../core/app';
 import type {
@@ -31,16 +39,37 @@ function EmptyState() {
 // Routes to correct pane based on activeTab.type
 function ContentPaneRouter() {
   const { tabs, activeTabId } = useContentPanelContext();
+  const [editorInited, setEditorInited] = useState(false);
 
   if (tabs.length === 0) {
     return <EmptyState />;
   }
+  // 当前不存在editor且没有未初始化过，使用shadow editor 进行资源预加载，editor 正式出现后，禁用shadow editor
+  const showShadowEditor =
+    !tabs.find((i) => i.type === 'editor') && !editorInited;
 
   return (
     <div className="flex-1 flex flex-col" style={{ minHeight: 0 }}>
       {tabs.map((tab) => (
-        <ContentPane key={tab.id} tab={tab} isActive={tab.id === activeTabId} />
+        <ContentPane
+          key={tab.id}
+          tab={tab}
+          isActive={tab.id === activeTabId}
+          onReady={() => {
+            if (tab.type === 'editor') {
+              setEditorInited(true);
+            }
+          }}
+        />
       ))}
+      {showShadowEditor && (
+        <div style={{ display: 'none' }}>
+          <EditorPane
+            isActive
+            onReady={() => console.log('shadow editor inited')}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -108,15 +137,17 @@ const ContentPanelPluginPane = memo(function ContentPanelPluginPane({
 const ContentPane = memo(function ContentPane({
   tab,
   isActive,
+  onReady,
 }: {
   tab: ContentTab;
   isActive: boolean;
+  onReady?: () => void;
 }) {
   switch (tab.type) {
     case 'terminal':
       return <TerminalPane tab={tab} isActive={isActive} />;
     case 'editor':
-      return <EditorPane tab={tab} isActive={isActive} />;
+      return <EditorPane tab={tab} isActive={isActive} onReady={onReady} />;
     case 'review':
       return <ReviewPane tab={tab} isActive={isActive} />;
     case 'browser':

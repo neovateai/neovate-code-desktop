@@ -18,8 +18,6 @@ import {
   ContextMenuItem,
 } from '../ui/context-menu';
 
-import '../../styles/seti.css';
-
 interface IFileTreeItemBase {
   fullPath: string;
   relPath: string;

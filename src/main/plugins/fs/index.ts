@@ -15,7 +15,7 @@ export const fsPlugin: Plugin = {
         /** TODO: 后续考虑大项目的性能问题 */
         return {
           success: true,
-          data: { tree: getFileTree(data?.cwd) },
+          data: { tree: await getFileTree(data?.cwd) },
         };
       },
       'fs.delete': async (data: { path: string }) => {
