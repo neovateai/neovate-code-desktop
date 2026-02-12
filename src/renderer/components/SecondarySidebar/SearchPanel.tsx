@@ -36,7 +36,7 @@ export function SearchPanel({ active }: { active: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { request } = useStore();
+  const request = useStore((s) => s.request);
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
   const { getPanel, toggle } = useAppLayoutPanels();
   const contentPanel = getPanel('contentPanel');

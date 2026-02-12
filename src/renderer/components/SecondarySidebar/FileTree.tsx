@@ -36,7 +36,7 @@ export function FileTree(props: { active: boolean }) {
   const [itemToDelete, setItemToDelete] = useState<IFileTreeItem | null>(null);
 
   const { getPanel, toggle } = useAppLayoutPanels();
-  const { request } = useStore();
+  const request = useStore((s) => s.request);
   const setPendingTabRequest = useStore((s) => s.setPendingTabRequest);
   const inited = useRef(false);
 
