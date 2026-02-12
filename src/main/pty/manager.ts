@@ -89,7 +89,7 @@ class PTYManager {
     );
 
     try {
-      const ptyProcess = pty.spawn(shell, [], {
+      const ptyProcess = pty.spawn(shell, ['-l'], {
         name: 'xterm-256color',
         cols,
         rows,
