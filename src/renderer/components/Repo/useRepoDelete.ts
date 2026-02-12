@@ -11,7 +11,6 @@ export const useRepoDelete = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [repoToDelete, setRepoToDelete] = useState<RepoDeleteInfo | null>(null);
   const deleteRepo = useStore((state) => state.deleteRepo);
-  const workspaces = useStore((state) => state.workspaces);
 
   const handleDeleteRepoClick = (
     e: React.MouseEvent,
@@ -19,6 +18,8 @@ export const useRepoDelete = () => {
     repoName: string,
   ) => {
     e.stopPropagation();
+    // Read workspaces at call time — no subscription needed
+    const workspaces = useStore.getState().workspaces;
     const workspaceCount = Object.values(workspaces).filter(
       (w) => w.repoPath === repoPath,
     ).length;

@@ -1,5 +1,6 @@
 import { MoreHorizontal } from 'lucide-react';
-import type { ReactElement } from 'react';
+import { useCallback, type ReactElement } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '../store';
 import { useSessionDelete } from './Session/useSessionDelete';
 import { Button, toastManager } from './ui';
@@ -27,20 +28,28 @@ export function SessionActionsMenu({
   onRenameStart,
   onDeleted,
 }: SessionActionsMenuProps) {
-  const workspaces = useStore((state) => state.workspaces);
-  const pinnedSessions = useStore((state) => state.pinnedSessions);
-  const togglePinSession = useStore((state) => state.togglePinSession);
-  const request = useStore((state) => state.request);
-  const { deleteSession } = useSessionDelete();
+  const isPinned = useStore(
+    useCallback(
+      (state) => state.pinnedSessions.includes(sessionId),
+      [sessionId],
+    ),
+  );
 
-  const workspace = workspaces[workspaceId];
-  const isPinned = pinnedSessions.includes(sessionId);
+  const actions = useStore(
+    useShallow((state) => ({
+      togglePinSession: state.togglePinSession,
+      request: state.request,
+    })),
+  );
+
+  const { deleteSession } = useSessionDelete();
 
   const handleDelete = () => {
     deleteSession(workspaceId, sessionId, onDeleted);
   };
 
   const handleCopyWorkingDirectory = () => {
+    const workspace = useStore.getState().workspaces[workspaceId];
     if (workspace) {
       navigator.clipboard.writeText(workspace.worktreePath);
       toastManager.add({ title: 'Copied working directory' });
@@ -53,9 +62,10 @@ export function SessionActionsMenu({
   };
 
   const handleOpenLogFile = async () => {
+    const workspace = useStore.getState().workspaces[workspaceId];
     if (workspace) {
       const logFilePath = `${workspace.globalProjectDir}/${sessionId}.jsonl`;
-      await request('utils.open', { cwd: logFilePath, app: 'finder' });
+      await actions.request('utils.open', { cwd: logFilePath, app: 'finder' });
     }
   };
 
@@ -72,7 +82,7 @@ export function SessionActionsMenu({
       />
       <MenuPopup side="bottom" align="end" className="text-xs">
         {onRenameStart && <MenuItem onClick={onRenameStart}>Rename</MenuItem>}
-        <MenuItem onClick={() => togglePinSession(sessionId)}>
+        <MenuItem onClick={() => actions.togglePinSession(sessionId)}>
           {isPinned ? 'Unpin' : 'Pin'}
         </MenuItem>
         <MenuItem className="text-red-500" onClick={handleDelete}>
@@ -102,20 +112,28 @@ export function SessionActionsContextMenuItems({
   onRenameStart,
   onDeleted,
 }: SessionActionsContextMenuItemsProps) {
-  const workspaces = useStore((state) => state.workspaces);
-  const pinnedSessions = useStore((state) => state.pinnedSessions);
-  const togglePinSession = useStore((state) => state.togglePinSession);
-  const request = useStore((state) => state.request);
-  const { deleteSession } = useSessionDelete();
+  const isPinned = useStore(
+    useCallback(
+      (state) => state.pinnedSessions.includes(sessionId),
+      [sessionId],
+    ),
+  );
 
-  const workspace = workspaces[workspaceId];
-  const isPinned = pinnedSessions.includes(sessionId);
+  const actions = useStore(
+    useShallow((state) => ({
+      togglePinSession: state.togglePinSession,
+      request: state.request,
+    })),
+  );
+
+  const { deleteSession } = useSessionDelete();
 
   const handleDelete = () => {
     deleteSession(workspaceId, sessionId, onDeleted);
   };
 
   const handleCopyWorkingDirectory = () => {
+    const workspace = useStore.getState().workspaces[workspaceId];
     if (workspace) {
       navigator.clipboard.writeText(workspace.worktreePath);
       toastManager.add({ title: 'Copied working directory' });
@@ -128,9 +146,10 @@ export function SessionActionsContextMenuItems({
   };
 
   const handleOpenLogFile = async () => {
+    const workspace = useStore.getState().workspaces[workspaceId];
     if (workspace) {
       const logFilePath = `${workspace.globalProjectDir}/${sessionId}.jsonl`;
-      await request('utils.open', { cwd: logFilePath, app: 'finder' });
+      await actions.request('utils.open', { cwd: logFilePath, app: 'finder' });
     }
   };
 
@@ -139,7 +158,7 @@ export function SessionActionsContextMenuItems({
       {onRenameStart && (
         <ContextMenuItem onClick={onRenameStart}>Rename</ContextMenuItem>
       )}
-      <ContextMenuItem onClick={() => togglePinSession(sessionId)}>
+      <ContextMenuItem onClick={() => actions.togglePinSession(sessionId)}>
         {isPinned ? 'Unpin' : 'Pin'}
       </ContextMenuItem>
       <ContextMenuItem className="text-red-500" onClick={handleDelete}>

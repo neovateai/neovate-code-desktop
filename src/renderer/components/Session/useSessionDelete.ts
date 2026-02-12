@@ -2,21 +2,16 @@ import { useCallback, useState } from 'react';
 import { useStore } from '../../store';
 
 export function useSessionDelete() {
-  const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
-  const removeSession = useStore((state) => state.removeSession);
-  const selectSession = useStore((state) => state.selectSession);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const request = useStore((state) => state.request);
-
   const [confirmingSessionId, setConfirmingSessionId] = useState<string | null>(
     null,
   );
 
   const deleteSession = useCallback(
     async (workspaceId: string, sessionId: string, onDeleted?: () => void) => {
-      const workspace = workspaces[workspaceId];
-      const session = sessions[workspaceId]?.find(
+      // Read from getState() at call time — no subscriptions needed
+      const state = useStore.getState();
+      const workspace = state.workspaces[workspaceId];
+      const session = state.sessions[workspaceId]?.find(
         (s) => s.sessionId === sessionId,
       );
       if (!workspace || !session) return;
@@ -25,7 +20,7 @@ export function useSessionDelete() {
 
       try {
         if (!isLocalOnly) {
-          const result = await request('sessions.remove', {
+          const result = await state.request('sessions.remove', {
             cwd: workspace.worktreePath,
             sessionId,
           });
@@ -35,13 +30,15 @@ export function useSessionDelete() {
           }
         }
 
-        removeSession(workspaceId, sessionId);
+        state.removeSession(workspaceId, sessionId);
 
-        if (selectedSessionId === sessionId) {
-          const remaining = (sessions[workspaceId] || [])
+        if (state.selectedSessionId === sessionId) {
+          const remaining = (state.sessions[workspaceId] || [])
             .filter((s) => s.sessionId !== sessionId)
             .sort((a, b) => b.modified - a.modified);
-          selectSession(remaining.length > 0 ? remaining[0].sessionId : null);
+          state.selectSession(
+            remaining.length > 0 ? remaining[0].sessionId : null,
+          );
         }
 
         onDeleted?.();
@@ -49,14 +46,7 @@ export function useSessionDelete() {
         console.error('Failed to delete session:', error);
       }
     },
-    [
-      workspaces,
-      sessions,
-      removeSession,
-      selectSession,
-      selectedSessionId,
-      request,
-    ],
+    [],
   );
 
   const startDelete = useCallback((sessionId: string) => {

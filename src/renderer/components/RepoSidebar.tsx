@@ -1,39 +1,21 @@
 import {
   Clock01Icon,
-  Comment01Icon,
   FilterIcon,
   FolderAddIcon,
   FolderIcon,
-  HelpCircleIcon,
   PlusSignCircleIcon,
   PlusSignIcon,
   TaskEdit01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { formatDistanceToNowStrict } from 'date-fns';
-import {
-  CheckIcon,
-  ChevronDown,
-  ChevronRight,
-  Pin,
-  PinOff,
-  Trash2,
-} from 'lucide-react';
-import { memo, useState } from 'react';
-import type { RepoData } from '../client/types/entities';
-import { cn } from '../lib/utils';
+import { CheckIcon, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { memo, useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '../store';
 import { RepoDeleteDialog } from './Repo/RepoDeleteDialog';
+import { SessionItem } from './Repo/SessionItem';
 import { useRepoDelete } from './Repo/useRepoDelete';
-import { SessionActionsContextMenuItems } from './SessionActionsMenu';
-import { useSessionDelete } from './Session/useSessionDelete';
-import {
-  ContextMenu,
-  ContextMenuPopup,
-  ContextMenuTrigger,
-} from './ui/context-menu';
 import { ScrollArea } from './ui/scroll-area';
-import { Spinner } from './ui/spinner';
 import { Button, toastManager } from './ui';
 import { Accordion, AccordionItem, AccordionPanel } from './ui/accordion';
 import {
@@ -54,406 +36,123 @@ import {
   EmptyTitle,
 } from './ui/empty';
 
-function formatRelativeTime(timestamp: number): string {
-  const distance = formatDistanceToNowStrict(timestamp, { addSuffix: false });
-  return distance
-    .replace(/ seconds?/, 's')
-    .replace(/ minutes?/, 'm')
-    .replace(/ hours?/, 'h')
-    .replace(/ days?/, 'd')
-    .replace(/ months?/, 'mo')
-    .replace(/ years?/, 'y');
-}
-
 const DEFAULT_SESSION_LIMIT = 5;
 const CHRONOLOGICAL_SESSION_LIMIT = 50;
 
-const PinnedSessionList = () => {
-  const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
-  const pinnedSessions = useStore((state) => state.pinnedSessions);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const sessionProcessing = useStore((state) => state.sessionProcessing);
+// ─── PinnedSessionList ──────────────────────────────────────────────
+
+/** Encode a (workspaceId, sessionId) pair as a single string key */
+const encodePairKey = (workspaceId: string, sessionId: string) =>
+  `${workspaceId}\0${sessionId}`;
+
+/** Decode a pair key back into { workspaceId, sessionId } */
+const decodePairKey = (key: string) => {
+  const idx = key.indexOf('\0');
+  return { workspaceId: key.slice(0, idx), sessionId: key.slice(idx + 1) };
+};
+
+const PinnedSessionList = memo(function PinnedSessionList() {
   const sidebarSortBy = useStore((state) => state.sidebarSortBy);
-  const selectWorkspace = useStore((state) => state.selectWorkspace);
-  const selectSession = useStore((state) => state.selectSession);
-  const updateSession = useStore((state) => state.updateSession);
-  const togglePinSession = useStore((state) => state.togglePinSession);
-  const request = useStore((state) => state.request);
-  const { confirmingSessionId, startDelete, cancelDelete, confirmDelete } =
-    useSessionDelete();
 
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState('');
-
-  const pinnedSessionsData = Object.entries(sessions).flatMap(
-    ([workspaceId, workspaceSessions]) => {
-      const workspace = workspaces[workspaceId];
-      if (!workspace) return [];
-      return workspaceSessions
-        .filter((session) => pinnedSessions.includes(session.sessionId))
-        .map((session) => ({
-          session,
-          workspaceId,
-        }));
-    },
-  );
-
-  const startRename = (sessionId: string, currentSummary: string) => {
-    setEditingSessionId(sessionId);
-    setEditingValue(currentSummary || 'New Chat');
-  };
-
-  const saveRename = async (workspaceId: string, sessionId: string) => {
-    const trimmed = editingValue.trim();
-    if (trimmed) {
-      const workspace = workspaces[workspaceId];
-      if (workspace) {
-        try {
-          await request('session.config.setSummary', {
-            cwd: workspace.worktreePath,
-            sessionId,
-            summary: trimmed,
-          });
-          updateSession(workspaceId, sessionId, { summary: trimmed });
-        } catch (error) {
-          console.error('Failed to rename session:', error);
+  // Derive string[] keys — useShallow compares strings by value (primitives),
+  // so this avoids the infinite-loop that new objects cause.
+  const pinnedKeys = useStore(
+    useShallow((state) => {
+      const keys: string[] = [];
+      for (const [workspaceId, workspaceSessions] of Object.entries(
+        state.sessions,
+      )) {
+        if (!state.workspaces[workspaceId]) continue;
+        for (const session of workspaceSessions) {
+          if (state.pinnedSessions.includes(session.sessionId)) {
+            keys.push(encodePairKey(workspaceId, session.sessionId));
+          }
         }
       }
-    }
-    setEditingSessionId(null);
-  };
+      return keys;
+    }),
+  );
 
-  const cancelRename = () => {
-    setEditingSessionId(null);
-  };
+  const pinnedItems = useMemo(
+    () => pinnedKeys.map(decodePairKey),
+    [pinnedKeys],
+  );
 
-  if (pinnedSessionsData.length === 0) {
+  if (pinnedItems.length === 0) {
     return null;
   }
 
   return (
     <div className="space-y-1 px-2 pb-2">
-      {pinnedSessionsData.map(({ session, workspaceId }) => {
-        const isSessionSelected = selectedSessionId === session.sessionId;
-        const isEditing = editingSessionId === session.sessionId;
-        const displaySummary = session.summary || 'New Chat';
-        const processing = sessionProcessing[session.sessionId] || {
-          status: 'idle',
-        };
-        const isProcessing = processing.status === 'processing';
-        const isAwaitingApproval = processing.status === 'awaiting_approval';
-        const isFailed = processing.status === 'failed';
-
-        const isConfirming = confirmingSessionId === session.sessionId;
-
-        return (
-          <ContextMenu key={session.sessionId}>
-            <ContextMenuTrigger
-              className={cn(
-                'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
-                isSessionSelected
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                isFailed && 'text-destructive-foreground',
-              )}
-              onClick={() => {
-                selectWorkspace(workspaceId);
-                selectSession(session.sessionId);
-              }}
-              onMouseLeave={cancelDelete}
-            >
-              <button
-                className="hidden group-hover:block"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePinSession(session.sessionId);
-                }}
-              >
-                <PinOff size={14} strokeWidth={1.5} />
-              </button>
-              <div className="group-hover:hidden">
-                {isProcessing ? (
-                  <Spinner className="size-3.5" />
-                ) : isAwaitingApproval ? (
-                  <HugeiconsIcon
-                    icon={HelpCircleIcon}
-                    size={14}
-                    strokeWidth={1.5}
-                    className="text-warning-foreground"
-                  />
-                ) : (
-                  <Pin size={14} strokeWidth={1.5} />
-                )}
-              </div>
-              {isEditing ? (
-                <input
-                  className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
-                  value={editingValue}
-                  onChange={(e) => setEditingValue(e.target.value)}
-                  onBlur={() => saveRename(workspaceId, session.sessionId)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      saveRename(workspaceId, session.sessionId);
-                    } else if (e.key === 'Escape') {
-                      cancelRename();
-                    }
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  autoFocus
-                  onFocus={(e) => e.target.select()}
-                />
-              ) : (
-                <span className="flex-1 text-sm truncate">
-                  {displaySummary}
-                </span>
-              )}
-              <span
-                className={cn(
-                  'text-sm text-muted-foreground group-hover:hidden',
-                  isConfirming && 'hidden',
-                )}
-              >
-                {formatRelativeTime(
-                  sidebarSortBy === 'created'
-                    ? session.created
-                    : session.modified,
-                )}
-              </span>
-              {isConfirming ? (
-                <button
-                  className="text-xs text-destructive cursor-pointer rounded bg-muted px-2 py-0.5 hover:bg-destructive/10 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    confirmDelete(workspaceId, session.sessionId);
-                  }}
-                >
-                  Confirm
-                </button>
-              ) : (
-                <button
-                  className="hidden group-hover:block cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startDelete(session.sessionId);
-                  }}
-                >
-                  <Trash2 size={14} strokeWidth={1.5} />
-                </button>
-              )}
-            </ContextMenuTrigger>
-            <ContextMenuPopup>
-              <SessionActionsContextMenuItems
-                sessionId={session.sessionId}
-                workspaceId={workspaceId}
-                onRenameStart={() =>
-                  startRename(session.sessionId, session.summary || '')
-                }
-              />
-            </ContextMenuPopup>
-          </ContextMenu>
-        );
-      })}
+      {pinnedItems.map(({ sessionId, workspaceId }) => (
+        <SessionItem
+          key={sessionId}
+          sessionId={sessionId}
+          workspaceId={workspaceId}
+          isPinned
+          sortBy={sidebarSortBy}
+        />
+      ))}
     </div>
   );
-};
+});
 
-const ChronologicalSessionList = () => {
-  const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
-  const pinnedSessions = useStore((state) => state.pinnedSessions);
+// ─── ChronologicalSessionList ───────────────────────────────────────
+
+const ChronologicalSessionList = memo(function ChronologicalSessionList() {
   const sidebarSortBy = useStore((state) => state.sidebarSortBy);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const sessionProcessing = useStore((state) => state.sessionProcessing);
-  const selectWorkspace = useStore((state) => state.selectWorkspace);
-  const selectSession = useStore((state) => state.selectSession);
-  const updateSession = useStore((state) => state.updateSession);
-  const togglePinSession = useStore((state) => state.togglePinSession);
-  const request = useStore((state) => state.request);
-  const { confirmingSessionId, startDelete, cancelDelete, confirmDelete } =
-    useSessionDelete();
 
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState('');
-  const [showAll, setShowAll] = useState(false);
-
-  const flatSessions = Object.entries(sessions).flatMap(
-    ([workspaceId, workspaceSessions]) => {
-      const workspace = workspaces[workspaceId];
-      if (!workspace) return [];
-      return workspaceSessions
-        .filter((session) => !pinnedSessions.includes(session.sessionId))
-        .map((session) => ({
-          session,
-          workspaceId,
-        }));
-    },
-  );
-
-  const sortedSessions = flatSessions.slice().sort((a, b) => {
-    if (sidebarSortBy === 'created') {
-      return b.session.created - a.session.created;
-    }
-    return b.session.modified - a.session.modified;
-  });
-
-  const visibleSessions = showAll
-    ? sortedSessions
-    : sortedSessions.slice(0, CHRONOLOGICAL_SESSION_LIMIT);
-  const hiddenCount = sortedSessions.length - CHRONOLOGICAL_SESSION_LIMIT;
-
-  const startRename = (sessionId: string, currentSummary: string) => {
-    setEditingSessionId(sessionId);
-    setEditingValue(currentSummary || 'New Chat');
-  };
-
-  const saveRename = async (workspaceId: string, sessionId: string) => {
-    const trimmed = editingValue.trim();
-    if (trimmed) {
-      const workspace = workspaces[workspaceId];
-      if (workspace) {
-        try {
-          await request('session.config.setSummary', {
-            cwd: workspace.worktreePath,
-            sessionId,
-            summary: trimmed,
+  // Derive sorted string[] keys — useShallow compares strings by value.
+  const sortedKeys = useStore(
+    useShallow((state) => {
+      const items: { key: string; sortKey: number }[] = [];
+      for (const [workspaceId, workspaceSessions] of Object.entries(
+        state.sessions,
+      )) {
+        if (!state.workspaces[workspaceId]) continue;
+        for (const session of workspaceSessions) {
+          if (state.pinnedSessions.includes(session.sessionId)) continue;
+          items.push({
+            key: encodePairKey(workspaceId, session.sessionId),
+            sortKey:
+              state.sidebarSortBy === 'created'
+                ? session.created
+                : session.modified,
           });
-          updateSession(workspaceId, sessionId, { summary: trimmed });
-        } catch (error) {
-          console.error('Failed to rename session:', error);
         }
       }
-    }
-    setEditingSessionId(null);
-  };
+      items.sort((a, b) => b.sortKey - a.sortKey);
+      return items.map((item) => item.key);
+    }),
+  );
 
-  const cancelRename = () => {
-    setEditingSessionId(null);
-  };
+  const sortedItems = useMemo(
+    () => sortedKeys.map(decodePairKey),
+    [sortedKeys],
+  );
+
+  const showAllThreshold = CHRONOLOGICAL_SESSION_LIMIT;
+  const hasHidden = sortedItems.length > showAllThreshold;
+
+  // Use local state for show all toggle
+  const [showAll, setShowAll] = useState(false);
+
+  const visibleItems = showAll
+    ? sortedItems
+    : sortedItems.slice(0, showAllThreshold);
+  const hiddenCount = sortedItems.length - showAllThreshold;
 
   return (
     <div className="space-y-1">
-      {visibleSessions.map(({ session, workspaceId }) => {
-        const isSessionSelected = selectedSessionId === session.sessionId;
-        const isEditing = editingSessionId === session.sessionId;
-        const displaySummary = session.summary || 'New Chat';
-        const processing = sessionProcessing[session.sessionId] || {
-          status: 'idle',
-        };
-        const isProcessing = processing.status === 'processing';
-        const isAwaitingApproval = processing.status === 'awaiting_approval';
-        const isFailed = processing.status === 'failed';
-
-        const isConfirming = confirmingSessionId === session.sessionId;
-
-        return (
-          <ContextMenu key={session.sessionId}>
-            <ContextMenuTrigger
-              className={cn(
-                'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
-                isSessionSelected
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                isFailed && 'text-destructive-foreground',
-              )}
-              onClick={() => {
-                selectWorkspace(workspaceId);
-                selectSession(session.sessionId);
-              }}
-              onMouseLeave={cancelDelete}
-            >
-              <button
-                className="hidden group-hover:block"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePinSession(session.sessionId);
-                }}
-              >
-                <Pin size={14} strokeWidth={1.5} />
-              </button>
-              <div className="group-hover:hidden">
-                {isProcessing ? (
-                  <Spinner className="size-3.5" />
-                ) : isAwaitingApproval ? (
-                  <HugeiconsIcon
-                    icon={HelpCircleIcon}
-                    size={14}
-                    strokeWidth={1.5}
-                    className="text-warning-foreground"
-                  />
-                ) : (
-                  <HugeiconsIcon
-                    icon={Comment01Icon}
-                    size={14}
-                    strokeWidth={1.5}
-                  />
-                )}
-              </div>
-              {isEditing ? (
-                <input
-                  className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
-                  value={editingValue}
-                  onChange={(e) => setEditingValue(e.target.value)}
-                  onBlur={() => saveRename(workspaceId, session.sessionId)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      saveRename(workspaceId, session.sessionId);
-                    } else if (e.key === 'Escape') {
-                      cancelRename();
-                    }
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  autoFocus
-                  onFocus={(e) => e.target.select()}
-                />
-              ) : (
-                <span className="flex-1 text-sm truncate">
-                  {displaySummary}
-                </span>
-              )}
-              <span
-                className={cn(
-                  'text-sm text-muted-foreground group-hover:hidden',
-                  isConfirming && 'hidden',
-                )}
-              >
-                {formatRelativeTime(session.modified)}
-              </span>
-              {isConfirming ? (
-                <button
-                  className="text-xs text-destructive cursor-pointer rounded bg-muted px-2 py-0.5 hover:bg-destructive/10 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    confirmDelete(workspaceId, session.sessionId);
-                  }}
-                >
-                  Confirm
-                </button>
-              ) : (
-                <button
-                  className="hidden group-hover:block cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startDelete(session.sessionId);
-                  }}
-                >
-                  <Trash2 size={14} strokeWidth={1.5} />
-                </button>
-              )}
-            </ContextMenuTrigger>
-            <ContextMenuPopup>
-              <SessionActionsContextMenuItems
-                sessionId={session.sessionId}
-                workspaceId={workspaceId}
-                onRenameStart={() =>
-                  startRename(session.sessionId, session.summary || '')
-                }
-              />
-            </ContextMenuPopup>
-          </ContextMenu>
-        );
-      })}
-      {hiddenCount > 0 && (
+      {visibleItems.map(({ sessionId, workspaceId }) => (
+        <SessionItem
+          key={sessionId}
+          sessionId={sessionId}
+          workspaceId={workspaceId}
+          sortBy={sidebarSortBy}
+        />
+      ))}
+      {hasHidden && hiddenCount > 0 && (
         <button
           className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
           onClick={() => setShowAll(!showAll)}
@@ -463,283 +162,120 @@ const ChronologicalSessionList = () => {
       )}
     </div>
   );
-};
+});
+
+// ─── RepoSessionList ────────────────────────────────────────────────
 
 interface RepoSessionListProps {
-  repo: RepoData;
+  workspaceId: string;
 }
 
-const RepoSessionList = ({ repo }: RepoSessionListProps) => {
-  const workspaces = useStore((state) => state.workspaces);
-  const sessions = useStore((state) => state.sessions);
-  const pinnedSessions = useStore((state) => state.pinnedSessions);
-  const expandedSessions = useStore((state) => state.expandedSessionGroups);
-  const selectedSessionId = useStore((state) => state.selectedSessionId);
-  const sessionProcessing = useStore((state) => state.sessionProcessing);
-  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+const RepoSessionList = memo(function RepoSessionList({
+  workspaceId,
+}: RepoSessionListProps) {
   const sidebarSortBy = useStore((state) => state.sidebarSortBy);
-  const selectWorkspace = useStore((state) => state.selectWorkspace);
-  const selectSession = useStore((state) => state.selectSession);
-  const createOrSelectEmptySession = useStore(
-    (state) => state.createOrSelectEmptySession,
+  const multiProjectSupport = useStore((state) => state.multiProjectSupport);
+
+  const isExpanded = useStore(
+    (state) => state.expandedSessionGroups[workspaceId] ?? false,
   );
-  const toggleSessionGroupExpanded = useStore(
-    (state) => state.toggleSessionGroupExpanded,
+
+  const actions = useStore(
+    useShallow((state) => ({
+      selectWorkspace: state.selectWorkspace,
+      createOrSelectEmptySession: state.createOrSelectEmptySession,
+      toggleSessionGroupExpanded: state.toggleSessionGroupExpanded,
+    })),
   );
-  const togglePinSession = useStore((state) => state.togglePinSession);
-  const updateSession = useStore((state) => state.updateSession);
-  const request = useStore((state) => state.request);
-  const { confirmingSessionId, startDelete, cancelDelete, confirmDelete } =
-    useSessionDelete();
 
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState('');
+  // Derive sorted session IDs for this workspace, excluding pinned
+  const sortedSessionIds = useStore(
+    useShallow((state) => {
+      const workspaceSessions = state.sessions[workspaceId] || [];
+      return workspaceSessions
+        .filter((s) => !state.pinnedSessions.includes(s.sessionId))
+        .slice()
+        .sort((a, b) => {
+          if (state.sidebarSortBy === 'created') {
+            return b.created - a.created;
+          }
+          return b.modified - a.modified;
+        })
+        .map((s) => s.sessionId);
+    }),
+  );
 
-  const startRename = (sessionId: string, currentSummary: string) => {
-    setEditingSessionId(sessionId);
-    setEditingValue(currentSummary || 'New Chat');
-  };
-
-  const saveRename = async (workspaceId: string, sessionId: string) => {
-    const trimmed = editingValue.trim();
-    if (trimmed) {
-      const workspace = workspaces[workspaceId];
-      if (workspace) {
-        try {
-          await request('session.config.setSummary', {
-            cwd: workspace.worktreePath,
-            sessionId,
-            summary: trimmed,
-          });
-          updateSession(workspaceId, sessionId, { summary: trimmed });
-        } catch (error) {
-          console.error('Failed to rename session:', error);
-        }
-      }
-    }
-    setEditingSessionId(null);
-  };
-
-  const cancelRename = () => {
-    setEditingSessionId(null);
-  };
+  const visibleIds = isExpanded
+    ? sortedSessionIds
+    : sortedSessionIds.slice(0, DEFAULT_SESSION_LIMIT);
+  const hiddenCount = sortedSessionIds.length - DEFAULT_SESSION_LIMIT;
 
   return (
     <div className="space-y-1">
-      {repo.workspaceIds.slice(0, 1).map((workspaceId) => {
-        const workspace = workspaces[workspaceId];
-        if (!workspace) return null;
+      <div>
+        {multiProjectSupport ? null : (
+          <Button
+            className="mb-3 mt-2 w-full"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              actions.selectWorkspace(workspaceId);
+              actions.createOrSelectEmptySession(workspaceId);
+            }}
+          >
+            <HugeiconsIcon icon={PlusSignIcon} size={14} strokeWidth={1.5} />
+            <span>New Chat</span>
+          </Button>
+        )}
 
-        const workspaceSessions = (sessions[workspaceId] || [])
-          .filter((s) => !pinnedSessions.includes(s.sessionId))
-          .slice()
-          .sort((a, b) => {
-            if (sidebarSortBy === 'created') {
-              return b.created - a.created;
-            }
-            return b.modified - a.modified;
-          });
+        {visibleIds.map((sessionId) => (
+          <SessionItem
+            key={sessionId}
+            sessionId={sessionId}
+            workspaceId={workspaceId}
+            sortBy={sidebarSortBy}
+          />
+        ))}
 
-        const expandKey = `${workspaceId}`;
-        const isExpanded = expandedSessions[expandKey] ?? false;
-        const visibleSessions = isExpanded
-          ? workspaceSessions
-          : workspaceSessions.slice(0, DEFAULT_SESSION_LIMIT);
-        const hiddenCount = workspaceSessions.length - DEFAULT_SESSION_LIMIT;
-
-        return (
-          <div key={workspaceId}>
-            <div>
-              {multiProjectSupport ? null : (
-                <Button
-                  className="mb-3 mt-2 w-full"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    selectWorkspace(workspaceId);
-                    createOrSelectEmptySession(workspaceId);
-                  }}
-                >
-                  <HugeiconsIcon
-                    icon={PlusSignIcon}
-                    size={14}
-                    strokeWidth={1.5}
-                  />
-                  <span>New Chat</span>
-                </Button>
-              )}
-
-              {visibleSessions.map((session) => {
-                const isSessionSelected =
-                  selectedSessionId === session.sessionId;
-                const isEditing = editingSessionId === session.sessionId;
-                const displaySummary = session.summary || 'New Chat';
-                const processing = sessionProcessing[session.sessionId] || {
-                  status: 'idle',
-                };
-                const isProcessing = processing.status === 'processing';
-                const isAwaitingApproval =
-                  processing.status === 'awaiting_approval';
-                const isFailed = processing.status === 'failed';
-                const isPinned = pinnedSessions.includes(session.sessionId);
-
-                const isConfirming = confirmingSessionId === session.sessionId;
-
-                return (
-                  <ContextMenu key={session.sessionId}>
-                    <ContextMenuTrigger
-                      className={cn(
-                        'flex items-center gap-2 px-3 py-1.5 mb-1 cursor-pointer rounded transition-colors group',
-                        isSessionSelected
-                          ? 'bg-accent text-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                        isFailed && 'text-destructive-foreground',
-                      )}
-                      onClick={() => {
-                        selectWorkspace(workspaceId);
-                        selectSession(session.sessionId);
-                      }}
-                      onMouseLeave={cancelDelete}
-                    >
-                      <button
-                        className="hidden group-hover:block"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePinSession(session.sessionId);
-                        }}
-                      >
-                        {isPinned ? (
-                          <PinOff size={14} strokeWidth={1.5} />
-                        ) : (
-                          <Pin size={14} strokeWidth={1.5} />
-                        )}
-                      </button>
-                      <div className="group-hover:hidden">
-                        {isProcessing ? (
-                          <Spinner className="size-3.5" />
-                        ) : isAwaitingApproval ? (
-                          <HugeiconsIcon
-                            icon={HelpCircleIcon}
-                            size={14}
-                            strokeWidth={1.5}
-                            className="text-warning-foreground"
-                          />
-                        ) : (
-                          <HugeiconsIcon
-                            icon={Comment01Icon}
-                            size={14}
-                            strokeWidth={1.5}
-                          />
-                        )}
-                      </div>
-                      {isEditing ? (
-                        <input
-                          className="flex-1 text-sm bg-transparent border border-primary rounded px-1 py-0.5 outline-none"
-                          value={editingValue}
-                          onChange={(e) => setEditingValue(e.target.value)}
-                          onBlur={() =>
-                            saveRename(workspaceId, session.sessionId)
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              saveRename(workspaceId, session.sessionId);
-                            } else if (e.key === 'Escape') {
-                              cancelRename();
-                            }
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          autoFocus
-                          onFocus={(e) => e.target.select()}
-                        />
-                      ) : (
-                        <span className="flex-1 text-sm truncate">
-                          {displaySummary}
-                        </span>
-                      )}
-                      <span
-                        className={cn(
-                          'text-sm text-muted-foreground group-hover:hidden',
-                          isConfirming && 'hidden',
-                        )}
-                      >
-                        {formatRelativeTime(
-                          sidebarSortBy === 'created'
-                            ? session.created
-                            : session.modified,
-                        )}
-                      </span>
-                      {isConfirming ? (
-                        <button
-                          className="text-xs text-destructive cursor-pointer rounded bg-muted px-2 py-0.5 hover:bg-destructive/10 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            confirmDelete(workspaceId, session.sessionId);
-                          }}
-                        >
-                          Confirm
-                        </button>
-                      ) : (
-                        <button
-                          className="hidden group-hover:block cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startDelete(session.sessionId);
-                          }}
-                        >
-                          <Trash2 size={14} strokeWidth={1.5} />
-                        </button>
-                      )}
-                    </ContextMenuTrigger>
-                    <ContextMenuPopup>
-                      <SessionActionsContextMenuItems
-                        sessionId={session.sessionId}
-                        workspaceId={workspaceId}
-                        onRenameStart={() =>
-                          startRename(session.sessionId, session.summary || '')
-                        }
-                      />
-                    </ContextMenuPopup>
-                  </ContextMenu>
-                );
-              })}
-
-              {hiddenCount > 0 && (
-                <button
-                  className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSessionGroupExpanded(expandKey);
-                  }}
-                >
-                  {isExpanded ? 'Show less' : `Show ${hiddenCount} more`}
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })}
+        {hiddenCount > 0 && (
+          <button
+            className="px-3 py-1 text-sm cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+            onClick={(e) => {
+              e.stopPropagation();
+              actions.toggleSessionGroupExpanded(workspaceId);
+            }}
+          >
+            {isExpanded ? 'Show less' : `Show ${hiddenCount} more`}
+          </button>
+        )}
+      </div>
     </div>
   );
-};
+});
 
-const SidebarTitleBar = () => {
-  const [isLoading, setIsLoading] = useState(false);
+// ─── SidebarTitleBar ────────────────────────────────────────────────
+
+const SidebarTitleBar = memo(function SidebarTitleBar() {
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
   const sidebarOrganize = useStore((state) => state.sidebarOrganize);
   const sidebarSortBy = useStore((state) => state.sidebarSortBy);
-  const setSidebarOrganize = useStore((state) => state.setSidebarOrganize);
-  const setSidebarSortBy = useStore((state) => state.setSidebarSortBy);
-  const request = useStore((state) => state.request);
-  const addRepo = useStore((state) => state.addRepo);
-  const addWorkspace = useStore((state) => state.addWorkspace);
-  const repos = useStore((state) => state.repos);
-  const selectWorkspace = useStore((state) => state.selectWorkspace);
+
+  const actions = useStore(
+    useShallow((state) => ({
+      setSidebarOrganize: state.setSidebarOrganize,
+      setSidebarSortBy: state.setSidebarSortBy,
+      request: state.request,
+      addRepo: state.addRepo,
+      addWorkspace: state.addWorkspace,
+      selectWorkspace: state.selectWorkspace,
+    })),
+  );
+
+  if (!multiProjectSupport) {
+    return null;
+  }
 
   const handleOpenProject = async () => {
-    if (isLoading) {
-      return;
-    }
-
     let loadingToastId: string | undefined;
 
     const closeLoadingToast = () => {
@@ -761,7 +297,8 @@ const SidebarTitleBar = () => {
         return;
       }
 
-      if (repos[selectedPath]) {
+      // Use getState() to check repos at call time — no subscription needed
+      if (useStore.getState().repos[selectedPath]) {
         toastManager.add({
           title: 'Repository already exists',
           description: `The repository at ${selectedPath} is already added.`,
@@ -770,26 +307,26 @@ const SidebarTitleBar = () => {
         return;
       }
 
-      setIsLoading(true);
       loadingToastId = toastManager.add({
         title: 'Adding repository',
         description: 'Loading repository information...',
         type: 'loading',
       });
 
-      const response = await request('project.getRepoInfo', {
+      const response = await actions.request('project.getRepoInfo', {
         cwd: selectedPath,
       });
 
       if (response.success && response.data?.repoData) {
         const repoData = response.data.repoData;
 
-        addRepo(repoData);
+        actions.addRepo(repoData);
 
         try {
-          const workspacesResponse = await request('project.workspaces.list', {
-            cwd: selectedPath,
-          });
+          const workspacesResponse = await actions.request(
+            'project.workspaces.list',
+            { cwd: selectedPath },
+          );
 
           if (
             workspacesResponse.success &&
@@ -797,10 +334,10 @@ const SidebarTitleBar = () => {
           ) {
             const workspaces = workspacesResponse.data.workspaces;
             for (const workspace of workspaces) {
-              addWorkspace(workspace);
+              actions.addWorkspace(workspace);
             }
             if (workspaces.length > 0) {
-              selectWorkspace(workspaces[0].id);
+              actions.selectWorkspace(workspaces[0].id);
             }
           } else if (!workspacesResponse.success) {
             console.warn(
@@ -840,18 +377,12 @@ const SidebarTitleBar = () => {
         description: errorMessage,
         type: 'error',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleOrganizeChange = (value: string) => {
-    setSidebarOrganize(value as 'byProject' | 'chronological');
+    actions.setSidebarOrganize(value as 'byProject' | 'chronological');
   };
-
-  if (!multiProjectSupport) {
-    return null;
-  }
 
   return (
     <div className="flex items-center justify-between px-3 py-2">
@@ -904,7 +435,7 @@ const SidebarTitleBar = () => {
             <MenuSeparator />
             <MenuGroup>
               <MenuGroupLabel>Sort by</MenuGroupLabel>
-              <MenuItem onClick={() => setSidebarSortBy('created')}>
+              <MenuItem onClick={() => actions.setSidebarSortBy('created')}>
                 <HugeiconsIcon
                   icon={PlusSignCircleIcon}
                   size={14}
@@ -913,7 +444,7 @@ const SidebarTitleBar = () => {
                 <span className="flex-1">Created</span>
                 {sidebarSortBy === 'created' && <CheckIcon size={14} />}
               </MenuItem>
-              <MenuItem onClick={() => setSidebarSortBy('updated')}>
+              <MenuItem onClick={() => actions.setSidebarSortBy('updated')}>
                 <HugeiconsIcon
                   icon={TaskEdit01Icon}
                   size={12}
@@ -928,22 +459,34 @@ const SidebarTitleBar = () => {
       </div>
     </div>
   );
-};
+});
 
-export const RepoSidebar = () => {
+// ─── RepoSidebar ────────────────────────────────────────────────────
+
+const SidebarHeader = memo(function Header() {
+  return null;
+});
+
+const SidebarFooter = memo(function Footer() {
+  return null;
+});
+
+const RepoSidebarInner = memo(function RepoSidebar() {
   const openRepos = useStore((state) => state.openRepoAccordions);
   const setOpenRepoAccordions = useStore(
     (state) => state.setOpenRepoAccordions,
   );
   const multiProjectSupport = useStore((state) => state.multiProjectSupport);
   const sidebarOrganize = useStore((state) => state.sidebarOrganize);
-  const repos = useStore((state) => state.repos);
   const selectedRepoPath = useStore((state) => state.selectedRepoPath);
-  const selectWorkspace = useStore((state) => state.selectWorkspace);
-  const createOrSelectEmptySession = useStore(
-    (state) => state.createOrSelectEmptySession,
-  );
   const developerMode = useStore((state) => state.developerMode);
+
+  const actions = useStore(
+    useShallow((state) => ({
+      selectWorkspace: state.selectWorkspace,
+      createOrSelectEmptySession: state.createOrSelectEmptySession,
+    })),
+  );
 
   const {
     deleteDialogOpen: repoDeleteDialogOpen,
@@ -953,10 +496,18 @@ export const RepoSidebar = () => {
     handleCancelDelete: handleRepoCancelDelete,
   } = useRepoDelete();
 
-  const repoList = Object.values(repos);
-  const displayRepos = multiProjectSupport
-    ? repoList
-    : repoList.filter((repo) => repo.path === selectedRepoPath);
+  // Derive the display repo list — returns actual store objects (stable refs)
+  // so useShallow can compare elements by reference.
+  const displayRepos = useStore(
+    useShallow((state) => {
+      const repoList = Object.values(state.repos);
+      return state.multiProjectSupport
+        ? repoList
+        : repoList.filter((repo) => repo.path === state.selectedRepoPath);
+    }),
+  );
+
+  const repoCount = useStore((state) => Object.keys(state.repos).length);
 
   return (
     <div className="h-full flex flex-col">
@@ -968,7 +519,7 @@ export const RepoSidebar = () => {
           <div>
             multiProjectSupport: {multiProjectSupport ? 'true' : 'false'}
           </div>
-          <div>repoList count: {repoList.length}</div>
+          <div>repoList count: {repoCount}</div>
           <div>filtered repos: {displayRepos.length}</div>
         </div>
       )}
@@ -977,7 +528,7 @@ export const RepoSidebar = () => {
         className="flex-1 p-2 pt-0 **:data-[slot=scroll-area-scrollbar]:hidden"
         scrollFade
       >
-        {repoList.length === 0 ? (
+        {repoCount === 0 ? (
           <Empty>
             <EmptyMedia variant="icon">
               <HugeiconsIcon
@@ -1042,8 +593,8 @@ export const RepoSidebar = () => {
                         e.stopPropagation();
                         const workspaceId = repo.workspaceIds[0];
                         if (workspaceId) {
-                          selectWorkspace(workspaceId);
-                          createOrSelectEmptySession(workspaceId);
+                          actions.selectWorkspace(workspaceId);
+                          actions.createOrSelectEmptySession(workspaceId);
                         }
                       }}
                     >
@@ -1056,20 +607,27 @@ export const RepoSidebar = () => {
                   </div>
                 </RepoAccordionTrigger>
                 <AccordionPanel>
-                  <RepoSessionList repo={repo} />
+                  {repo.workspaceIds[0] && (
+                    <RepoSessionList workspaceId={repo.workspaceIds[0]} />
+                  )}
                 </AccordionPanel>
               </AccordionItem>
             ))}
           </Accordion>
         ) : (
-          displayRepos.map((repo) => (
-            <RepoSessionList key={repo.path} repo={repo} />
-          ))
+          displayRepos.map((repo) =>
+            repo.workspaceIds[0] ? (
+              <RepoSessionList
+                key={repo.path}
+                workspaceId={repo.workspaceIds[0]}
+              />
+            ) : null,
+          )
         )}
       </ScrollArea>
 
       <div className="mt-auto">
-        <RepoSidebar.Footer />
+        <SidebarFooter />
       </div>
 
       <RepoDeleteDialog
@@ -1080,12 +638,9 @@ export const RepoSidebar = () => {
       />
     </div>
   );
-};
-
-RepoSidebar.Header = memo(function Header() {
-  return null;
 });
 
-RepoSidebar.Footer = memo(function Footer() {
-  return null;
+export const RepoSidebar = Object.assign(RepoSidebarInner, {
+  Header: SidebarHeader,
+  Footer: SidebarFooter,
 });
