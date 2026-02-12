@@ -30,6 +30,10 @@ class UpdaterService {
     this.mainWindow = mainWindow;
 
     if (!this.isAutoUpdaterSetup) {
+      if (updaterOptions?.channel) {
+        autoUpdater.channel = updaterOptions.channel;
+      }
+
       if (updaterOptions?.feedURL) {
         try {
           const resolved =
