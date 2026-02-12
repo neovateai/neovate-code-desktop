@@ -27,9 +27,11 @@ export class MainApp {
   private mainWindow: BrowserWindow | null = null;
   private tray: Tray | null = null;
   private neovateOptions?: NeovateOptions;
+  private updater?: MainAppOptions['updater'];
 
   constructor(options?: MainAppOptions) {
     this.neovateOptions = options?.neovateOptions;
+    this.updater = options?.updater;
   }
 
   async start(): Promise<void> {
@@ -44,7 +46,7 @@ export class MainApp {
     this.registerIpcHandlers();
     this.createMenu();
     this.createTray();
-    this.createWindow();
+    await this.createWindow();
     this.registerLifecycleHandlers();
   }
 
@@ -279,7 +281,7 @@ export class MainApp {
     this.tray.setContextMenu(contextMenu);
   }
 
-  private createWindow(): void {
+  private async createWindow(): Promise<void> {
     this.mainWindow = new BrowserWindow({
       width: 1200,
       height: 800,
@@ -301,8 +303,7 @@ export class MainApp {
     // Initialize services after window is created
     if (this.mainWindow) {
       browserWindowManager.setMainWindow(this.mainWindow);
-      updaterService.init(this.mainWindow);
-      // 设置 bridgeServer 的 webContents，以便 extension 可以通知 renderer
+      updaterService.init(this.mainWindow, this.updater);
       bridgeServer.connect2renderer(this.mainWindow.webContents);
     }
 
@@ -330,7 +331,7 @@ export class MainApp {
 
     app.on('activate', () => {
       if (this.mainWindow === null) {
-        this.createWindow();
+        this.createWindow().catch(console.error);
       }
     });
 
