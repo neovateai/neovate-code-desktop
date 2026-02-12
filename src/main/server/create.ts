@@ -63,6 +63,7 @@ export async function createNeovateServer(
 
   const argv = await parseArgs([
     'server',
+    '--disable-context-cache',
     '--port',
     String(port),
     '--host',
