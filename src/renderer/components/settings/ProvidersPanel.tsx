@@ -1103,7 +1103,7 @@ export const ProvidersPanel = () => {
         </div>
 
         {/* Provider Detail */}
-        <div className="flex-1 p-4 bg-background">
+        <div className="flex-1 p-4 bg-background overflow-y-auto">
           {selectedProvider ? (
             isLoadingConfig ? (
               <div className="flex items-center justify-center py-12">
