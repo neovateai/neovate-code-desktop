@@ -39,7 +39,7 @@ export class I18nManager {
   async init(options: I18nInitOptions = {}): Promise<void> {
     const { store } = options;
 
-    // Get saved locale from store if available
+    // Get locale from store or browser detection
     const savedLocale = store?.getState().locale;
 
     await this.instance.init({

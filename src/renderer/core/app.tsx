@@ -43,6 +43,7 @@ export class RendererApp {
     RendererPluginConfig
   >;
   readonly i18nManager: I18nManager;
+  readonly useStore: typeof useStore;
 
   /** Plugin UI contributions collected at startup */
   contributions: PluginConfigContribution[] = [];
@@ -57,9 +58,6 @@ export class RendererApp {
    * - `windowType` determines which component to render. It matches against
    *   `WindowConfig.windowType` registered in `RendererApp({ windows: [...] })`.
    * - `windowId` is the instance dedup key. Opening the same `windowId` twice
-   *   focuses the existing window instead of creating a duplicate. Different
-   *   `windowId` values with the same `windowType` open independent windows
-   *   that render the same component.
    *   focuses the existing window instead of creating a duplicate. Different
    *   `windowId` values with the same `windowType` open independent windows
    *   that render the same component.
@@ -78,6 +76,7 @@ export class RendererApp {
     this.windows = options?.windows ?? [];
     this.pluginManager = new PluginManager(options?.plugins);
     this.i18nManager = new I18nManager();
+    this.useStore = useStore;
   }
 
   async start(): Promise<void> {
@@ -92,17 +91,16 @@ export class RendererApp {
       (r): r is LazyNamespaceConfig => r != null,
     );
 
+    // Hydrate store for both main and sub windows (locale, etc.)
+    await hydrateStore(useStore);
+    await this.i18nManager.init({ store: useStore });
+
     // Sub window: render matched component directly
     if (windowConfig) {
-      await this.i18nManager.init();
       this.i18nManager.setupLazyNamespaces(lazyNamespaceConfigs);
       this.render(lazy(windowConfig.componentLoader));
       return;
     }
-
-    // Main window: hydrate store first, then init everything else
-    await hydrateStore(useStore);
-    await this.i18nManager.init({ store: useStore });
     this.i18nManager.setupLazyNamespaces(lazyNamespaceConfigs);
 
     // Collect plugin UI contributions
