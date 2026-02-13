@@ -5,11 +5,30 @@ import type { Plugin } from '@neovate/code';
 import { editorControllers } from './editor';
 import { getFileTree } from './tree';
 import { searchFiles } from './search';
+import { watchWorkspace, unwatchWorkspace } from './watch';
+
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  delay: number,
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout | null = null;
+
+  return (...args: Parameters<T>) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
 
 export const fsPlugin: Plugin = {
   name: 'fs',
 
   nodeBridgeHandler() {
+    const context = this; // plugin context, include message bus
     return {
       'fs.tree': async (data: { cwd: string }) => {
         /** TODO: 后续考虑大项目的性能问题 */
@@ -101,6 +120,22 @@ export const fsPlugin: Plugin = {
             error: error instanceof Error ? error.message : 'Search failed',
           };
         }
+      },
+      'fs.watch': async (data: { cwd: string }) => {
+        // 创建防抖后的回调函数
+        const debouncedEmit = debounce((subType: string) => {
+          console.log('onFsChange', subType);
+          context.messageBus?.emitEvent?.('fs-change', { cwd: data.cwd });
+        }, 600);
+
+        watchWorkspace(data.cwd, {
+          onFsChange: debouncedEmit,
+        });
+        return { success: true, data: {} };
+      },
+      'fs.unwatch': async (data: { cwd: string }) => {
+        unwatchWorkspace(data.cwd);
+        return { success: true, data: {} };
       },
       ...editorControllers,
     } as ReturnType<NonNullable<Plugin['nodeBridgeHandler']>>;
