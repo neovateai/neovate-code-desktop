@@ -15,6 +15,7 @@ export type FeedURLOptions = Parameters<AppUpdater['setFeedURL']>[0];
 
 export interface UpdaterOptions {
   feedURL?: FeedURLOptions | (() => Promise<FeedURLOptions>);
+  channel?: string;
 }
 
 export interface MainAppOptions {
