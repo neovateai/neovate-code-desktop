@@ -1,6 +1,6 @@
 {
   "name": "neovate-code-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Neovate Code Desktop",
   "main": "dist/main/index.js",
   "workspaces": [
