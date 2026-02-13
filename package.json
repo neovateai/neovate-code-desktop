@@ -107,7 +107,7 @@
     "zustand": "^5.0.11"
   },
   "dependencies": {
-    "@neovate/code": "^0.28.1",
+    "@neovate/code": "^0.28.2",
     "electron-updater": "^6.7.3",
     "node-pty": "^1.1.0"
   },
