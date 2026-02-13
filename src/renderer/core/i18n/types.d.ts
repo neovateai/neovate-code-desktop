@@ -6,7 +6,7 @@
  * @see src/renderer/plugins/demo/types.d.ts
  */
 import 'i18next';
-import type en from '../../locales/en.json';
+import type en from '../../locales/en-US.json';
 
 declare module 'i18next' {
   interface I18nResources {

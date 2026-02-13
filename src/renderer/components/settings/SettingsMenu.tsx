@@ -11,24 +11,36 @@ import {
   SettingsIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { type SettingsMenuId, useStore } from '../../store';
 
 interface MenuItem {
   id: SettingsMenuId;
-  label: string;
   icon: typeof SettingsIcon;
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'general', label: 'General', icon: SettingsIcon },
-  { id: 'providers', label: 'Providers', icon: CloudIcon },
-  { id: 'chat', label: 'Chat', icon: MessageIcon },
-  { id: 'rules', label: 'Rules', icon: Book02Icon },
-  { id: 'skills', label: 'Skills', icon: MagicWandIcon },
-  { id: 'keybindings', label: 'Keybindings', icon: KeyboardIcon },
-  { id: 'about', label: 'About', icon: HelpCircleIcon },
+  { id: 'general', icon: SettingsIcon },
+  { id: 'providers', icon: CloudIcon },
+  { id: 'chat', icon: MessageIcon },
+  { id: 'rules', icon: Book02Icon },
+  { id: 'skills', icon: MagicWandIcon },
+  { id: 'keybindings', icon: KeyboardIcon },
+  { id: 'about', icon: HelpCircleIcon },
 ];
+
+const MENU_LABEL_KEYS: Record<SettingsMenuId, string> = {
+  general: 'settings.general',
+  providers: 'settings.provider',
+  chat: 'settings.chat',
+  rules: 'settings.rules',
+  skills: 'settings.skills',
+  keybindings: 'settings.keybindings',
+  about: 'settings.about',
+  mcp: 'settings.mcp.title',
+  preferences: 'settings.general',
+};
 
 export const SettingsMenu = ({
   activeMenu,
@@ -37,6 +49,7 @@ export const SettingsMenu = ({
   activeMenu: SettingsMenuId;
   onMenuSelect: (id: SettingsMenuId) => void;
 }) => {
+  const { t } = useTranslation();
   const setShowSettings = useStore((state) => state.setShowSettings);
 
   return (
@@ -81,7 +94,7 @@ export const SettingsMenu = ({
               onClick={() => onMenuSelect(item.id)}
             >
               <HugeiconsIcon icon={item.icon} size={18} strokeWidth={1.5} />
-              <span>{item.label}</span>
+              <span>{t(MENU_LABEL_KEYS[item.id] as any)}</span>
             </button>
           );
         })}

@@ -1,6 +1,7 @@
 import { HelpCircleIcon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ipcMainCaller } from '../../lib/ipc';
 import type { UpdaterState } from '../../../shared/types/updater';
 import { Button } from '../ui/button';
@@ -8,6 +9,7 @@ import { Spinner } from '../ui/spinner';
 import { SettingsRow } from './components/SettingRow';
 
 export const AboutPanel = () => {
+  const { t } = useTranslation();
   const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false);
   const [appVersion, setAppVersion] = useState<string>('');
   const [updaterState, setUpdaterState] = useState<UpdaterState>({
@@ -18,20 +20,20 @@ export const AboutPanel = () => {
   const getUpdateStatusText = (state: UpdaterState): string => {
     switch (state.status) {
       case 'checking':
-        return 'Checking...';
+        return t('settings.about.checking');
       case 'up-to-date':
-        return 'You are up to date';
+        return t('settings.about.upToDate');
       case 'available':
-        return `New version ${state.version} available`;
+        return t('settings.about.newVersion', { version: state.version });
       case 'ready':
-        return `Version ${state.version} ready to install`;
+        return t('settings.about.readyToInstall', { version: state.version });
       case 'downloading':
-        return `Downloading ${state.version}...`;
+        return t('settings.about.downloading', { version: state.version });
       case 'error':
         return state.message;
       case 'idle':
       default:
-        return 'You are up to date';
+        return t('settings.about.upToDate');
     }
   };
 
@@ -92,14 +94,17 @@ export const AboutPanel = () => {
     <div>
       <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={HelpCircleIcon} size={22} strokeWidth={1.5} />
-        About
+        {t('settings.about')}
       </h1>
 
       <div className="space-y-0">
         {/* Check for Updates */}
         <SettingsRow
-          title="Check for Updates"
-          description={`Current version: ${appVersion} • ${getUpdateStatusText(updaterState)}`}
+          title={t('settings.about.checkForUpdates')}
+          description={t('settings.about.currentVersion', {
+            version: appVersion,
+            status: getUpdateStatusText(updaterState),
+          })}
         >
           <Button
             variant="outline"
@@ -113,17 +118,17 @@ export const AboutPanel = () => {
             ) : (
               <HugeiconsIcon icon={RefreshIcon} size={14} strokeWidth={1.5} />
             )}
-            Check for Updates
+            {t('settings.about.checkForUpdates')}
           </Button>
         </SettingsRow>
 
         {/* Feedback */}
         <SettingsRow
-          title="Feedback"
-          description="Help us improve by sharing your feedback"
+          title={t('settings.about.feedback')}
+          description={t('settings.about.feedback.description')}
         >
           <Button variant="outline" size="sm" onClick={handleSendFeedback}>
-            Send Feedback
+            {t('settings.about.sendFeedback')}
           </Button>
         </SettingsRow>
       </div>

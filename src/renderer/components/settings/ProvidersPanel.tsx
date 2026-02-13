@@ -15,6 +15,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Copy, Check, ExternalLink, Loader2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store';
 import {
@@ -112,6 +113,7 @@ interface GroupedModels {
 }
 
 export const ProvidersPanel = () => {
+  const { t } = useTranslation();
   const request = useStore((state) => state.request);
 
   // Provider list state
@@ -204,7 +206,7 @@ export const ProvidersPanel = () => {
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to load providers',
+        title: t('settings.provider.toast.loadFailed'),
         description: String(error),
       });
       return [];
@@ -287,14 +289,16 @@ export const ProvidersPanel = () => {
         setSelectedProviderId(providerId);
         toastManager.add({
           type: 'success',
-          title: 'Custom provider created',
-          description: `${name} has been added.`,
+          title: t('settings.provider.toast.created'),
+          description: t('settings.provider.toast.created.description', {
+            name,
+          }),
         });
       }
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to create custom provider',
+        title: t('settings.provider.toast.createFailed'),
         description: String(error),
       });
     }
@@ -318,13 +322,13 @@ export const ProvidersPanel = () => {
           }
           toastManager.add({
             type: 'info',
-            title: 'Custom provider deleted',
+            title: t('settings.provider.toast.deleted'),
           });
         }
       } catch (error) {
         toastManager.add({
           type: 'error',
-          title: 'Failed to delete custom provider',
+          title: t('settings.provider.toast.deleteFailed'),
           description: String(error),
         });
       }
@@ -350,13 +354,13 @@ export const ProvidersPanel = () => {
         await refreshProviders();
         toastManager.add({
           type: 'success',
-          title: 'Provider name updated',
+          title: t('settings.provider.toast.nameUpdated'),
         });
       }
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to update provider name',
+        title: t('settings.provider.toast.nameUpdateFailed'),
         description: String(error),
       });
     } finally {
@@ -386,13 +390,13 @@ export const ProvidersPanel = () => {
         await Promise.all([refreshProviders(), refreshModels()]);
         toastManager.add({
           type: 'success',
-          title: 'Model added',
+          title: t('settings.provider.toast.modelAdded'),
         });
       }
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to add model',
+        title: t('settings.provider.toast.modelAddFailed'),
         description: String(error),
       });
     } finally {
@@ -421,13 +425,13 @@ export const ProvidersPanel = () => {
           await Promise.all([refreshProviders(), refreshModels()]);
           toastManager.add({
             type: 'info',
-            title: 'Model removed',
+            title: t('settings.provider.toast.modelRemoved'),
           });
         }
       } catch (error) {
         toastManager.add({
           type: 'error',
-          title: 'Failed to remove model',
+          title: t('settings.provider.toast.modelRemoveFailed'),
           description: String(error),
         });
       } finally {
@@ -465,14 +469,14 @@ export const ProvidersPanel = () => {
             await Promise.all([refreshProviders(), refreshModels()]);
             toastManager.add({
               type: 'success',
-              title: 'Model renamed',
+              title: t('settings.provider.toast.modelRenamed'),
             });
           }
         }
       } catch (error) {
         toastManager.add({
           type: 'error',
-          title: 'Failed to rename model',
+          title: t('settings.provider.toast.modelRenameFailed'),
           description: String(error),
         });
       } finally {
@@ -518,12 +522,12 @@ export const ProvidersPanel = () => {
         await refreshProviders();
         toastManager.add({
           type: 'success',
-          title: 'API format updated',
+          title: t('settings.provider.toast.apiFormatUpdated'),
         });
       } catch (error) {
         toastManager.add({
           type: 'error',
-          title: 'Failed to update API format',
+          title: t('settings.provider.toast.apiFormatUpdateFailed'),
           description: String(error),
         });
       } finally {
@@ -618,8 +622,10 @@ export const ProvidersPanel = () => {
       if (result.success) {
         toastManager.add({
           type: 'success',
-          title: 'API Key saved',
-          description: `API key for ${selectedProvider?.name} has been saved.`,
+          title: t('settings.provider.toast.apiKeySaved'),
+          description: t('settings.provider.toast.apiKeySaved.description', {
+            name: selectedProvider?.name,
+          }),
         });
         // Refresh providers list to update hasApiKey status
         await refreshProviders();
@@ -629,7 +635,7 @@ export const ProvidersPanel = () => {
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to save API key',
+        title: t('settings.provider.toast.apiKeySaveFailed'),
         description: String(error),
       });
     } finally {
@@ -659,8 +665,10 @@ export const ProvidersPanel = () => {
         if (result.success) {
           toastManager.add({
             type: 'success',
-            title: 'Base URL saved',
-            description: `Base URL for ${selectedProvider?.name} has been saved.`,
+            title: t('settings.provider.toast.baseUrlSaved'),
+            description: t('settings.provider.toast.baseUrlSaved.description', {
+              name: selectedProvider?.name,
+            }),
           });
         } else {
           throw new Error('Failed to save');
@@ -675,15 +683,18 @@ export const ProvidersPanel = () => {
         if (result.success) {
           toastManager.add({
             type: 'info',
-            title: 'Base URL removed',
-            description: `Custom base URL for ${selectedProvider?.name} has been removed.`,
+            title: t('settings.provider.toast.baseUrlRemoved'),
+            description: t(
+              'settings.provider.toast.baseUrlRemoved.description',
+              { name: selectedProvider?.name },
+            ),
           });
         }
       }
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to save Base URL',
+        title: t('settings.provider.toast.baseUrlSaveFailed'),
         description: String(error),
       });
     } finally {
@@ -706,8 +717,10 @@ export const ProvidersPanel = () => {
         setApiKey('');
         toastManager.add({
           type: 'info',
-          title: 'API Key removed',
-          description: `API key for ${selectedProvider?.name} has been removed.`,
+          title: t('settings.provider.toast.apiKeyRemoved'),
+          description: t('settings.provider.toast.apiKeyRemoved.description', {
+            name: selectedProvider?.name,
+          }),
         });
         // Refresh providers list
         await refreshProviders();
@@ -715,7 +728,7 @@ export const ProvidersPanel = () => {
     } catch (error) {
       toastManager.add({
         type: 'error',
-        title: 'Failed to remove API key',
+        title: t('settings.provider.toast.apiKeyRemoveFailed'),
         description: String(error),
       });
     } finally {
@@ -748,8 +761,15 @@ export const ProvidersPanel = () => {
         const user = statusResult.data.user;
         toastManager.add({
           type: 'info',
-          title: 'Already logged in',
-          description: `${selectedProvider.name} is already logged in${user ? ` as ${user}` : ''}.`,
+          title: t('settings.provider.toast.alreadyLoggedIn'),
+          description: user
+            ? t('settings.provider.toast.alreadyLoggedInUser.description', {
+                name: selectedProvider.name,
+                user,
+              })
+            : t('settings.provider.toast.alreadyLoggedIn.description', {
+                name: selectedProvider.name,
+              }),
         });
         setOauthLoading(false);
         return;
@@ -828,8 +848,15 @@ export const ProvidersPanel = () => {
             setOauthState(null);
             toastManager.add({
               type: 'success',
-              title: 'Login successful',
-              description: `${oauthState.providerName} authorized${user ? ` as ${user}` : ''}.`,
+              title: t('settings.provider.toast.loginSuccess'),
+              description: user
+                ? t('settings.provider.toast.loginSuccessUser.description', {
+                    name: oauthState.providerName,
+                    user,
+                  })
+                : t('settings.provider.toast.loginSuccess.description', {
+                    name: oauthState.providerName,
+                  }),
             });
             await refreshProviders();
             setApiKey('[OAuth Token]');
@@ -866,7 +893,7 @@ export const ProvidersPanel = () => {
         if (prev <= 1) {
           clearInterval(timer);
           setOauthState(null);
-          setOauthError('Authorization timed out. Please try again.');
+          setOauthError(t('settings.provider.oauth.timedOut'));
           return 0;
         }
         return prev - 1;
@@ -895,14 +922,17 @@ export const ProvidersPanel = () => {
           setCurrentModel(modelValue);
           toastManager.add({
             type: 'success',
-            title: 'Default model updated',
-            description: `Set ${modelValue} as the default model.`,
+            title: t('settings.provider.toast.defaultModelUpdated'),
+            description: t(
+              'settings.provider.toast.defaultModelUpdated.description',
+              { model: modelValue },
+            ),
           });
         }
       } catch (error) {
         toastManager.add({
           type: 'error',
-          title: 'Failed to set model',
+          title: t('settings.provider.toast.defaultModelFailed'),
           description: String(error),
         });
       }
@@ -924,14 +954,17 @@ export const ProvidersPanel = () => {
           setCurrentSmallModel(modelValue);
           toastManager.add({
             type: 'success',
-            title: 'Small model updated',
-            description: `Set ${modelValue} as the small model.`,
+            title: t('settings.provider.toast.smallModelUpdated'),
+            description: t(
+              'settings.provider.toast.smallModelUpdated.description',
+              { model: modelValue },
+            ),
           });
         }
       } catch (error) {
         toastManager.add({
           type: 'error',
-          title: 'Failed to set small model',
+          title: t('settings.provider.toast.smallModelFailed'),
           description: String(error),
         });
       }
@@ -957,15 +990,18 @@ export const ProvidersPanel = () => {
           setTestStatus('success');
           toastManager.add({
             type: 'success',
-            title: 'Model test passed',
-            description: `${modelValue} is working correctly.`,
+            title: t('settings.provider.toast.modelTestPassed'),
+            description: t(
+              'settings.provider.toast.modelTestPassed.description',
+              { model: modelValue },
+            ),
           });
         } else {
           setTestStatus('error');
           setTestError(result.error || 'Unknown error');
           toastManager.add({
             type: 'error',
-            title: 'Model test failed',
+            title: t('settings.provider.toast.modelTestFailed'),
             description: result.error || 'Unknown error',
           });
         }
@@ -974,7 +1010,7 @@ export const ProvidersPanel = () => {
         setTestError(String(error));
         toastManager.add({
           type: 'error',
-          title: 'Model test failed',
+          title: t('settings.provider.toast.modelTestFailed'),
           description: String(error),
         });
       }
@@ -1010,7 +1046,7 @@ export const ProvidersPanel = () => {
     <div>
       <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={CloudIcon} size={22} strokeWidth={1.5} />
-        Providers
+        {t('settings.provider')}
       </h1>
 
       <div
@@ -1025,7 +1061,7 @@ export const ProvidersPanel = () => {
           {/* Search */}
           <div className="p-2">
             <Input
-              placeholder="Search providers..."
+              placeholder={t('settings.provider.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1063,7 +1099,7 @@ export const ProvidersPanel = () => {
                         e.stopPropagation();
                         setDeleteProviderId(provider.id);
                       }}
-                      title="Delete custom provider"
+                      title={t('settings.provider.deleteCustom')}
                     >
                       <HugeiconsIcon
                         icon={Delete01Icon}
@@ -1082,7 +1118,7 @@ export const ProvidersPanel = () => {
                   {isProviderActive(provider) && (
                     <span
                       className="w-2 h-2 rounded-full bg-green-500"
-                      title="Active"
+                      title={t('settings.provider.status.active')}
                     />
                   )}
                 </div>
@@ -1097,7 +1133,7 @@ export const ProvidersPanel = () => {
               onClick={handleAddCustomProvider}
             >
               <HugeiconsIcon icon={Add01Icon} size={16} strokeWidth={1.5} />
-              Add custom provider
+              {t('settings.provider.addCustom')}
             </button>
           </div>
         </div>
@@ -1138,7 +1174,7 @@ export const ProvidersPanel = () => {
                             onClick={handleSaveProviderName}
                             disabled={isSaving || !editingProviderName.trim()}
                           >
-                            Save
+                            {t('settings.provider.save')}
                           </Button>
                         )}
                       </div>
@@ -1156,8 +1192,8 @@ export const ProvidersPanel = () => {
                       )}
                     >
                       {isProviderActive(selectedProvider)
-                        ? 'Active'
-                        : 'Inactive'}
+                        ? t('settings.provider.status.active')
+                        : t('settings.provider.status.inactive')}
                     </span>
                   </div>
 
@@ -1178,7 +1214,7 @@ export const ProvidersPanel = () => {
                         title={
                           testStatus === 'error' && testError
                             ? testError
-                            : 'Test a model'
+                            : t('settings.provider.testModel')
                         }
                       >
                         {testStatus === 'testing' ? (
@@ -1220,7 +1256,7 @@ export const ProvidersPanel = () => {
                           }}
                         >
                           <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
-                            Select a model to test
+                            {t('settings.provider.selectModelToTest')}
                           </div>
                           {selectedProviderModels.map((model) => (
                             <button
@@ -1244,7 +1280,7 @@ export const ProvidersPanel = () => {
                       onClick={() => openExternalUrl(selectedProvider.doc!)}
                       className="text-sm hover:underline cursor-pointer text-blue-500 bg-transparent border-none p-0"
                     >
-                      View Documentation →
+                      {t('settings.provider.viewDocs')}
                     </button>
                   </div>
                 )}
@@ -1254,7 +1290,7 @@ export const ProvidersPanel = () => {
                   selectedProvider.validEnvs.length > 0 && (
                     <div className="p-3 rounded-md text-sm bg-muted border border-border">
                       <div className="font-medium mb-1 text-foreground">
-                        Environment Variables
+                        {t('settings.provider.envVars')}
                       </div>
                       <div className="text-muted-foreground">
                         {selectedProvider.validEnvs.join(', ')}
@@ -1279,7 +1315,7 @@ export const ProvidersPanel = () => {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="font-medium text-red-500">
-                            Authorization Failed
+                            {t('settings.provider.oauth.failed')}
                           </div>
                           <Button
                             variant="ghost"
@@ -1296,7 +1332,7 @@ export const ProvidersPanel = () => {
                           onClick={handleOAuthLogin}
                           disabled={oauthLoading}
                         >
-                          Try Again
+                          {t('settings.provider.tryAgain')}
                         </Button>
                       </div>
                     )}
@@ -1306,7 +1342,9 @@ export const ProvidersPanel = () => {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="font-medium text-foreground">
-                            {oauthState.providerName} Authorization
+                            {t('settings.provider.oauth.title', {
+                              name: oauthState.providerName,
+                            })}
                           </div>
                           <Button
                             variant="ghost"
@@ -1323,14 +1361,14 @@ export const ProvidersPanel = () => {
                             onClick={() => openExternalUrl(oauthState.authUrl)}
                             className="text-sm text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-left break-all"
                           >
-                            Open in browser to authorize
+                            {t('settings.provider.oauth.openBrowser')}
                           </button>
                         </div>
 
                         {oauthState.userCode && (
                           <div className="flex items-center gap-2">
                             <span className="text-muted-foreground">
-                              Enter code:
+                              {t('settings.provider.oauth.enterCode')}
                             </span>
                             <code className="px-2 py-1 rounded bg-muted font-mono text-sm font-bold text-foreground">
                               {oauthState.userCode}
@@ -1340,7 +1378,7 @@ export const ProvidersPanel = () => {
                                 handleCopyCode(oauthState.userCode!)
                               }
                               className="p-1 rounded hover:bg-muted cursor-pointer bg-transparent border-none text-muted-foreground hover:text-foreground transition-colors"
-                              title="Copy code"
+                              title={t('settings.provider.oauth.copyCode')}
                             >
                               {copiedCode ? (
                                 <Check className="h-3.5 w-3.5 text-green-500" />
@@ -1354,7 +1392,7 @@ export const ProvidersPanel = () => {
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <div className="flex items-center gap-1.5">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            <span>Waiting for authorization...</span>
+                            <span>{t('settings.provider.oauth.waiting')}</span>
                           </div>
                           <span>
                             {Math.floor(oauthCountdown / 60)}:
@@ -1369,7 +1407,7 @@ export const ProvidersPanel = () => {
                       <>
                         <div className="flex items-center justify-between mb-2">
                           <div className="font-medium text-foreground">
-                            OAuth Provider
+                            {t('settings.provider.oauthProvider')}
                           </div>
                           {selectedProvider.hasApiKey ? (
                             <Button
@@ -1381,7 +1419,7 @@ export const ProvidersPanel = () => {
                               {isSaving ? (
                                 <Spinner className="h-4 w-4" />
                               ) : (
-                                'Logout'
+                                t('settings.provider.logout')
                               )}
                             </Button>
                           ) : (
@@ -1394,15 +1432,15 @@ export const ProvidersPanel = () => {
                               {oauthLoading ? (
                                 <Spinner className="h-4 w-4" />
                               ) : (
-                                'Login'
+                                t('settings.provider.login')
                               )}
                             </Button>
                           )}
                         </div>
                         <div className="text-muted-foreground">
                           {selectedProvider.hasApiKey
-                            ? 'You are logged in. Click Logout to remove your credentials.'
-                            : 'This provider uses OAuth authentication.'}
+                            ? t('settings.provider.oauth.loggedInHint')
+                            : t('settings.provider.oauth.hint')}
                         </div>
                       </>
                     )}
@@ -1413,7 +1451,7 @@ export const ProvidersPanel = () => {
                 {!isOAuthProvider && (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-foreground">
-                      API Key
+                      {t('settings.provider.apiKey')}
                     </label>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 relative">
@@ -1421,7 +1459,9 @@ export const ProvidersPanel = () => {
                           type={showApiKey ? 'text' : 'password'}
                           value={apiKey}
                           onChange={(e) => setApiKey(e.target.value)}
-                          placeholder="Enter your API key"
+                          placeholder={t(
+                            'settings.provider.apiKey.placeholder',
+                          )}
                           className="w-full px-3 py-2 pr-10 text-sm rounded-md outline-none bg-muted border border-border text-foreground focus:border-accent"
                         />
                         <button
@@ -1442,7 +1482,11 @@ export const ProvidersPanel = () => {
                         onClick={handleSaveApiKey}
                         disabled={isSaving || !apiKey.trim()}
                       >
-                        {isSaving ? <Spinner className="h-4 w-4" /> : 'Save'}
+                        {isSaving ? (
+                          <Spinner className="h-4 w-4" />
+                        ) : (
+                          t('settings.provider.save')
+                        )}
                       </Button>
                       {selectedProvider.hasApiKey && (
                         <Button
@@ -1451,18 +1495,18 @@ export const ProvidersPanel = () => {
                           onClick={handleRemoveApiKey}
                           disabled={isSaving}
                         >
-                          Remove
+                          {t('settings.provider.remove')}
                         </Button>
                       )}
                     </div>
                     {selectedProvider.doc && (
                       <p className="text-xs text-muted-foreground">
-                        Get your API key from{' '}
+                        {t('settings.provider.apiKey.getFrom')}{' '}
                         <button
                           onClick={() => openExternalUrl(selectedProvider.doc!)}
                           className="hover:underline cursor-pointer text-blue-500 bg-transparent border-none p-0 font-inherit"
                         >
-                          {selectedProvider.name} API Keys
+                          {selectedProvider.name}
                         </button>
                       </p>
                     )}
@@ -1473,7 +1517,7 @@ export const ProvidersPanel = () => {
                 {!isOAuthProvider && (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-foreground">
-                      Base URL (Optional)
+                      {t('settings.provider.baseUrl')}
                     </label>
                     <div className="flex items-center gap-2">
                       <input
@@ -1482,7 +1526,7 @@ export const ProvidersPanel = () => {
                         onChange={(e) => setBaseUrl(e.target.value)}
                         placeholder={
                           selectedProvider.api ||
-                          'Custom base URL (leave empty for default)'
+                          t('settings.provider.baseUrl.placeholder')
                         }
                         className="flex-1 px-3 py-2 text-sm rounded-md outline-none bg-muted border border-border text-foreground focus:border-accent"
                       />
@@ -1492,11 +1536,15 @@ export const ProvidersPanel = () => {
                         onClick={handleSaveBaseUrl}
                         disabled={isSaving}
                       >
-                        {isSaving ? <Spinner className="h-4 w-4" /> : 'Save'}
+                        {isSaving ? (
+                          <Spinner className="h-4 w-4" />
+                        ) : (
+                          t('settings.provider.save')
+                        )}
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Leave empty to use the default API endpoint
+                      {t('settings.provider.baseUrl.hint')}
                     </p>
                   </div>
                 )}
@@ -1505,7 +1553,7 @@ export const ProvidersPanel = () => {
                 {!isOAuthProvider && selectedProvider.source !== 'built-in' && (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-foreground">
-                      API Format
+                      {t('settings.provider.apiFormat')}
                     </label>
                     <Select
                       value={editingApiFormat}
@@ -1534,7 +1582,9 @@ export const ProvidersPanel = () => {
                   selectedProvider.source !== 'built-in') && (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-foreground">
-                      Models ({selectedProviderModels.length})
+                      {t('settings.provider.models', {
+                        count: selectedProviderModels.length,
+                      })}
                     </label>
                     {selectedProviderModels.length > 0 && (
                       <div
@@ -1597,7 +1647,7 @@ export const ProvidersPanel = () => {
                                             ]?.trim()
                                           }
                                         >
-                                          Save
+                                          {t('settings.provider.save')}
                                         </Button>
                                       )}
                                   </div>
@@ -1611,12 +1661,12 @@ export const ProvidersPanel = () => {
                                 )}
                                 {isCurrentModel && (
                                   <span className="px-1.5 py-0.5 text-xs rounded bg-blue-500/10 text-blue-500">
-                                    Default
+                                    {t('settings.provider.model.default')}
                                   </span>
                                 )}
                                 {isCurrentSmallModel && (
                                   <span className="px-1.5 py-0.5 text-xs rounded bg-green-500/10 text-green-500">
-                                    Small
+                                    {t('settings.provider.model.small')}
                                   </span>
                                 )}
                               </div>
@@ -1625,9 +1675,9 @@ export const ProvidersPanel = () => {
                                   <button
                                     onClick={() => handleSetModel(model.value)}
                                     className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
-                                    title="Set as default model"
+                                    title={t('settings.provider.setDefault')}
                                   >
-                                    Set Default
+                                    {t('settings.provider.setDefault')}
                                   </button>
                                 )}
                                 {!isCurrentSmallModel && (
@@ -1636,9 +1686,9 @@ export const ProvidersPanel = () => {
                                       handleSetSmallModel(model.value)
                                     }
                                     className="px-2 py-1 text-xs rounded hover:bg-accent transition-colors bg-background text-muted-foreground border border-border"
-                                    title="Set as small model"
+                                    title={t('settings.provider.setSmall')}
                                   >
-                                    Set Small
+                                    {t('settings.provider.setSmall')}
                                   </button>
                                 )}
                                 {selectedProvider.source !== 'built-in' && (
@@ -1647,7 +1697,7 @@ export const ProvidersPanel = () => {
                                       handleDeleteModelInline(model.modelId)
                                     }
                                     className="px-2 py-1 text-xs rounded hover:bg-red-500/10 hover:text-red-500 transition-colors text-muted-foreground"
-                                    title="Delete model"
+                                    title={t('common.delete')}
                                     disabled={isSaving}
                                   >
                                     <HugeiconsIcon
@@ -1675,7 +1725,9 @@ export const ProvidersPanel = () => {
                               handleAddModelInline();
                             }
                           }}
-                          placeholder="Model ID (e.g., gpt-4)"
+                          placeholder={t(
+                            'settings.provider.model.idPlaceholder',
+                          )}
                           className="flex-1 px-3 py-2 text-sm rounded-md outline-none bg-muted border border-border text-foreground focus:border-accent"
                         />
                         <Button
@@ -1684,7 +1736,7 @@ export const ProvidersPanel = () => {
                           onClick={handleAddModelInline}
                           disabled={isSaving || !inlineNewModelId.trim()}
                         >
-                          Add
+                          {t('settings.provider.add')}
                         </Button>
                       </div>
                     )}
@@ -1694,7 +1746,7 @@ export const ProvidersPanel = () => {
             )
           ) : (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              Select a provider to configure
+              {t('settings.provider.selectToConfigure')}
             </div>
           )}
         </div>
@@ -1709,14 +1761,20 @@ export const ProvidersPanel = () => {
       >
         <AlertDialogPopup>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Provider?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t('settings.provider.delete.title')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {`This will permanently delete '${providers.find((p) => p.id === deleteProviderId)?.name ?? deleteProviderId}' and its configuration. This action cannot be undone.`}
+              {t('settings.provider.delete.description', {
+                name:
+                  providers.find((p) => p.id === deleteProviderId)?.name ??
+                  deleteProviderId,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogClose>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline">{t('common.cancel')}</Button>
             </AlertDialogClose>
             <Button
               variant="destructive"
@@ -1729,7 +1787,7 @@ export const ProvidersPanel = () => {
               }}
             >
               <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={1.5} />
-              Delete
+              {t('common.delete')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogPopup>

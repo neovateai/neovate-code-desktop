@@ -7,6 +7,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import type { HandlerOutput } from '../../nodeBridge.types';
 import { useStore } from '../../store';
@@ -46,6 +47,7 @@ type AddFlowState =
   | { phase: 'error'; message: string };
 
 export const SkillsPanel = () => {
+  const { t } = useTranslation();
   const messageBus = useStore((state) => state.messageBus);
   const selectedRepo = useStore(getSelectedRepo);
   const cwd = selectedRepo?.path || '.';
@@ -79,10 +81,10 @@ export const SkillsPanel = () => {
       if (result.success) {
         setSkills(result.data.skills);
       } else {
-        setError('Failed to load skills');
+        setError(t('settings.skills.loadFailed'));
       }
     } catch (e: any) {
-      setError(e.message || 'Failed to load skills');
+      setError(e.message || t('settings.skills.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -108,7 +110,7 @@ export const SkillsPanel = () => {
         if (previewSkills.length === 0) {
           setAddFlow({
             phase: 'error',
-            message: 'No skills found in this repository',
+            message: t('settings.skills.noSkillsFound'),
           });
           return;
         }
@@ -127,13 +129,13 @@ export const SkillsPanel = () => {
       } else {
         setAddFlow({
           phase: 'error',
-          message: result.error || 'Failed to fetch skills',
+          message: result.error || t('settings.skills.fetchFailed'),
         });
       }
     } catch (e: any) {
       setAddFlow({
         phase: 'error',
-        message: e.message || 'Failed to fetch skills',
+        message: e.message || t('settings.skills.fetchFailed'),
       });
     }
   };
@@ -162,13 +164,13 @@ export const SkillsPanel = () => {
       } else {
         setAddFlow({
           phase: 'error',
-          message: result.error || 'Failed to install skills',
+          message: result.error || t('settings.skills.installFailed'),
         });
       }
     } catch (e: any) {
       setAddFlow({
         phase: 'error',
-        message: e.message || 'Failed to install skills',
+        message: e.message || t('settings.skills.installFailed'),
       });
     }
   };
@@ -236,7 +238,7 @@ export const SkillsPanel = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-semibold flex items-center gap-2 text-foreground">
           <HugeiconsIcon icon={MagicWandIcon} size={22} strokeWidth={1.5} />
-          Skills
+          {t('settings.skills')}
         </h1>
         {addFlow.phase === 'idle' && (
           <Button
@@ -245,7 +247,7 @@ export const SkillsPanel = () => {
             onClick={() => setAddFlow({ phase: 'input' })}
           >
             <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
-            Add Skill
+            {t('settings.skills.addSkill')}
           </Button>
         )}
       </div>
@@ -260,7 +262,7 @@ export const SkillsPanel = () => {
                 <Input
                   value={sourceInput}
                   onChange={(e) => setSourceInput(e.target.value)}
-                  placeholder="user/repo or GitHub URL"
+                  placeholder={t('settings.skills.sourcePlaceholder')}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && sourceInput.trim()) {
                       handlePreview();
@@ -273,7 +275,7 @@ export const SkillsPanel = () => {
                   onClick={handlePreview}
                   disabled={!sourceInput.trim()}
                 >
-                  Preview
+                  {t('settings.skills.preview')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleCancel}>
                   <HugeiconsIcon
@@ -299,7 +301,7 @@ export const SkillsPanel = () => {
                 className="animate-spin"
               />
               <span className="text-sm">
-                Fetching skills from {addFlow.source}...
+                {t('settings.skills.fetching', { source: addFlow.source })}
               </span>
             </div>
           )}
@@ -308,7 +310,7 @@ export const SkillsPanel = () => {
           {addFlow.phase === 'selecting' && (
             <div>
               <p className="text-sm mb-3 text-muted-foreground">
-                Select skills to install:
+                {t('settings.skills.selectToInstall')}
               </p>
               <div className="space-y-2 mb-4">
                 {addFlow.skills.map((skill) => {
@@ -352,23 +354,26 @@ export const SkillsPanel = () => {
                     onCheckedChange={toggleInstallGlobally}
                     disabled={!hasProject}
                   />
-                  Install globally
+                  {t('settings.skills.installGlobally')}
                 </label>
                 <label className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground">
                   <Checkbox
                     checked={addFlow.useClaude}
                     onCheckedChange={toggleUseClaude}
                   />
-                  Use .claude directory
+                  {t('settings.skills.useClaudeDir')}
                 </label>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
-                  {addFlow.selected.size} of {addFlow.skills.length} selected
+                  {t('settings.skills.selectedCount', {
+                    selected: addFlow.selected.size,
+                    total: addFlow.skills.length,
+                  })}
                 </span>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={handleCancel}>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     variant="default"
@@ -376,7 +381,9 @@ export const SkillsPanel = () => {
                     onClick={handleInstall}
                     disabled={addFlow.selected.size === 0}
                   >
-                    Install ({addFlow.selected.size})
+                    {t('settings.skills.installCount', {
+                      count: addFlow.selected.size,
+                    })}
                   </Button>
                 </div>
               </div>
@@ -392,7 +399,7 @@ export const SkillsPanel = () => {
                 strokeWidth={1.5}
                 className="animate-spin"
               />
-              <span className="text-sm">Installing skills...</span>
+              <span className="text-sm">{t('settings.skills.installing')}</span>
             </div>
           )}
         </div>
@@ -408,7 +415,7 @@ export const SkillsPanel = () => {
               strokeWidth={1.5}
               className="animate-spin"
             />
-            <span className="text-sm">Loading skills...</span>
+            <span className="text-sm">{t('settings.skills.loading')}</span>
           </div>
         ) : error ? (
           <div>
@@ -417,7 +424,7 @@ export const SkillsPanel = () => {
               className="text-sm underline text-muted-foreground"
               onClick={fetchSkills}
             >
-              Retry
+              {t('settings.skills.retry')}
             </button>
           </div>
         ) : (
@@ -425,11 +432,11 @@ export const SkillsPanel = () => {
             {/* Global Skills Section */}
             <div className="mb-6">
               <h2 className="text-sm font-medium mb-3 text-muted-foreground">
-                Global Skills
+                {t('settings.skills.globalSkills')}
               </h2>
               {globalSkills.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No global skills installed.
+                  {t('settings.skills.noGlobalSkills')}
                 </p>
               ) : (
                 <div className="space-y-1">
@@ -478,11 +485,11 @@ export const SkillsPanel = () => {
             {hasProject ? (
               <div>
                 <h2 className="text-sm font-medium mb-3 text-muted-foreground">
-                  Project Skills ({folderName})
+                  {t('settings.skills.projectSkills', { folder: folderName })}
                 </h2>
                 {projectSkills.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No project skills installed.
+                    {t('settings.skills.noProjectSkills')}
                   </p>
                 ) : (
                   <div className="space-y-1">
@@ -528,7 +535,7 @@ export const SkillsPanel = () => {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Select a project to view project-level skills.
+                {t('settings.skills.selectProject')}
               </p>
             )}
           </>
