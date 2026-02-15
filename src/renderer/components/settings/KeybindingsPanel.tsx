@@ -1,6 +1,7 @@
 import { KeyboardIcon, LockIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   captureKeybinding,
   DEFAULT_KEYBINDINGS,
@@ -73,6 +74,7 @@ const KeybindingRow = ({
   onStartRecording,
   onStopRecording,
 }: KeybindingRowProps) => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!isRecording) return;
 
@@ -126,7 +128,7 @@ const KeybindingRow = ({
       <div className="flex-shrink-0">
         {isRecording ? (
           <div className="px-3 py-1.5 rounded text-sm animate-pulse bg-accent text-foreground">
-            Press shortcut...
+            {t('settings.keybindings.pressShortcut')}
           </div>
         ) : isReadonly ? (
           // Read-only display (no hover, no click)
@@ -148,6 +150,7 @@ const KeybindingRow = ({
 };
 
 export const KeybindingsPanel = () => {
+  const { t } = useTranslation();
   const keybindings = useStore((state) => state.keybindings);
   const setKeybinding = useStore((state) => state.setKeybinding);
   const resetKeybindings = useStore((state) => state.resetKeybindings);
@@ -208,7 +211,7 @@ export const KeybindingsPanel = () => {
     <div>
       <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={KeyboardIcon} size={22} strokeWidth={1.5} />
-        Keybindings
+        {t('settings.keybindings')}
       </h1>
 
       <div className="space-y-0">
@@ -233,7 +236,7 @@ export const KeybindingsPanel = () => {
       {hasCustomBindings && (
         <div className="mt-6 flex justify-end">
           <Button variant="outline" size="sm" onClick={handleReset}>
-            Reset to Defaults
+            {t('settings.keybindings.resetToDefaults')}
           </Button>
         </div>
       )}

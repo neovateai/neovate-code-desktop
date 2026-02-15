@@ -1,5 +1,6 @@
 import { MessageIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../../store';
 import type { SendMessageWith } from '../../store/slices/desktopSettings';
 import { ModelSelector } from '../ModelSelector';
@@ -18,6 +19,7 @@ type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
 type NotificationValue = 'off' | 'default' | string;
 
 export const ChatPanel = () => {
+  const { t } = useTranslation();
   const globalConfig = useStore((state) => state.globalConfig);
   const isConfigLoading = useStore((state) => state.isConfigLoading);
   const isConfigSaving = useStore((state) => state.isConfigSaving);
@@ -89,19 +91,22 @@ export const ChatPanel = () => {
     <div>
       <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={MessageIcon} size={22} strokeWidth={1.5} />
-        Chat
+        {t('settings.chat')}
       </h1>
 
       <div className="space-y-0">
         {/* Model */}
-        <SettingsRow title="Model" description="Select the primary AI model">
+        <SettingsRow
+          title={t('settings.chat.model')}
+          description={t('settings.chat.model.description')}
+        >
           <ModelSelector type="global" disabled={isConfigSaving} />
         </SettingsRow>
 
         {/* Small Model */}
         <SettingsRow
-          title="Small Model"
-          description="Model for lightweight tasks"
+          title={t('settings.chat.smallModel')}
+          description={t('settings.chat.smallModel.description')}
         >
           <ModelSelector
             type="global"
@@ -112,8 +117,8 @@ export const ChatPanel = () => {
 
         {/* Language */}
         <SettingsRow
-          title="Agent Language"
-          description="Preferred response language"
+          title={t('settings.chat.agentLanguage')}
+          description={t('settings.chat.agentLanguage.description')}
         >
           <Select
             value={language}
@@ -136,8 +141,8 @@ export const ChatPanel = () => {
 
         {/* Approval Mode */}
         <SettingsRow
-          title="Approval Mode"
-          description="Control how actions are approved"
+          title={t('settings.chat.approvalMode')}
+          description={t('settings.chat.approvalMode.description')}
         >
           <Select
             value={approvalMode}
@@ -150,26 +155,32 @@ export const ChatPanel = () => {
               <SelectValue>
                 {(value: ApprovalMode | null) => {
                   const labels: Record<ApprovalMode, string> = {
-                    default: 'Default',
-                    autoEdit: 'Auto Edit',
-                    yolo: 'YOLO',
+                    default: t('settings.chat.approvalMode.default'),
+                    autoEdit: t('settings.chat.approvalMode.autoEdit'),
+                    yolo: t('settings.chat.approvalMode.yolo'),
                   };
                   return value ? labels[value] : 'Select...';
                 }}
               </SelectValue>
             </SelectTrigger>
             <SelectPopup>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="autoEdit">Auto Edit</SelectItem>
-              <SelectItem value="yolo">YOLO</SelectItem>
+              <SelectItem value="default">
+                {t('settings.chat.approvalMode.default')}
+              </SelectItem>
+              <SelectItem value="autoEdit">
+                {t('settings.chat.approvalMode.autoEdit')}
+              </SelectItem>
+              <SelectItem value="yolo">
+                {t('settings.chat.approvalMode.yolo')}
+              </SelectItem>
             </SelectPopup>
           </Select>
         </SettingsRow>
 
         {/* Notification */}
         <SettingsRow
-          title="Notification"
-          description="Sound notification when task completes"
+          title={t('settings.chat.notification')}
+          description={t('settings.chat.notification.description')}
         >
           <Select
             value={notification}
@@ -181,27 +192,41 @@ export const ChatPanel = () => {
             <SelectTrigger size="sm" className="w-36">
               <SelectValue>
                 {(value: NotificationValue | null) => {
-                  if (!value || value === 'off') return 'Off';
-                  if (value === 'default') return 'Default';
+                  if (!value || value === 'off')
+                    return t('settings.chat.notification.off');
+                  if (value === 'default')
+                    return t('settings.chat.notification.default');
                   return value;
                 }}
               </SelectValue>
             </SelectTrigger>
             <SelectPopup>
-              <SelectItem value="off">Off</SelectItem>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="Glass">Glass</SelectItem>
-              <SelectItem value="Ping">Ping</SelectItem>
-              <SelectItem value="Pop">Pop</SelectItem>
-              <SelectItem value="Funk">Funk</SelectItem>
+              <SelectItem value="off">
+                {t('settings.chat.notification.off')}
+              </SelectItem>
+              <SelectItem value="default">
+                {t('settings.chat.notification.default')}
+              </SelectItem>
+              <SelectItem value="Glass">
+                {t('settings.chat.notification.glass')}
+              </SelectItem>
+              <SelectItem value="Ping">
+                {t('settings.chat.notification.ping')}
+              </SelectItem>
+              <SelectItem value="Pop">
+                {t('settings.chat.notification.pop')}
+              </SelectItem>
+              <SelectItem value="Funk">
+                {t('settings.chat.notification.funk')}
+              </SelectItem>
             </SelectPopup>
           </Select>
         </SettingsRow>
 
         {/* Send Message With */}
         <SettingsRow
-          title="Send Message"
-          description="Keyboard shortcut to send messages"
+          title={t('settings.chat.sendMessage')}
+          description={t('settings.chat.sendMessage.description')}
         >
           <ToggleOptions
             value={sendMessageWith}

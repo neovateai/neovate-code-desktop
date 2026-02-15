@@ -63,14 +63,14 @@ export const GeneralPanel = () => {
     <div>
       <h1 className="text-xl font-semibold mb-6 flex items-center gap-2 text-foreground">
         <HugeiconsIcon icon={SettingsIcon} size={22} strokeWidth={1.5} />
-        General
+        {t('settings.general')}
       </h1>
 
       <div className="space-y-0">
         {/* Language */}
         <SettingsRow
-          title="Language"
-          description="Select your preferred language for the interface"
+          title={t('settings.general.language')}
+          description={t('settings.general.language.description')}
         >
           <ToggleOptions
             value={locale}
@@ -97,8 +97,8 @@ export const GeneralPanel = () => {
 
         {/* Run on Startup */}
         <SettingsRow
-          title="Run on Startup"
-          description="Automatically launch the app when you log in"
+          title={t('settings.general.runOnStartup')}
+          description={t('settings.general.runOnStartup.description')}
         >
           <Switch
             checked={runOnStartup}
@@ -108,8 +108,8 @@ export const GeneralPanel = () => {
 
         {/* Multi-Project Support */}
         <SettingsRow
-          title="Multi-Project Support"
-          description="Enable support for multiple project task lists"
+          title={t('settings.general.multiProjectSupport')}
+          description={t('settings.general.multiProjectSupport.description')}
         >
           <Switch
             checked={multiProjectSupport}
@@ -119,8 +119,8 @@ export const GeneralPanel = () => {
 
         {/* Terminal Font Size */}
         <SettingsRow
-          title="Terminal Font Size"
-          description="Font size for the integrated terminal"
+          title={t('settings.general.terminalFontSize')}
+          description={t('settings.general.terminalFontSize.description')}
         >
           <Input
             type="number"
@@ -134,22 +134,22 @@ export const GeneralPanel = () => {
 
         {/* Terminal Font */}
         <SettingsRow
-          title="Terminal Font"
-          description="Font family for the terminal (leave empty for default)"
+          title={t('settings.general.terminalFont')}
+          description={t('settings.general.terminalFont.description')}
         >
           <Input
             type="text"
             value={terminalFont}
             onChange={(e) => setTerminalFont(e.target.value)}
-            placeholder="Default"
+            placeholder={t('settings.general.terminalFont.default')}
             className="w-40"
           />
         </SettingsRow>
 
         {/* Developer Mode */}
         <SettingsRow
-          title="Developer Mode"
-          description="Show debug info in chat input and other places"
+          title={t('settings.general.developerMode')}
+          description={t('settings.general.developerMode.description')}
         >
           <Switch checked={developerMode} onCheckedChange={setDeveloperMode} />
         </SettingsRow>
