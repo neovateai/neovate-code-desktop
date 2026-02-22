@@ -67,6 +67,11 @@ const config = {
       process.env.APPLE_ID && process.env.APPLE_APP_SPECIFIC_PASSWORD
     ),
   },
+  linux: {
+    icon: 'build/icons',
+    category: 'Development',
+    target: ['AppImage', 'deb', 'rpm'],
+  },
 
   // Remove unused Electron Framework localizations (~30MB saved)
   afterPack: async (context) => {

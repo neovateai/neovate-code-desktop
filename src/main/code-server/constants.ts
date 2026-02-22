@@ -38,12 +38,12 @@ function getPlatformString() {
   if (platform === 'darwin') {
     return arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64';
   }
-  // TODO: support these platform later.
-  // if (platform === 'linux') {
-  //   if (arch === 'arm64') return 'linux-arm64';
-  //   if (arch === 'arm') return 'linux-armv7l';
-  //   return 'linux-amd64';
-  // }
+  if (platform === 'linux') {
+    if (arch === 'arm64') return 'linux-arm64';
+    if (arch === 'arm') return 'linux-armv7l';
+    return 'linux-amd64';
+  }
+  // TODO: support win32 platform later.
   // if (platform === 'win32') {
   //   return arch === 'arm64' ? 'win32-arm64' : 'win32-x64';
   // }
@@ -58,6 +58,15 @@ const ASSET_RESOURCE_URL: Record<string, string> = {
   // https://github.com/coder/code-server/releases/download/v4.108.2/code-server-4.108.2-macos-amd64.tar.gz
   'darwin-x64':
     'https://mdn.alipayobjects.com/portal_metor2/afts/file/A*PCbjQ4l9vFIAAAAAh-AAAAgAegAAAQ',
+  // https://github.com/coder/code-server/releases/download/v4.109.2/code-server-4.109.2-linux-amd64.tar.gz
+  'linux-amd64':
+    'https://github.com/coder/code-server/releases/download/v4.109.2/code-server-4.109.2-linux-amd64.tar.gz',
+  // https://github.com/coder/code-server/releases/download/v4.109.2/code-server-4.109.2-linux-arm64.tar.gz
+  'linux-arm64':
+    'https://github.com/coder/code-server/releases/download/v4.109.2/code-server-4.109.2-linux-arm64.tar.gz',
+  // https://github.com/coder/code-server/releases/download/v4.109.2/code-server-4.109.2-linux-armv7l.tar.gz
+  'linux-armv7l':
+    'https://github.com/coder/code-server/releases/download/v4.109.2/code-server-4.109.2-linux-armv7l.tar.gz',
 };
 
 // Download URL
