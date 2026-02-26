@@ -32,6 +32,7 @@ export async function codeServerStarter(opts: {
     return await delay(1000); // FIXME: 插件关闭侧边栏有延迟，先这样处理，后面可能用魔改产物的方式强制屏蔽
   } catch (e) {
     console.log(`Code Server Starter Failed: ${e}`);
+    throw e;
   }
 }
 

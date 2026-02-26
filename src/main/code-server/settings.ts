@@ -28,6 +28,14 @@ const OVERRIDE_SETTINGS = {
   'security.workspace.trust.enabled': false,
   /** 禁用空入口时的欢迎特性 */
   'workbench.startupEditor': 'none',
+  /** 禁用不必要的内置扩展，避免其 activate() 阻塞 Eager extensions activated */
+  'extensions.experimental.disabled': [
+    'vscode.git',
+    'vscode.git-base',
+    'vscode.github',
+    'vscode.github-authentication',
+    'vscode.npm',
+  ],
   /** 行号前面的空间，用于小灯泡 */
   'editor.glyphMargin': false,
   /** 代码折叠功能 */
