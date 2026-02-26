@@ -11,6 +11,8 @@ interface IBridgeRequestParams {
   params: Record<string, any>;
 }
 
+export const BRIDGE_SERVER_PORT = 45000;
+
 class ExtensionBridgeServer extends EventEmitter {
   private server: net.Server | null = null;
   private clients = new Map<string, net.Socket>();
@@ -36,8 +38,16 @@ class ExtensionBridgeServer extends EventEmitter {
     this.webContents = webContents;
   }
 
-  start(port: number = 45000) {
-    return new Promise((resolve) => {
+  start(port: number = BRIDGE_SERVER_PORT) {
+    console.log(`[ExtensionBridgeServer] Starting on port ${port}...`);
+    return new Promise((resolve, reject) => {
+      // If already running on this port, reuse it
+      if (this.server && this.server.listening) {
+        console.log(`[ExtensionBridgeServer] Already running on port ${port}`);
+        resolve('');
+        return;
+      }
+
       this.server = net.createServer((socket) => {
         let currentCwd: string | null = null;
 
@@ -121,9 +131,24 @@ class ExtensionBridgeServer extends EventEmitter {
           }
         });
       });
+
+      // Handle server errors (e.g., EADDRINUSE)
+      this.server.on('error', (error: NodeJS.ErrnoException) => {
+        console.error(`[ExtensionBridgeServer] Server error:`, error);
+        if (error.code === 'EADDRINUSE') {
+          reject(
+            new Error(
+              `Port ${port} is already in use. Please close other instances or restart the application.`,
+            ),
+          );
+        } else {
+          reject(error);
+        }
+      });
+
       this.server.listen(port, () => {
         console.log(
-          `Extension Bridge server started on port ${port}`,
+          `[ExtensionBridgeServer] ✓ Started on port ${port}`,
           Date.now(),
         );
         resolve('');

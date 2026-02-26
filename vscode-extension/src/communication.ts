@@ -54,6 +54,10 @@ export function runServer() {
     send('ping', {});
   });
 
+  client.on('error', (err) => {
+    console.error('Extension bridge connection error:', err.message);
+  });
+
   client.on('data', async (data) => {
     try {
       const request = JSON.parse(data.toString());
