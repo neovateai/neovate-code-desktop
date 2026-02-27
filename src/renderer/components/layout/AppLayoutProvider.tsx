@@ -238,6 +238,10 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
     for (const iframe of iframes) {
       iframe.style.pointerEvents = 'none';
     }
+    const webviews = document.getElementsByTagName('webview');
+    for (const webview of webviews) {
+      (webview as HTMLElement).style.pointerEvents = 'none';
+    }
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
@@ -248,6 +252,9 @@ export function AppLayoutPanelProvider({ children }: { children: ReactNode }) {
       document.body.style.cursor = '';
       for (const iframe of iframes) {
         iframe.style.pointerEvents = '';
+      }
+      for (const webview of webviews) {
+        (webview as HTMLElement).style.pointerEvents = '';
       }
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
