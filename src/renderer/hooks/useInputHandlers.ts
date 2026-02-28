@@ -307,20 +307,6 @@ export function useInputHandlers({
     inputState,
   ]);
 
-  const isAtFirstLine = useCallback(() => {
-    const currentValue = valueRef.current;
-    const currentCursorPosition = cursorPositionRef.current;
-    const beforeCursor = currentValue.substring(0, currentCursorPosition);
-    return !beforeCursor.includes('\n');
-  }, []);
-
-  const isAtLastLine = useCallback(() => {
-    const currentValue = valueRef.current;
-    const currentCursorPosition = cursorPositionRef.current;
-    const afterCursor = currentValue.substring(currentCursorPosition);
-    return !afterCursor.includes('\n');
-  }, []);
-
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const textarea = e.currentTarget;
@@ -395,7 +381,7 @@ export function useInputHandlers({
           e.preventDefault();
           return;
         }
-        if (hasSuggestions || isAtFirstLine()) {
+        if (hasSuggestions) {
           e.preventDefault();
           handleHistoryUp();
         }
@@ -403,7 +389,7 @@ export function useInputHandlers({
       }
 
       if (e.key === 'ArrowDown') {
-        if (hasSuggestions || isAtLastLine()) {
+        if (hasSuggestions) {
           e.preventDefault();
           handleHistoryDown();
         }
@@ -598,8 +584,6 @@ export function useInputHandlers({
       applyFileSuggestion,
       togglePlanMode,
       toggleThinking,
-      isAtFirstLine,
-      isAtLastLine,
     ],
   );
 
