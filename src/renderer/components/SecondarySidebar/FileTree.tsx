@@ -45,23 +45,45 @@ export function FileTree(props: { active: boolean }) {
   const cwd = selectedWorkspaceId
     ? workspaces[selectedWorkspaceId]?.worktreePath
     : null;
+  const subscriptionRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     inited.current = false;
-    init(true);
+    if (cwd) {
+      init(true);
+      return () => {
+        // stop watching to save system resources
+        request<any>('fs.unwatch', { cwd });
+        // stop waiting for notifications
+        const messageBus = useStore.getState()?.messageBus;
+        if (messageBus && subscriptionRef.current) {
+          messageBus.removeEventHandler('fs-change', subscriptionRef.current);
+        }
+      };
+    }
   }, [cwd]);
 
-  useEffect(() => {
-    if (active && inited.current) {
-      init(false);
+  const waitForNotifications = (cwd: string) => {
+    const messageBus = useStore.getState()?.messageBus;
+    if (!messageBus || !cwd) {
+      return;
     }
-  }, [active]);
+    if (subscriptionRef.current) {
+      messageBus.removeEventHandler('fs-change', subscriptionRef.current);
+    }
+    // recreate handler with new cwd
+    subscriptionRef.current = () => {
+      console.log('sth changed in', cwd);
+      init();
+    };
+    messageBus.onEvent('fs-change', subscriptionRef.current);
+  };
 
-  const init = async (clear = false) => {
+  const init = async (reset = false) => {
     if (!cwd) {
       return;
     }
-    if (clear) {
+    if (reset) {
       setSelectedKey(null);
       setExpandedKeys(new Set());
       setItemToDelete(null);
@@ -70,6 +92,12 @@ export function FileTree(props: { active: boolean }) {
       inited.current = true;
       if (res?.data?.tree) {
         setTreeData(res.data.tree);
+      }
+      // start watch and wait for notifications
+      if (reset) {
+        request<any>('fs.watch', { cwd }).then(() => {
+          waitForNotifications(cwd);
+        });
       }
     });
   };
@@ -109,10 +137,7 @@ export function FileTree(props: { active: boolean }) {
   const handleRename = async (oldPath: string, newPath: string) => {
     try {
       const result = await request<any>('fs.rename', { oldPath, newPath });
-
       if (result.success) {
-        init();
-
         // 如果当前选中的文件就是被重命名的文件
         if (selectedKey === oldPath) {
           setSelectedKey(newPath);
@@ -134,7 +159,6 @@ export function FileTree(props: { active: boolean }) {
       });
 
       if (result.success) {
-        init();
         if (selectedKey === itemToDelete.fullPath) {
           setSelectedKey(null);
         }

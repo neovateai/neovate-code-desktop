@@ -96,7 +96,7 @@ export function EditorPane({ isActive, onReady }: EditorPaneProps) {
 
   // 文件打开行为承接
   useEffect(() => {
-    if (pendingTabUri?.type === 'editor' && status === 'ready') {
+    if (pendingTabUri?.type === 'editor' && extensionReady) {
       const uri = pendingTabUri.uri;
       // anchor request from search panel
       if (uri.includes(`#L`)) {
@@ -120,7 +120,7 @@ export function EditorPane({ isActive, onReady }: EditorPaneProps) {
       }
       request<any>('editor.open', { cwd: repoPath, filePath: uri });
     }
-  }, [pendingTabUri, status]);
+  }, [pendingTabUri, extensionReady]);
 
   useEffect(() => {
     if (extensionReady) {
