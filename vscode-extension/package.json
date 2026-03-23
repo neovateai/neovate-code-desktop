@@ -2,7 +2,7 @@
   "name": "neovate-code-extension",
   "displayName": "Neovate Code",
   "description": "Neovate Code VS Code Extension",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "publisher": "afx",
   "engines": {
     "vscode": "^1.108.1"
@@ -14,7 +14,22 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "contributes": {},
+  "contributes": {
+    "commands": [
+      {
+        "command": "neovate.addToChat",
+        "title": "Add to Chat"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "neovate.addToChat",
+          "group": "navigation@0"
+        }
+      ]
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run package",
     "build": "vsce package --no-dependencies",

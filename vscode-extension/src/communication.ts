@@ -64,7 +64,7 @@ export function runServer() {
       }
       const request = JSON.parse(requestRaw);
       const { operationType, params, requestId } = request || {};
-      console.log('Extension Received', request);
+      console.debug('Extension Received', request);
       if (!operationType || !params) {
         return;
       }
@@ -84,7 +84,7 @@ export function runServer() {
         console.error(`处理 ${operationType} 时出错:`, err);
       }
       const response = { requestId, operationType, result, error };
-      console.log('Extension Response', response);
+      console.debug('Extension Response', response);
       client.write(JSON.stringify(response));
     } catch (error) {
       console.error('解析请求数据时出错:', { error, text: requestRaw });

@@ -3,6 +3,7 @@ import { runServer } from './communication';
 import { registerLinkHandler } from './ide/link';
 import { setTheme } from './ide/theme';
 import { registerGitDiffProvider, showGitDiff } from './ide/diff';
+import { registerEditorCommands } from './ide/editor';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('Extension is activated');
@@ -80,6 +81,13 @@ export function activate(context: vscode.ExtensionContext) {
   });
   /** 注册 Git diff 虚拟文档提供器 */
   registerGitDiffProvider(context);
+
+  /** 注册编辑器命令 */
+  registerEditorCommands(context, {
+    onContextAdd: (type, data) => {
+      server.send('context.add', { type, data });
+    },
+  });
 }
 
 // This method is called when your extension is deactivated
