@@ -2,7 +2,7 @@
   "name": "neovate-code-extension",
   "displayName": "Neovate Code",
   "description": "Neovate Code VS Code Extension",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "publisher": "afx",
   "engines": {
     "vscode": "^1.108.1"

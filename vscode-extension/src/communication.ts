@@ -46,17 +46,23 @@ export function runServer() {
   const register = (operationType: string, handler: OperationHandler) => {
     operationHandlers.set(operationType, handler);
   };
+  const port = process.env.NEOVATE_BRIDGE_PORT
+    ? Number(process.env.NEOVATE_BRIDGE_PORT)
+    : 45000;
 
-  client.connect(45000, 'localhost', () => {
+  client.connect(port, 'localhost', () => {
     console.log(
       'Extension client is active, start to connect with neovate bridge.',
     );
     send('ping', {});
   });
 
-  client.on('data', async (data) => {
+  const handler = async (requestRaw: string) => {
     try {
-      const request = JSON.parse(data.toString());
+      if (!requestRaw) {
+        return;
+      }
+      const request = JSON.parse(requestRaw);
       const { operationType, params, requestId } = request || {};
       console.log('Extension Received', request);
       if (!operationType || !params) {
@@ -81,7 +87,19 @@ export function runServer() {
       console.log('Extension Response', response);
       client.write(JSON.stringify(response));
     } catch (error) {
-      console.error('解析请求数据时出错:', error);
+      console.error('解析请求数据时出错:', { error, text: requestRaw });
+    }
+  };
+
+  client.on('data', async (data) => {
+    try {
+      const content = data.toString();
+      const jsonList = content.split('\n\n'); // 通过分隔符避免socket 消息粘包
+      for (const fragment of jsonList) {
+        handler(fragment);
+      }
+    } catch (error) {
+      console.error('Unknown request data:', { error, text: data.toString() });
     }
   });
 
