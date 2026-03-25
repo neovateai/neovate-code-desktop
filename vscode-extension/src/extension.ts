@@ -5,6 +5,7 @@ import { setTheme } from './ide/theme';
 import { registerGitDiffProvider, showGitDiff } from './ide/diff';
 import { registerEditorCommands } from './ide/editor';
 import { registerEditorEvents } from './ide/editor-events';
+import { openFile } from './ide/open';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('Extension is activated');
@@ -13,38 +14,11 @@ export function activate(context: vscode.ExtensionContext) {
   // run socket server
   const server = runServer();
   server.register('editor.open', (params) => {
-    if (!params?.filePath) {
-      return { success: false };
-    }
-    const uri = vscode.Uri.file(params.filePath);
-    const lineNumber = params.line
-      ? Math.max(0, parseInt(params.line, 10) - 1)
-      : 0;
-    const shouldFocus = params.focus !== false;
-
-    vscode.workspace.openTextDocument(uri).then(
-      (document) => {
-        vscode.window
-          .showTextDocument(document, {
-            preview: false,
-            viewColumn: vscode.ViewColumn.Active,
-            preserveFocus: !shouldFocus,
-          })
-          .then((editor) => {
-            // 无论是否focus，只要有line参数就跳转到指定行
-            const position = new vscode.Position(lineNumber, 0);
-            editor.selection = new vscode.Selection(position, position);
-            editor.revealRange(
-              new vscode.Range(position, position),
-              vscode.TextEditorRevealType.InCenter,
-            );
-          });
-      },
-      (error) => {
-        vscode.window.showErrorMessage(`无法打开文件: ${error.message}`);
-      },
-    );
-    return { success: true };
+    return openFile({
+      filePath: params?.filePath,
+      line: params?.line,
+      focus: params?.focus,
+    });
   });
   server.register('editor.theme.set', async (params) => {
     if (!params || typeof params !== 'object') {
