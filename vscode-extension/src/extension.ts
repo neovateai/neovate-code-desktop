@@ -4,6 +4,7 @@ import { registerLinkHandler } from './ide/link';
 import { setTheme } from './ide/theme';
 import { registerGitDiffProvider, showGitDiff } from './ide/diff';
 import { registerEditorCommands } from './ide/editor';
+import { registerEditorEvents } from './ide/editor-events';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('Extension is activated');
@@ -19,6 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
     const lineNumber = params.line
       ? Math.max(0, parseInt(params.line, 10) - 1)
       : 0;
+    const shouldFocus = params.focus !== false;
 
     vscode.workspace.openTextDocument(uri).then(
       (document) => {
@@ -26,9 +28,10 @@ export function activate(context: vscode.ExtensionContext) {
           .showTextDocument(document, {
             preview: false,
             viewColumn: vscode.ViewColumn.Active,
+            preserveFocus: !shouldFocus,
           })
           .then((editor) => {
-            // 跳转到指定行
+            // 无论是否focus，只要有line参数就跳转到指定行
             const position = new vscode.Position(lineNumber, 0);
             editor.selection = new vscode.Selection(position, position);
             editor.revealRange(
@@ -86,6 +89,13 @@ export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context, {
     onContextAdd: (type, data) => {
       server.send('context.add', { type, data });
+    },
+  });
+
+  /** 注册编辑器事件监听 */
+  registerEditorEvents(context, {
+    onActiveChange: (tabs) => {
+      server.send('tabs.change', { tabs });
     },
   });
 }
