@@ -54,8 +54,10 @@ export function registerEditorEvents(
   const emitOpenChange = () => {
     // 获取当前最新的活动编辑器
     const activeEditor = vscode.window.activeTextEditor;
+
     if (!activeEditor) {
-      lastEmittedUri = null;
+      // 没有活跃编辑器时返回空数组
+      callbacks.onActiveChange([]);
       return;
     }
 

@@ -1,51 +1,170 @@
+import * as crypto from 'crypto';
 import * as net from 'net';
 import * as vscode from 'vscode';
 
 type OperationHandler = (params: Record<string, any>) => any | Promise<any>;
+
+interface PendingRequest {
+  resolve: (value: any) => void;
+  reject: (error: Error) => void;
+  timer: NodeJS.Timeout;
+}
+
+interface RequestMessage {
+  operationType: string;
+  params?: Record<string, any>;
+  cwd: string;
+  requestId: string;
+  msgType?: 'PUSH' | 'REQUEST';
+}
+
+interface ResponseMessage {
+  requestId: string;
+  operationType: string;
+  result?: any;
+  error?: string;
+}
 
 export function runServer() {
   const client = new net.Socket();
   const cwd = vscode.workspace.workspaceFolders?.[0]?.uri?.path || '';
   const operationHandlers = new Map<string, OperationHandler>();
 
+  // 集中管理待处理的请求
+  const pendingRequests = new Map<string, PendingRequest>();
+
+  const doSend = (message: string) => {
+    client.write(message);
+    client.write('\n\n');
+  };
+
   const send = (operationType: string, params?: Record<string, any>) => {
     return new Promise((resolve, reject) => {
-      const requestId = Date.now() + Math.random();
-      const message = JSON.stringify({
+      const requestId = crypto.randomUUID();
+
+      const timer = setTimeout(() => {
+        pendingRequests.delete(requestId);
+        reject(new Error('Request timeout'));
+      }, 10000);
+
+      pendingRequests.set(requestId, { resolve, reject, timer });
+
+      const message: RequestMessage = { operationType, params, cwd, requestId };
+      doSend(JSON.stringify(message));
+    });
+  };
+
+  /** 无超时，推送请求 */
+  const push = (operationType: string, params?: Record<string, any>) => {
+    return new Promise(() => {
+      const requestId = crypto.randomUUID();
+      const message: RequestMessage = {
         operationType,
         params,
         cwd,
         requestId,
-      });
-
-      // 设置一次性监听器等待响应
-      const onResponse = (data: Buffer) => {
-        try {
-          const response = JSON.parse(data.toString());
-          if (response.requestId === requestId) {
-            client.off('data', onResponse);
-            resolve(response.result);
-          }
-        } catch (error) {
-          client.off('data', onResponse);
-          reject(error);
-        }
+        msgType: 'PUSH',
       };
-
-      client.on('data', onResponse);
-      client.write(message);
-
-      // 设置超时
-      setTimeout(() => {
-        client.off('data', onResponse);
-        reject(new Error('Request timeout'));
-      }, 5000);
+      doSend(JSON.stringify(message));
     });
   };
 
   const register = (operationType: string, handler: OperationHandler) => {
     operationHandlers.set(operationType, handler);
   };
+
+  // 处理响应消息
+  const handleResponse = (response: ResponseMessage) => {
+    const pending = pendingRequests.get(response.requestId);
+
+    if (!pending) {
+      console.debug('收到未知 requestId 的响应:', response.requestId);
+      return;
+    }
+
+    clearTimeout(pending.timer);
+    pendingRequests.delete(response.requestId);
+
+    if (response.error) {
+      pending.reject(new Error(response.error));
+    } else {
+      pending.resolve(response.result);
+    }
+  };
+
+  // 处理请求消息（来自 bridge 的请求）
+  const handleRequest = async (requestRaw: string) => {
+    if (!requestRaw) {
+      return;
+    }
+
+    let request: RequestMessage;
+    try {
+      request = JSON.parse(requestRaw);
+    } catch {
+      console.error('解析请求数据时出错:', requestRaw);
+      return;
+    }
+
+    const { operationType, params, requestId } = request || {};
+    console.debug('Extension Received', request);
+
+    if (!operationType || params === undefined) {
+      return;
+    }
+
+    let result: any = null;
+    let error: string = '';
+
+    try {
+      const handler = operationHandlers.get(operationType);
+      if (!handler) {
+        throw new Error(`No handler for operationType: ${operationType}`);
+      }
+      result = await handler(params);
+    } catch (err: any) {
+      error = err.message || String(err);
+      console.error(`处理 ${operationType} 时出错:`, err);
+    }
+
+    const response: ResponseMessage = {
+      requestId,
+      operationType,
+      result,
+      error,
+    };
+    console.debug('Extension Response', response);
+    doSend(JSON.stringify(response));
+  };
+
+  // 统一的消息处理器
+  const processMessage = (messageRaw: string) => {
+    if (!messageRaw) return;
+
+    try {
+      const message = JSON.parse(messageRaw);
+      // 响应消息，不需要处理
+      if (!message.operationType) {
+        return;
+      }
+      console.log('pro', message);
+
+      // 判断是响应还是请求
+      // 响应消息: 有 requestId 且 result 或 error 存在
+      // 请求消息: 有 operationType 且 params 存在
+      if (
+        message.requestId !== undefined &&
+        ('result' in message || 'error' in message)
+      ) {
+        handleResponse(message as ResponseMessage);
+      } else if (message.operationType) {
+        handleRequest(messageRaw);
+      }
+    } catch (error) {
+      console.error('解析消息失败:', { error, text: messageRaw });
+    }
+  };
+
   const port = process.env.NEOVATE_BRIDGE_PORT
     ? Number(process.env.NEOVATE_BRIDGE_PORT)
     : 45000;
@@ -54,54 +173,33 @@ export function runServer() {
     console.log(
       'Extension client is active, start to connect with neovate bridge.',
     );
-    send('ping', {});
+    push('ping', {});
   });
 
-  const handler = async (requestRaw: string) => {
-    try {
-      if (!requestRaw) {
-        return;
-      }
-      const request = JSON.parse(requestRaw);
-      const { operationType, params, requestId } = request || {};
-      console.debug('Extension Received', request);
-      if (!operationType || !params) {
-        return;
-      }
-
-      let result: any = null;
-      let error: string | null = null;
-
-      try {
-        // 查找注册的处理器
-        const handler = operationHandlers.get(operationType);
-        if (!handler) {
-          throw new Error('No handler');
-        }
-        result = await handler(params);
-      } catch (err: any) {
-        error = err.message || String(err);
-        console.error(`处理 ${operationType} 时出错:`, err);
-      }
-      const response = { requestId, operationType, result, error };
-      console.debug('Extension Response', response);
-      client.write(JSON.stringify(response));
-    } catch (error) {
-      console.error('解析请求数据时出错:', { error, text: requestRaw });
-    }
-  };
-
-  client.on('data', async (data) => {
-    try {
-      const content = data.toString();
-      const jsonList = content.split('\n\n'); // 通过分隔符避免socket 消息粘包
-      for (const fragment of jsonList) {
-        handler(fragment);
-      }
-    } catch (error) {
-      console.error('Unknown request data:', { error, text: data.toString() });
+  // 单一的 data 监听器，统一处理粘包
+  client.on('data', (data) => {
+    console.log('on data', data.toString());
+    // 通过分隔符分割完整消息
+    const parts = data.toString().split('\n\n');
+    for (const message of parts) {
+      processMessage(message);
     }
   });
 
-  return { send, register };
+  client.on('error', (error) => {
+    console.error('Socket connection error:', error);
+  });
+
+  client.on('close', () => {
+    console.log('Socket connection closed');
+
+    // 清理所有待处理的请求
+    for (const [requestId, pending] of pendingRequests) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error('Connection closed'));
+      pendingRequests.delete(requestId);
+    }
+  });
+
+  return { send, push, register };
 }

@@ -54,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
   /** 注册链接处理器 */
   registerLinkHandler(context, (url) => {
-    server.send('link.open', { url });
+    server.push('link.open', { url });
   });
   /** 注册 Git diff 虚拟文档提供器 */
   registerGitDiffProvider(context);
@@ -62,14 +62,14 @@ export function activate(context: vscode.ExtensionContext) {
   /** 注册编辑器命令 */
   registerEditorCommands(context, {
     onContextAdd: (type, data) => {
-      server.send('context.add', { type, data });
+      server.push('context.add', { type, data });
     },
   });
 
   /** 注册编辑器事件监听 */
   registerEditorEvents(context, {
     onActiveChange: (tabs) => {
-      server.send('tabs.change', { tabs });
+      server.push('tabs.change', { tabs });
     },
   });
 }

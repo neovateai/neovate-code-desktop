@@ -92,19 +92,13 @@ class ExtensionBridgeServer extends EventEmitter {
                 });
                 socket.write(Buffer.from(response));
               }
-            } else {
-              const response = JSON.stringify({
-                success: false,
-                error: `No handler registered for operation: ${operationType}`,
-                requestId: data.requestId,
-              });
-              socket.write(Buffer.from(response));
             }
           } catch (error) {
             const response = JSON.stringify({
               success: false,
               error: 'Invalid JSON format',
             });
+            console.warn('Invalid JSON format', raw.toString());
             socket.write(Buffer.from(response));
           }
         });
