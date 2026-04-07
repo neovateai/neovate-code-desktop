@@ -21,6 +21,7 @@ interface RequestMessage {
 interface ResponseMessage {
   requestId: string;
   operationType: string;
+  msgType: 'RESPONSE';
   result?: any;
   error?: string;
 }
@@ -132,6 +133,7 @@ export function runServer() {
       operationType,
       result,
       error,
+      msgType: 'RESPONSE',
     };
     console.debug('Extension Response', response);
     doSend(JSON.stringify(response));
@@ -147,8 +149,6 @@ export function runServer() {
       if (!message.operationType) {
         return;
       }
-      console.log('pro', message);
-
       // 判断是响应还是请求
       // 响应消息: 有 requestId 且 result 或 error 存在
       // 请求消息: 有 operationType 且 params 存在
@@ -169,18 +169,22 @@ export function runServer() {
     ? Number(process.env.NEOVATE_BRIDGE_PORT)
     : 45000;
 
-  client.connect(port, 'localhost', () => {
+  client.connect(port, '127.0.0.1', () => {
     console.log(
-      'Extension client is active, start to connect with neovate bridge.',
+      `Extension client is active, ready to connect with neovate bridge.[Port:${port}, Cwd: ${cwd}]`,
     );
-    push('ping', {});
+    push('connected', { port });
   });
 
   // 单一的 data 监听器，统一处理粘包
   client.on('data', (data) => {
-    console.log('on data', data.toString());
+    const str = data.toString();
+    if (!str.trim()) {
+      return;
+    }
+    console.log('Extension client receive content', str);
     // 通过分隔符分割完整消息
-    const parts = data.toString().split('\n\n');
+    const parts = str.split('\n\n');
     for (const message of parts) {
       processMessage(message);
     }
