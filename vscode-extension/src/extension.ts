@@ -4,7 +4,7 @@ import { registerLinkHandler } from './ide/link';
 import { setTheme } from './ide/theme';
 import { registerGitDiffProvider, showGitDiff } from './ide/diff';
 import { registerEditorCommands } from './ide/editor';
-import { registerEditorEvents } from './ide/editor-events';
+import { collectTabs, registerEditorEvents } from './ide/editor-events';
 import { openFile } from './ide/open';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -12,7 +12,14 @@ export function activate(context: vscode.ExtensionContext) {
   /** 插件加载时立即关闭侧边栏 */
   vscode.commands.executeCommand('workbench.action.closeSidebar');
   // run socket server
-  const server = runServer();
+  const server = runServer({
+    onConnected: () => {
+      // 确保ready已经被处理了再发送该事件
+      setTimeout(() => {
+        server.push('tabs.change', { tabs: collectTabs() });
+      }, 1000);
+    },
+  });
   server.register('editor.open', (params) => {
     return openFile({
       filePath: params?.filePath,
@@ -63,6 +70,9 @@ export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context, {
     onContextAdd: (type, data) => {
       server.push('context.add', { type, data });
+    },
+    onOpenDevTools: () => {
+      server.push('devtools.open', {});
     },
   });
 

@@ -26,7 +26,7 @@ interface ResponseMessage {
   error?: string;
 }
 
-export function runServer() {
+export function runServer(opts: { onConnected: () => void }) {
   const client = new net.Socket();
   const cwd = vscode.workspace.workspaceFolders?.[0]?.uri?.path || '';
   const operationHandlers = new Map<string, OperationHandler>();
@@ -174,6 +174,7 @@ export function runServer() {
       `Extension client is active, ready to connect with neovate bridge.[Port:${port}, Cwd: ${cwd}]`,
     );
     push('connected', { port });
+    opts?.onConnected?.();
   });
 
   // 单一的 data 监听器，统一处理粘包

@@ -20,7 +20,7 @@ const getRelativePath = (uri: vscode.Uri): string => {
     : uri.fsPath;
 };
 
-const collectTabs = (): Array<{
+export const collectTabs = (): Array<{
   type: 'text' | 'webview';
   uri: string;
   fullPath?: string;
@@ -126,7 +126,4 @@ export function registerEditorEvents(
     onTabChange,
     timerDisposable,
   );
-
-  // 初始化时立即通知当前已打开的 tabs
-  emitOpenChange();
 }

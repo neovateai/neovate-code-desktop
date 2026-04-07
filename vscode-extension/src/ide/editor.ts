@@ -9,13 +9,14 @@ interface FileContextData {
 
 interface EditorCommandOptions {
   onContextAdd: (type: string, data: FileContextData) => void;
+  onOpenDevTools?: () => void;
 }
 
 export function registerEditorCommands(
   context: vscode.ExtensionContext,
   options: EditorCommandOptions,
 ) {
-  const { onContextAdd } = options || {};
+  const { onContextAdd, onOpenDevTools } = options || {};
 
   // 注册 Add to Chat 命令
   const addToChatCommand = vscode.commands.registerCommand(
@@ -37,5 +38,13 @@ export function registerEditorCommands(
     },
   );
 
-  context.subscriptions.push(addToChatCommand);
+  // 注册 Open Dev Tools 命令
+  const openDevToolsCommand = vscode.commands.registerCommand(
+    'neovate.openDevTools',
+    async () => {
+      onOpenDevTools?.();
+    },
+  );
+
+  context.subscriptions.push(addToChatCommand, openDevToolsCommand);
 }

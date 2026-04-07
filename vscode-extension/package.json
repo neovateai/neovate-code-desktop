@@ -2,7 +2,7 @@
   "name": "neovate-code-extension",
   "displayName": "Neovate Code",
   "description": "Neovate Code VS Code Extension",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "afx",
   "engines": {
     "vscode": "^1.108.1"
@@ -19,6 +19,10 @@
       {
         "command": "neovate.addToChat",
         "title": "Add to Chat"
+      },
+      {
+        "command": "neovate.openDevTools",
+        "title": "Open Dev Tools"
       }
     ],
     "menus": {
